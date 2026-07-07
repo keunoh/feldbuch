@@ -1,4 +1,14 @@
 package io.github.kaltz.feldbuch.common.exception;
 
-public record ErrorResponse() {
+import lombok.Builder;
+
+import java.time.LocalDateTime;
+
+@Builder
+public record ErrorResponse(
+        LocalDateTime timestamp,
+        int status,
+        String code,
+        String message
+) {
 }

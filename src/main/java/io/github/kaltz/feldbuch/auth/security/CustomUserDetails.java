@@ -1,4 +1,66 @@
 package io.github.kaltz.feldbuch.auth.security;
 
-public class CustomUserDetails {
+import io.github.kaltz.feldbuch.user.entity.User;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
+
+@Getter
+@RequiredArgsConstructor
+public class CustomUserDetails implements UserDetails {
+
+    // Spring Security는 User 엔티티를 직접 사용하지 않는다.
+    // 반드시 UserDetails를 구현한 클래스를 사용한다.
+
+    private final User user;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(
+                new SimpleGrantedAuthority(user.getRole().name())
+        );
+    }
+
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getEmail();
+    }
+
+    public Long getUserId() {
+        return user.getId();
+    }
+
+    public String getNickname() {
+        return user.getNickname();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

@@ -1,20 +1,19 @@
 spring:
+
   datasource:
-    url: jdbc:h2:mem:feldbuch-test
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:mysql://localhost:3306/feldbuch
+    username: root
+    password: flflflfl1
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
 
     show-sql: true
 
     properties:
       hibernate:
         format_sql: true
-
 
 jwt:
   secret: 012345678901234567890123456789012345678901234567890123456789abcd
