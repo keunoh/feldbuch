@@ -4,5 +4,6 @@ import io.github.kaltz.feldbuch.ai.dto.SummaryRequest;
 
 public interface SummaryService {
 
-    String summarize(SummaryRequest note);
+    String summarize(SummaryRequest request);
+
 }

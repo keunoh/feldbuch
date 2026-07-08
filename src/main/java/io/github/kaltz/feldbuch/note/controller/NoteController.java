@@ -154,20 +154,4 @@ public class NoteController {
 
         return ApiResponse.success(null);
     }
-
-    @PostMapping("/{noteId}/summary")
-    public ApiResponse<Void> summarize(
-            @AuthenticationPrincipal
-            CustomUserDetails user,
-
-            @PathVariable
-            Long noteId
-    ) {
-        aiFacade.summarize(
-                user.getUserId(),
-                noteId
-        );
-
-        return ApiResponse.success(null);
-    }
 }

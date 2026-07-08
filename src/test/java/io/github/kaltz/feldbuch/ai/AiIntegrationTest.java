@@ -26,7 +26,7 @@ class AiIntegrationTest extends IntegrationTestSupport {
         );
 
         mockMvc.perform(
-                        post("/api/notes/{id}/summary",
+                        post("/api/ai/notes/{id}/summary",
                                 noteId)
 
                                 .header(
