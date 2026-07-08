@@ -21,7 +21,10 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USER-001", "이미 가입된 이메일입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH-001", "이메일 또는 비밀번호가 올바르지 않습니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "ATUH-002", "접근 권한이 없습니다."),
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH-003", "로그인이 필요합니다.");
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH-003", "로그인이 필요합니다."),
+
+    // Note
+    NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTE-001", "노트를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

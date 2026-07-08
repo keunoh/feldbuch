@@ -1,4 +1,18 @@
 package io.github.kaltz.feldbuch.note.dto.request;
 
-public record CreateNoteRequest() {
+import io.github.kaltz.feldbuch.note.entity.NoteCategory;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record CreateNoteRequest(
+
+        @NotBlank
+        String title,
+
+        @NotBlank
+        String content,
+
+        @NotNull
+        NoteCategory category
+) {
 }
