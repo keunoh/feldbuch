@@ -1,0 +1,21 @@
+Phase 1
+────────────────────────────
+✅ Spring Boot
+✅ Docker
+✅ MySQL
+✅ JPA
+✅ JWT
+✅ Spring Security
+✅ 회원가입
+✅ 로그인
+✅ 공통 응답
+✅ 공통 예외
+✅ Reader Pattern
+✅ Mapper
+✅ CRUD
+✅ QueryDSL
+✅ Pagination
+✅ Search
+✅ Pin
+✅ StudyStatus
+✅ Integration Test
