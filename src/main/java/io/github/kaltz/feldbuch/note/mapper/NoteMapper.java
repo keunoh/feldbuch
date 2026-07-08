@@ -17,7 +17,8 @@ public final class NoteMapper {
                 note.getContent(),
                 note.getSummary(),
                 note.getCategory(),
-                note.isPinned()
+                note.isPinned(),
+                note.getStudyStatus()
         );
     }
 
@@ -27,7 +28,8 @@ public final class NoteMapper {
                 note.getTitle(),
                 note.getSummary(),
                 note.getCategory(),
-                note.isPinned()
+                note.isPinned(),
+                note.getStudyStatus()
         );
     }
 }

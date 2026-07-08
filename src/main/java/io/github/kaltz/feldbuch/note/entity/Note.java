@@ -41,6 +41,11 @@ public class Note extends BaseEntity {
     )
     private User user;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private StudyStatus studyStatus = StudyStatus.TODO;
+
     // 객체 생성 방식이 하나로 통일된다.
     public static Note create(
             User user,
@@ -55,6 +60,7 @@ public class Note extends BaseEntity {
                 .category(category == null ? NoteCategory.MEMO : category)
                 .summary(null)
                 .pinned(false)
+                .studyStatus(StudyStatus.TODO)
                 .build();
     }
 
@@ -70,6 +76,12 @@ public class Note extends BaseEntity {
 
     public void changePinned(boolean pinned) {
         this.pinned = pinned;
+    }
+
+    public void changeStudyStatus(
+            StudyStatus studyStatus
+    ) {
+        this.studyStatus = studyStatus;
     }
 
     public void updateSummary(String summary) {

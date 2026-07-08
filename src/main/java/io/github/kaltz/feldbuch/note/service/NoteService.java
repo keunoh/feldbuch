@@ -3,6 +3,7 @@ package io.github.kaltz.feldbuch.note.service;
 import io.github.kaltz.feldbuch.note.dto.request.CreateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdatePinRequest;
+import io.github.kaltz.feldbuch.note.dto.request.UpdateStudyStatusRequest;
 import io.github.kaltz.feldbuch.note.dto.response.NoteListResponse;
 import io.github.kaltz.feldbuch.note.dto.response.NoteResponse;
 import io.github.kaltz.feldbuch.note.entity.Note;
@@ -104,5 +105,20 @@ public class NoteService {
     ) {
         Note note = noteReader.get(userId, noteId);
         note.changePinned(request.pinned());
+    }
+
+    public void changeStudyStatus(
+            Long userId,
+            Long noteId,
+            UpdateStudyStatusRequest request
+    ) {
+        Note note = noteReader.get(
+                userId,
+                noteId
+        );
+
+        note.changeStudyStatus(
+                request.studyStatus()
+        );
     }
 }

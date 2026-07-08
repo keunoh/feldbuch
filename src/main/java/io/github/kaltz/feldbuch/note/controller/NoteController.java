@@ -6,6 +6,7 @@ import io.github.kaltz.feldbuch.common.response.PageResponse;
 import io.github.kaltz.feldbuch.note.dto.request.CreateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdatePinRequest;
+import io.github.kaltz.feldbuch.note.dto.request.UpdateStudyStatusRequest;
 import io.github.kaltz.feldbuch.note.dto.response.NoteListResponse;
 import io.github.kaltz.feldbuch.note.dto.response.NoteResponse;
 import io.github.kaltz.feldbuch.note.service.NoteService;
@@ -119,6 +120,27 @@ public class NoteController {
     ) {
 
         noteService.changePinned(
+                user.getUserId(),
+                noteId,
+                request
+        );
+
+        return ApiResponse.success(null);
+    }
+
+    @PatchMapping("/{noteId}/study-status")
+    public ApiResponse<Void> changeStudyStatus(
+            @AuthenticationPrincipal
+            CustomUserDetails user,
+
+            @PathVariable
+            Long noteId,
+
+            @RequestBody
+            UpdateStudyStatusRequest request
+    ) {
+
+        noteService.changeStudyStatus(
                 user.getUserId(),
                 noteId,
                 request

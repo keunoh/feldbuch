@@ -100,4 +100,41 @@ class NoteIntegrationTest extends IntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
+
+    @DisplayName("학습 상태 변경")
+    @Test
+    void changeStudyStatus() throws Exception {
+
+        String token = authHelper.createAccessToken();
+
+        Long noteId = testDataFactory.createNote(
+                token,
+                "Spring",
+                "내용",
+                NoteCategory.STUDY
+        );
+
+        mockMvc.perform(
+                        patch("/api/notes/{id}/study-status",
+                                noteId)
+
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + token
+                                )
+
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+
+                                .content("""
+                                        {
+                                            "studyStatus":"DONE"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success")
+                        .value(true));
+    }
 }
