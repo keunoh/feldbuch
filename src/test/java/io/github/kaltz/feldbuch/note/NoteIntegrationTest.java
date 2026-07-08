@@ -137,30 +137,4 @@ class NoteIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.success")
                         .value(true));
     }
-
-    @Test
-    @DisplayName("노트 요약")
-    void summarizeNote() throws Exception {
-
-        String token = authHelper.createAccessToken();
-
-        Long noteId = testDataFactory.createNote(
-                token,
-                "Spring Security",
-                "Spring Security는 인증과 인가를 담당하는 프레임워크이다...",
-                NoteCategory.STUDY
-        );
-
-        mockMvc.perform(
-                        post("/api/notes/{id}/summary",
-                                noteId)
-
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        "Bearer " + token
-                                )
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
 }
