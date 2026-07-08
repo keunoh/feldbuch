@@ -84,6 +84,12 @@ public class Note extends BaseEntity {
         this.studyStatus = studyStatus;
     }
 
+    public void changeSummary(
+            String summary
+    ) {
+        this.summary = summary;
+    }
+
     public void updateSummary(String summary) {
         this.summary = summary;
     }

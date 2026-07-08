@@ -9,7 +9,8 @@ import io.github.kaltz.feldbuch.note.dto.request.UpdatePinRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdateStudyStatusRequest;
 import io.github.kaltz.feldbuch.note.dto.response.NoteListResponse;
 import io.github.kaltz.feldbuch.note.dto.response.NoteResponse;
-import io.github.kaltz.feldbuch.note.service.NoteService;
+import io.github.kaltz.feldbuch.note.service.NoteCommandService;
+import io.github.kaltz.feldbuch.note.service.NoteQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +23,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class NoteController {
 
-    private final NoteService noteService;
+    //    private final NoteService noteService;
+    private final NoteCommandService commandService;
+    private final NoteQueryService queryService;
 
     @PostMapping
     public ApiResponse<NoteResponse> create(
@@ -31,7 +34,7 @@ public class NoteController {
     ) {
 
         return ApiResponse.success(
-                noteService.create(user.getUserId(), request)
+                commandService.create(user.getUserId(), request)
         );
     }
 
@@ -52,7 +55,7 @@ public class NoteController {
         return ApiResponse.success(
 
                 PageResponse.from(
-                        noteService.search(
+                        queryService.search(
                                 user.getUserId(),
                                 keyword,
                                 pageable
@@ -70,7 +73,7 @@ public class NoteController {
     ) {
 
         return ApiResponse.success(
-                noteService.findById(
+                queryService.findById(
                         user.getUserId(),
                         noteId
                 )
@@ -85,7 +88,7 @@ public class NoteController {
     ) {
 
         return ApiResponse.success(
-                noteService.update(
+                commandService.update(
                         user.getUserId(),
                         noteId,
                         request
@@ -99,7 +102,7 @@ public class NoteController {
             @PathVariable Long noteId
     ) {
 
-        noteService.delete(
+        commandService.delete(
                 user.getUserId(),
                 noteId
         );
@@ -119,7 +122,7 @@ public class NoteController {
             UpdatePinRequest request
     ) {
 
-        noteService.changePinned(
+        commandService.changePinned(
                 user.getUserId(),
                 noteId,
                 request
@@ -140,7 +143,7 @@ public class NoteController {
             UpdateStudyStatusRequest request
     ) {
 
-        noteService.changeStudyStatus(
+        commandService.changeStudyStatus(
                 user.getUserId(),
                 noteId,
                 request
