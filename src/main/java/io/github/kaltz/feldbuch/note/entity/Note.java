@@ -1,5 +1,6 @@
 package io.github.kaltz.feldbuch.note.entity;
 
+import io.github.kaltz.feldbuch.ai.entity.AiSummaryStatus;
 import io.github.kaltz.feldbuch.user.entity.BaseEntity;
 import io.github.kaltz.feldbuch.user.entity.User;
 import jakarta.persistence.*;
@@ -46,6 +47,11 @@ public class Note extends BaseEntity {
     @Column(nullable = false, length = 30)
     private StudyStatus studyStatus = StudyStatus.TODO;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AiSummaryStatus summaryStatus = AiSummaryStatus.NONE;
+
     // 객체 생성 방식이 하나로 통일된다.
     public static Note create(
             User user,
@@ -88,9 +94,13 @@ public class Note extends BaseEntity {
             String summary
     ) {
         this.summary = summary;
+        this.summaryStatus = AiSummaryStatus.COMPLETED;
     }
 
-    public void updateSummary(String summary) {
-        this.summary = summary;
+    public void changeSummaryStatus(
+            AiSummaryStatus summaryStatus
+    ) {
+        this.summaryStatus = summaryStatus;
     }
+
 }

@@ -18,4 +18,10 @@ public class NoteReader {
                 .orElseThrow(() ->
                         new CustomException(ErrorCode.NOTE_NOT_FOUND));
     }
+
+    public Note get(Long noteId) {
+        return noteRepository.findById(noteId)
+                .orElseThrow(() ->
+                        new CustomException(ErrorCode.NOTE_NOT_FOUND));
+    }
 }
