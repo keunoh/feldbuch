@@ -5,6 +5,7 @@ import io.github.kaltz.feldbuch.common.response.ApiResponse;
 import io.github.kaltz.feldbuch.common.response.PageResponse;
 import io.github.kaltz.feldbuch.note.dto.request.CreateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdateNoteRequest;
+import io.github.kaltz.feldbuch.note.dto.request.UpdatePinRequest;
 import io.github.kaltz.feldbuch.note.dto.response.NoteListResponse;
 import io.github.kaltz.feldbuch.note.dto.response.NoteResponse;
 import io.github.kaltz.feldbuch.note.service.NoteService;
@@ -100,6 +101,27 @@ public class NoteController {
         noteService.delete(
                 user.getUserId(),
                 noteId
+        );
+
+        return ApiResponse.success(null);
+    }
+
+    @PatchMapping("/{noteId}/pin")
+    public ApiResponse<Void> changePinned(
+            @AuthenticationPrincipal
+            CustomUserDetails user,
+
+            @PathVariable
+            Long noteId,
+
+            @RequestBody
+            UpdatePinRequest request
+    ) {
+
+        noteService.changePinned(
+                user.getUserId(),
+                noteId,
+                request
         );
 
         return ApiResponse.success(null);

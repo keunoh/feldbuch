@@ -2,6 +2,7 @@ package io.github.kaltz.feldbuch.note.service;
 
 import io.github.kaltz.feldbuch.note.dto.request.CreateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdateNoteRequest;
+import io.github.kaltz.feldbuch.note.dto.request.UpdatePinRequest;
 import io.github.kaltz.feldbuch.note.dto.response.NoteListResponse;
 import io.github.kaltz.feldbuch.note.dto.response.NoteResponse;
 import io.github.kaltz.feldbuch.note.entity.Note;
@@ -94,5 +95,14 @@ public class NoteService {
         noteRepository.delete(
                 noteReader.get(userId, noteId)
         );
+    }
+
+    public void changePinned(
+            Long userId,
+            Long noteId,
+            UpdatePinRequest request
+    ) {
+        Note note = noteReader.get(userId, noteId);
+        note.changePinned(request.pinned());
     }
 }

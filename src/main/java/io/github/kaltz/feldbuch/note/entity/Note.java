@@ -68,12 +68,8 @@ public class Note extends BaseEntity {
         this.category = category;
     }
 
-    public void pin() {
-        this.pinned = true;
-    }
-
-    public void unpin() {
-        this.pinned = false;
+    public void changePinned(boolean pinned) {
+        this.pinned = pinned;
     }
 
     public void updateSummary(String summary) {

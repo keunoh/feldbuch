@@ -3,32 +3,22 @@ package io.github.kaltz.feldbuch.note;
 import io.github.kaltz.feldbuch.note.dto.request.CreateNoteRequest;
 import io.github.kaltz.feldbuch.note.entity.NoteCategory;
 import io.github.kaltz.feldbuch.support.IntegrationTestSupport;
-import io.github.kaltz.feldbuch.support.TestAuthHelper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class NoteIntegrationTest extends IntegrationTestSupport {
 
-    private TestAuthHelper testAuthHelper;
-
-    @BeforeEach
-    void setUp() {
-        testAuthHelper = new TestAuthHelper(mockMvc, objectMapper);
-    }
-
     @Test
     @DisplayName("노트 생성 성공")
     void createNote() throws Exception {
 
-        String token = testAuthHelper.createAccessToken();
+        String token = authHelper.createAccessToken();
 
         CreateNoteRequest request = new CreateNoteRequest(
                 "Spring Security",
@@ -52,7 +42,7 @@ class NoteIntegrationTest extends IntegrationTestSupport {
     @Test
     void searchNotes() throws Exception {
 
-        String token = testAuthHelper.createAccessToken();
+        String token = authHelper.createAccessToken();
 
         testDataFactory.createNote(
                 token,
@@ -85,4 +75,29 @@ class NoteIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.data.content.length()").value(3));
     }
 
+    @DisplayName("노트 고정")
+    @Test
+    void pinNote() throws Exception {
+        String token = authHelper.createAccessToken();
+
+        Long noteId = testDataFactory.createNote(
+                token,
+                "Spring",
+                "내용",
+                NoteCategory.STUDY
+        );
+
+        mockMvc.perform(patch("/api/notes/{id}/pin", noteId)
+                        .header(HttpHeaders.AUTHORIZATION,
+                                "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "pinned": true
+                                }
+                                """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
 }
