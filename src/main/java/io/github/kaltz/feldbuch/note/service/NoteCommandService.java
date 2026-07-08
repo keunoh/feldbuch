@@ -1,6 +1,5 @@
 package io.github.kaltz.feldbuch.note.service;
 
-import io.github.kaltz.feldbuch.ai.service.SummaryService;
 import io.github.kaltz.feldbuch.note.dto.request.CreateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdatePinRequest;
@@ -28,8 +27,6 @@ public class NoteCommandService {
     private final UserReader userReader;
 
     private final NoteReader noteReader;
-
-    private final SummaryService summaryService;
 
     public NoteResponse create(
             Long userId,

@@ -1,5 +1,6 @@
 package io.github.kaltz.feldbuch.note.controller;
 
+import io.github.kaltz.feldbuch.ai.facade.AiFacade;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
 import io.github.kaltz.feldbuch.common.response.ApiResponse;
 import io.github.kaltz.feldbuch.common.response.PageResponse;
@@ -26,6 +27,8 @@ public class NoteController {
     //    private final NoteService noteService;
     private final NoteCommandService commandService;
     private final NoteQueryService queryService;
+
+    private final AiFacade aiFacade;
 
     @PostMapping
     public ApiResponse<NoteResponse> create(
@@ -147,6 +150,22 @@ public class NoteController {
                 user.getUserId(),
                 noteId,
                 request
+        );
+
+        return ApiResponse.success(null);
+    }
+
+    @PostMapping("/{noteId}/summary")
+    public ApiResponse<Void> summarize(
+            @AuthenticationPrincipal
+            CustomUserDetails user,
+
+            @PathVariable
+            Long noteId
+    ) {
+        aiFacade.summarize(
+                user.getUserId(),
+                noteId
         );
 
         return ApiResponse.success(null);
