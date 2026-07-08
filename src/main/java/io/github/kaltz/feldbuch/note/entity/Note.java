@@ -29,10 +29,10 @@ public class Note extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private NoteCategory category = NoteCategory.MEMO;
+    private NoteCategory category;
 
     @Column(nullable = false)
-    private boolean pinned = false;
+    private boolean pinned;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(

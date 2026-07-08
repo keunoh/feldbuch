@@ -8,13 +8,14 @@ import io.github.kaltz.feldbuch.note.entity.Note;
 import io.github.kaltz.feldbuch.note.mapper.NoteMapper;
 import io.github.kaltz.feldbuch.note.reader.NoteReader;
 import io.github.kaltz.feldbuch.note.repository.NoteRepository;
+import io.github.kaltz.feldbuch.note.repository.query.NoteQueryRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.reader.UserReader;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,8 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final UserReader userReader;
     private final NoteReader noteReader;
+
+    private final NoteQueryRepository noteQueryRepository;
 
     public NoteResponse create(
             Long userId,
@@ -44,13 +47,18 @@ public class NoteService {
     }
 
     @Transactional(readOnly = true)
-    public List<NoteListResponse> findAll(Long userId) {
+    public Page<NoteListResponse> search(
+            Long userId,
+            String keyword,
+            Pageable pageable) {
 
-        return noteRepository
-                .findAllByUserIdOrderByPinnedDescCreatedAtDesc(userId)
-                .stream()
-                .map(NoteMapper::toListResponse)
-                .toList();
+        return noteQueryRepository
+                .search(
+                        userId,
+                        keyword,
+                        pageable
+                )
+                .map(NoteMapper::toListResponse);
     }
 
     @Transactional(readOnly = true)

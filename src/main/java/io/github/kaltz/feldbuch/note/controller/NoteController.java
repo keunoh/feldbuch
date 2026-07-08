@@ -2,6 +2,7 @@ package io.github.kaltz.feldbuch.note.controller;
 
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
 import io.github.kaltz.feldbuch.common.response.ApiResponse;
+import io.github.kaltz.feldbuch.common.response.PageResponse;
 import io.github.kaltz.feldbuch.note.dto.request.CreateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.request.UpdateNoteRequest;
 import io.github.kaltz.feldbuch.note.dto.response.NoteListResponse;
@@ -9,10 +10,10 @@ import io.github.kaltz.feldbuch.note.dto.response.NoteResponse;
 import io.github.kaltz.feldbuch.note.service.NoteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/notes")
@@ -33,13 +34,31 @@ public class NoteController {
     }
 
     @GetMapping
-    public ApiResponse<List<NoteListResponse>> findAll(
-            @AuthenticationPrincipal CustomUserDetails user
+    public ApiResponse<PageResponse<NoteListResponse>> search(
+
+            @AuthenticationPrincipal
+            CustomUserDetails user,
+
+            @RequestParam(required = false)
+            String keyword,
+
+            @PageableDefault(size = 20)
+            Pageable pageable
+
     ) {
 
         return ApiResponse.success(
-                noteService.findAll(user.getUserId())
+
+                PageResponse.from(
+                        noteService.search(
+                                user.getUserId(),
+                                keyword,
+                                pageable
+                        )
+                )
+
         );
+
     }
 
     @GetMapping("/{noteId}")
