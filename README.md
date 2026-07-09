@@ -8,7 +8,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 ## Overview
 
-![Feldbuch Deployment Architecture](docs/images/diagrams/feldbuch-architecture.svg)
+![Feldbuch Project Architecture](docs/images/diagrams/feldbuch-architecture.svg)
 
 ## Tech Stack
 
@@ -16,9 +16,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 |--------------------------------------------------------------|---------------------------------------------------------------------------|------------------------------------------------------------------|----------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|
 | <img src="docs/images/logos/java.svg" width="48" alt="Java"> | <img src="docs/images/logos/springboot.svg" width="48" alt="Spring Boot"> | <img src="docs/images/logos/docker.svg" width="48" alt="Docker"> | <img src="docs/images/logos/mysql.svg" width="48" alt="MySQL"> | <img src="docs/images/logos/gradle.svg" width="48" alt="Gradle"> | <img src="docs/images/logos/openai.svg" width="64" alt="OpenAI"> |
 
-| AWS                                                        | GitHub Actions                                                                  | Nginx                                                          | React                                                          | Redis                                                          | MariaDB                                                            |
-|------------------------------------------------------------|---------------------------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|--------------------------------------------------------------------|
-| <img src="docs/images/logos/aws.svg" width="64" alt="AWS"> | <img src="docs/images/logos/githubactions.svg" width="48" alt="GitHub Actions"> | <img src="docs/images/logos/nginx.svg" width="48" alt="Nginx"> | <img src="docs/images/logos/react.svg" width="48" alt="React"> | <img src="docs/images/logos/redis.svg" width="48" alt="Redis"> | <img src="docs/images/logos/mariadb.svg" width="48" alt="MariaDB"> |
+| Spring Security | JWT | Spring Data JPA | QueryDSL | H2 Test DB | RestClient |
+| --- | --- | --- | --- | --- | --- |
+| 인증/인가 | 토큰 인증 | ORM | 동적 검색 | 테스트 DB | OpenAI API 호출 |
 
 ## Features
 
@@ -85,10 +85,8 @@ src/main/java
 - 코드 리뷰
 - 학습 퀴즈 생성
 - 학습 로드맵 추천
-- Redis Cache
 - Docker Compose 정리
-- GitHub Actions
-- AWS 배포
+- 테스트 커버리지 확장
 - Monitoring
 
 ## Documentation

@@ -51,7 +51,6 @@ src/main/java
 - 코드 리뷰
 - 학습 로드맵 추천
 - Docker 기반 운영 환경 구성
-- AWS 배포
 
 ### 기술 스택
 
@@ -65,7 +64,7 @@ src/main/java
 | Query | QueryDSL |
 | Build | Gradle |
 | AI | OpenAI REST API |
-| Infra | Docker, AWS |
+| Infra | Docker |
 | Test | JUnit5, MockMvc |
 
 ### 기술 로고
@@ -74,9 +73,9 @@ src/main/java
 | --- | --- | --- | --- | --- | --- |
 | <img src="./images/logos/java.svg" width="48" alt="Java"> | <img src="./images/logos/springboot.svg" width="48" alt="Spring Boot"> | <img src="./images/logos/docker.svg" width="48" alt="Docker"> | <img src="./images/logos/mysql.svg" width="48" alt="MySQL"> | <img src="./images/logos/gradle.svg" width="48" alt="Gradle"> | <img src="./images/logos/openai.svg" width="64" alt="OpenAI"> |
 
-| AWS | GitHub | GitHub Actions | Nginx | React | Redis | MariaDB |
-| --- | --- | --- | --- | --- | --- | --- |
-| <img src="./images/logos/aws.svg" width="64" alt="AWS"> | <img src="./images/logos/github.svg" width="48" alt="GitHub"> | <img src="./images/logos/githubactions.svg" width="48" alt="GitHub Actions"> | <img src="./images/logos/nginx.svg" width="48" alt="Nginx"> | <img src="./images/logos/react.svg" width="48" alt="React"> | <img src="./images/logos/redis.svg" width="48" alt="Redis"> | <img src="./images/logos/mariadb.svg" width="48" alt="MariaDB"> |
+| Spring Security | JWT | Spring Data JPA | QueryDSL | H2 Test DB | RestClient |
+| --- | --- | --- | --- | --- | --- |
+| 인증/인가 | 토큰 인증 | ORM | 동적 검색 | 테스트 DB | OpenAI API 호출 |
 
 ---
 
@@ -193,11 +192,11 @@ OpenAiClient
 OpenAI API
 ```
 
-### AWS 배포 아키텍처 이미지
+### 프로젝트 아키텍처 이미지
 
-아래 이미지는 첨부 스크린샷을 그대로 쓰지 않고, 문서용으로 새로 정리한 배포 아키텍처 SVG입니다.
+아래 이미지는 현재 프로젝트에서 실제로 사용하는 기술을 기준으로 정리한 아키텍처 SVG입니다.
 
-![Feldbuch Deployment Architecture](./images/diagrams/feldbuch-architecture.svg)
+![Feldbuch Project Architecture](./images/diagrams/feldbuch-architecture.svg)
 
 이미지 파일 경로:
 
@@ -209,15 +208,14 @@ docs/images/diagrams/feldbuch-architecture.svg
 
 | 단계 | 이미지 | 설명 |
 | --- | --- | --- |
-| Source | <img src="./images/logos/github.svg" width="42" alt="GitHub"> | GitHub 저장소에 코드를 push |
-| CI/CD | <img src="./images/logos/githubactions.svg" width="42" alt="GitHub Actions"> | GitHub Actions로 체크아웃, 빌드, 배포 파이프라인 실행 |
 | Build | <img src="./images/logos/gradle.svg" width="42" alt="Gradle"> | Gradle로 Spring Boot 애플리케이션 빌드 |
-| Container | <img src="./images/logos/docker.svg" width="42" alt="Docker"> | Docker 이미지 빌드 및 실행 |
-| Cloud | <img src="./images/logos/aws.svg" width="54" alt="AWS"> | EC2, RDS, S3, ELB, Route 53 기반 운영 |
+| Runtime | <img src="./images/logos/docker.svg" width="42" alt="Docker"> | Docker Compose 기반 로컬 인프라 실행 |
 | Backend | <img src="./images/logos/springboot.svg" width="42" alt="Spring Boot"> | API 서버 |
-| Frontend | <img src="./images/logos/react.svg" width="42" alt="React"> | 사용자 화면 |
-| Cache | <img src="./images/logos/redis.svg" width="42" alt="Redis"> | 캐시와 비동기 처리 보조 |
-| Database | <img src="./images/logos/mariadb.svg" width="42" alt="MariaDB"> | 운영 데이터 저장 |
+| Security | JWT | Spring Security 기반 토큰 인증 |
+| Query | QueryDSL | 동적 검색 |
+| Database | <img src="./images/logos/mysql.svg" width="42" alt="MySQL"> | 운영 데이터 저장 |
+| Test Database | H2 | 테스트 환경 인메모리 DB |
+| AI | <img src="./images/logos/openai.svg" width="54" alt="OpenAI"> | OpenAI API 기반 AI 요약 |
 
 ---
 
@@ -298,7 +296,6 @@ Job 상태 업데이트
 
 ### Backend
 
-- Redis Cache
 - Event Driven Architecture
 - Spring Batch
 - API 문서화
@@ -307,10 +304,6 @@ Job 상태 업데이트
 ### Infra
 
 - Docker Compose 정리
-- GitHub Actions
-- AWS EC2 배포
-- Nginx
-- HTTPS
 - Monitoring
 
 ### Advanced
@@ -335,26 +328,24 @@ Job 상태 업데이트
 
 | 이름 | 경로 | 용도 |
 | --- | --- | --- |
-| Feldbuch Deployment Architecture | `docs/images/diagrams/feldbuch-architecture.svg` | AWS, Docker, GitHub Actions, Route 53, S3, RDS 구성 다이어그램 |
-| AWS | `docs/images/logos/aws.svg` | AWS 클라우드 영역 |
+| Feldbuch Project Architecture | `docs/images/diagrams/feldbuch-architecture.svg` | 현재 프로젝트의 Spring Boot, Security, QueryDSL, JPA, MySQL, H2, Docker, OpenAI 구조 |
 | Spring Boot | `docs/images/logos/springboot.svg` | 백엔드 API |
 | Docker | `docs/images/logos/docker.svg` | 컨테이너 실행 환경 |
-| React | `docs/images/logos/react.svg` | 프론트엔드 |
-| Redis | `docs/images/logos/redis.svg` | 캐시 |
-| MariaDB | `docs/images/logos/mariadb.svg` | 운영 DB |
-| GitHub Actions | `docs/images/logos/githubactions.svg` | CI/CD |
+| MySQL | `docs/images/logos/mysql.svg` | 운영 DB |
+| OpenAI | `docs/images/logos/openai.svg` | AI 요약 API |
+| Gradle | `docs/images/logos/gradle.svg` | 빌드 |
 
 ### Markdown 이미지 예시
 
 ```markdown
-![Feldbuch Deployment Architecture](./images/diagrams/feldbuch-architecture.svg)
+![Feldbuch Project Architecture](./images/diagrams/feldbuch-architecture.svg)
 ```
 
 ### HTML 이미지 예시
 
 ```html
 <img src="./images/logos/springboot.svg" width="48" alt="Spring Boot">
-<img src="./images/diagrams/feldbuch-architecture.svg" width="720" alt="Feldbuch Deployment Architecture">
+<img src="./images/diagrams/feldbuch-architecture.svg" width="720" alt="Feldbuch Project Architecture">
 ```
 
 ---
