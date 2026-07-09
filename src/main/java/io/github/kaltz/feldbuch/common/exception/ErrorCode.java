@@ -24,7 +24,10 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH-003", "로그인이 필요합니다."),
 
     // Note
-    NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTE-001", "노트를 찾을 수 없습니다.");
+    NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTE-001", "노트를 찾을 수 없습니다."),
+
+    // AI
+    AI_JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "AI-001", "AI 작업을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
