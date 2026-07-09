@@ -36,5 +36,6 @@ out/
 ### VS Code ###
 .vscode/
 
-### ENV ###
-.env
+### Local, Test
+src/main/resources/application-local.yml
+src/test/resources/application-test.yml
