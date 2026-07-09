@@ -24,6 +24,8 @@ public class AiSummaryAsyncService {
     @Transactional
     public void summarize(Long jobId, Long userId, Long noteId) {
 
+        log.info("========== Async 시작 ==========");
+
         // Job 시작
         aiJobService.start(jobId);
 
@@ -32,11 +34,17 @@ public class AiSummaryAsyncService {
         // 새로운 트랜잭션
         // 다시 Note 조회
         try {
+            log.info("1. SummaryRequest 생성");
             SummaryRequest request = SummaryMapper.toRequest(note);
 
+            log.info("2. OpenAI 호출 시작");
             String summary = summaryService.summarize(request);
 
+            log.info("3. OpenAI 응답 = {}", summary);
             note.completeSummary(summary);
+
+            log.info("4. Note 저장 완료");
+            aiJobService.complete(jobId);
 
             log.info("AI 요약 완료. jobId={}, noteId={}", jobId, noteId);
 

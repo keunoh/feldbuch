@@ -5,11 +5,9 @@ import io.github.kaltz.feldbuch.ai.job.service.AiJobService;
 import io.github.kaltz.feldbuch.ai.service.AiSummaryAsyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AiFacade {
 
     private final AiSummaryAsyncService aiSummaryAsyncService;
