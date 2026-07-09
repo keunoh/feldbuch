@@ -19,3 +19,14 @@ Phase 1
 ✅ Pin
 ✅ StudyStatus
 ✅ Integration Test
+
+커밋 1 했음
+환경 설정: OpenAI API 사용 준비
+커밋 2
+기능: OpenAI API 클라이언트 구현
+커밋 3
+기능: OpenAI 요약 서비스 구현
+커밋 4
+리팩토링: AI 구현체를 OpenAI 서비스로 교체
+커밋 5
+테스트: OpenAI 연동 테스트
