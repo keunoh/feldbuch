@@ -23,7 +23,7 @@ public class OpenAiConfig {
                 .baseUrl(properties.getBaseUrl())
                 .defaultHeader(
                         "Authorization",
-                        "Bearer " + properties.getKey()
+                        "Bearer " + properties.getApiKey()
                 )
                 .defaultHeader(
                         "Content-Type",

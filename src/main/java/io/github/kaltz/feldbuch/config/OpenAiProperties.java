@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "openai")
 public class OpenAiProperties {
 
-    private String key;
+    private String apiKey;
 
     private String baseUrl;
 

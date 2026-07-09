@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
 
   datasource:
     url: jdbc:mysql://localhost:3306/feldbuch
@@ -21,5 +23,5 @@ jwt:
 
 openai:
   api-key: ${OPENAI_API_KEY}
-  base-url: https://api.opneai.com/v1
+  base-url: https://api.openai.com/v1
   model: gpt-4.1-nano
