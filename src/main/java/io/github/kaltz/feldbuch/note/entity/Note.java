@@ -103,4 +103,12 @@ public class Note extends BaseEntity {
         this.summaryStatus = summaryStatus;
     }
 
+    public void completeSummary(String summary) {
+        this.summary = summary;
+        this.summaryStatus = AiSummaryStatus.COMPLETED;
+    }
+
+    public void changeSummaryStatusFailed() {
+        this.summaryStatus = AiSummaryStatus.FAILED;
+    }
 }

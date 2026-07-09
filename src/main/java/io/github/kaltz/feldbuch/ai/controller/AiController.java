@@ -19,18 +19,10 @@ public class AiController {
     private final AiFacade aiFacade;
 
     @PostMapping("/notes/{noteId}/summary")
-    public ApiResponse<Void> summarize(
-            @AuthenticationPrincipal
-            CustomUserDetails user,
+    public ApiResponse<Long> summarize(@AuthenticationPrincipal CustomUserDetails user,
+                                       @PathVariable Long noteId) {
+        Long jobId = aiFacade.summarize(user.getUserId(), noteId);
 
-            @PathVariable
-            Long noteId
-    ) {
-        aiFacade.summarize(
-                user.getUserId(),
-                noteId
-        );
-
-        return ApiResponse.success(null);
+        return ApiResponse.success(jobId);
     }
 }
