@@ -1,0 +1,9 @@
+$kind: http-request
+name: Search Notes
+method: GET
+url: '{{baseUrl}}/api/notes'
+order: 2000
+queryParams:
+  - key: keyword
+    value: ''
+    disabled: true

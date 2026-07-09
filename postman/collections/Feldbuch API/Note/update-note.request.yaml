@@ -1,0 +1,19 @@
+$kind: http-request
+name: Update Note
+method: PATCH
+url: '{{baseUrl}}/api/notes/{{noteId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+pathVariables:
+  - key: noteId
+    value: '1'
+body:
+  type: json
+  content: |-
+    {
+      "title": "Spring Boot 학습 노트",
+      "content": "Spring Boot 3.x 기반 백엔드 개발 내용 정리",
+      "category": "STUDY"
+    }

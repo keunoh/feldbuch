@@ -1,0 +1,12 @@
+$kind: collection
+name: Feldbuch API
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8080'
+  - key: accessToken
+    value: ''
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

@@ -1,0 +1,8 @@
+$kind: http-request
+name: Summarize Note
+method: POST
+url: '{{baseUrl}}/api/ai/notes/{{noteId}}/summary'
+order: 1000
+pathVariables:
+  - key: noteId
+    value: '1'

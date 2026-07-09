@@ -1,0 +1,16 @@
+$kind: http-request
+name: Create Note
+method: POST
+url: '{{baseUrl}}/api/notes'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Spring Boot 학습 노트",
+      "content": "Spring Boot 3.x 기반 백엔드 개발 내용 정리",
+      "category": "STUDY"
+    }
