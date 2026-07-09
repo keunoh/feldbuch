@@ -18,3 +18,8 @@ spring:
 jwt:
   secret: 012345678901234567890123456789012345678901234567890123456789abcd
   access-token-expiration: 1800000
+
+openai:
+  api-key: ${OPENAI_API_KEY}
+  base-url: https://api.opneai.com/v1
+  model: gpt-4.1-nano

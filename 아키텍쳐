@@ -1,0 +1,30 @@
+아키텍처
+현재까지 Felduch는 이렇게 동작한다.
+
+                Controller
+                     │
+        ┌────────────┴────────────┐
+        ▼                         ▼
+ CommandService             QueryService
+        │                         │
+        ▼                         ▼
+      Reader                 QueryDSL
+        │
+        ▼
+   Repository
+
+AI
+
+AiController
+        │
+        ▼
+    AiFacade
+        │
+        ▼
+AiSummaryAsyncService
+        │
+        ▼
+ SummaryService
+        │
+        ▼
+MockSummaryService
