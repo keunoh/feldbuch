@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 640" role="img" aria-labelledby="title desc">
+  <title id="title">Feldbuch Architecture Diagram</title>
+  <desc id="desc">Visual architecture diagram for Feldbuch using AWS, GitHub Actions, Docker, Spring Boot, React, Redis, MariaDB, S3, and Route 53.</desc>
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, Helvetica, sans-serif; fill: #111827; }
+      .label { font: 700 18px Arial, Helvetica, sans-serif; fill: #111827; }
+      .small { font: 500 14px Arial, Helvetica, sans-serif; fill: #374151; }
+      .box { fill: #fff; stroke: #d1d5db; stroke-width: 2; }
+      .aws { fill: #fff7ed; stroke: #ff9900; stroke-width: 3; }
+      .service { fill: #f9fafb; stroke: #e5e7eb; stroke-width: 2; }
+      .arrow { stroke: #374151; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .orange { stroke: #f97316; }
+      .blue { stroke: #0ea5e9; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#374151"/>
+    </marker>
+  </defs>
+  <rect width="1120" height="640" fill="#ffffff"/>
+  <text x="40" y="48" class="title">Feldbuch Deployment Architecture</text>
+  <rect x="36" y="96" width="170" height="420" rx="18" class="box"/>
+  <text x="121" y="132" text-anchor="middle" class="label">GitHub</text>
+  <circle cx="121" cy="188" r="34" fill="#111827"/>
+  <text x="121" y="195" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#fff">GH</text>
+  <text x="121" y="242" text-anchor="middle" class="small">Push</text>
+  <path d="M121 260v56" class="arrow"/>
+  <rect x="70" y="330" width="102" height="72" rx="14" fill="#eff6ff" stroke="#2088ff" stroke-width="2"/>
+  <text x="121" y="360" text-anchor="middle" class="label">Actions</text>
+  <text x="121" y="383" text-anchor="middle" class="small">CI/CD</text>
+  <path d="M206 366h90" class="arrow"/>
+  <rect x="300" y="306" width="150" height="120" rx="18" class="box"/>
+  <text x="375" y="348" text-anchor="middle" class="label">Gradle</text>
+  <text x="375" y="374" text-anchor="middle" class="small">Build</text>
+  <path d="M450 366h72" class="arrow"/>
+  <rect x="530" y="306" width="150" height="120" rx="18" class="box"/>
+  <text x="605" y="348" text-anchor="middle" class="label">Docker</text>
+  <text x="605" y="374" text-anchor="middle" class="small">Image Push</text>
+  <path d="M605 306v-54" class="arrow"/>
+  <rect x="250" y="84" width="800" height="472" rx="28" class="aws"/>
+  <text x="650" y="122" text-anchor="middle" class="label">AWS</text>
+  <rect x="292" y="146" width="496" height="346" rx="24" fill="#ffffff" stroke="#fed7aa" stroke-width="3"/>
+  <text x="540" y="178" text-anchor="middle" class="label">VPC / EC2</text>
+  <rect x="328" y="212" width="424" height="232" rx="24" fill="#f8fafc" stroke="#38bdf8" stroke-width="3"/>
+  <text x="540" y="244" text-anchor="middle" class="label">Docker Runtime</text>
+  <rect x="360" y="278" width="150" height="74" rx="14" class="service"/>
+  <text x="435" y="309" text-anchor="middle" class="label">Spring Boot</text>
+  <text x="435" y="332" text-anchor="middle" class="small">REST API</text>
+  <rect x="570" y="278" width="150" height="74" rx="14" class="service"/>
+  <text x="645" y="309" text-anchor="middle" class="label">React</text>
+  <text x="645" y="332" text-anchor="middle" class="small">Frontend</text>
+  <rect x="360" y="370" width="150" height="54" rx="14" class="service"/>
+  <text x="435" y="403" text-anchor="middle" class="label">Redis</text>
+  <path d="M510 316h60" class="arrow blue"/>
+  <path d="M510 398h168c24 0 38-14 38-38v-8" class="arrow blue"/>
+  <rect x="840" y="172" width="158" height="90" rx="18" class="box"/>
+  <text x="919" y="208" text-anchor="middle" class="label">RDS</text>
+  <text x="919" y="233" text-anchor="middle" class="small">MariaDB</text>
+  <path d="M752 315c48 0 48-98 88-98" class="arrow"/>
+  <rect x="840" y="294" width="158" height="90" rx="18" class="box"/>
+  <text x="919" y="330" text-anchor="middle" class="label">S3</text>
+  <text x="919" y="355" text-anchor="middle" class="small">Image Storage</text>
+  <path d="M752 326h88" class="arrow"/>
+  <rect x="840" y="416" width="158" height="90" rx="18" class="box"/>
+  <text x="919" y="452" text-anchor="middle" class="label">ELB</text>
+  <text x="919" y="477" text-anchor="middle" class="small">Load Balancer</text>
+  <path d="M788 442h52" class="arrow"/>
+  <rect x="858" y="548" width="140" height="58" rx="16" fill="#fff7ed" stroke="#ff9900" stroke-width="2"/>
+  <text x="928" y="584" text-anchor="middle" class="label">Route 53</text>
+  <path d="M928 548v-42" class="arrow orange"/>
+  <rect x="40" y="548" width="232" height="58" rx="16" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+  <text x="156" y="584" text-anchor="middle" class="label">https://tovalley.site</text>
+  <path d="M272 577h586" class="arrow orange"/>
+</svg>

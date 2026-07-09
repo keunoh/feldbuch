@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-labelledby="title desc">
+  <title id="title">OpenAI Badge</title>
+  <desc id="desc">Documentation badge representing OpenAI.</desc>
+  <rect width="240" height="160" rx="28" fill="#f5f5f4"/>
+  <rect x="10" y="10" width="220" height="140" rx="24" fill="#ffffff" stroke="#10a37f" stroke-width="8"/>
+  <circle cx="120" cy="66" r="26" fill="none" stroke="#10a37f" stroke-width="8"/>
+  <path d="M120 34v64M88 66h64M99 45l42 42M141 45L99 87" stroke="#10a37f" stroke-width="6" stroke-linecap="round"/>
+  <text x="120" y="125" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#111827">OpenAI</text>
+</svg>
