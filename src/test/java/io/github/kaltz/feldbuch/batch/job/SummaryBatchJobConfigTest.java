@@ -30,4 +30,5 @@ class SummaryBatchJobConfigTest {
 
         assertThat(execution.getExitStatus().getExitCode()).isEqualTo("COMPLETED");
     }
+
 }
