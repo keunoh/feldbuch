@@ -9,6 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.UUID;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,8 +22,10 @@ public class TestAuthHelper {
 
     public String createAccessToken() throws Exception {
 
+        String email = UUID.randomUUID() + "@test.com";
+
         SignupRequest signup = new SignupRequest(
-                "test@test.com",
+                email,
                 "12345678",
                 "kaltz"
         );
@@ -32,7 +36,7 @@ public class TestAuthHelper {
                 .andExpect(status().isCreated());
 
         LoginRequest login = new LoginRequest(
-                "test@test.com",
+                email,
                 "12345678"
         );
 
