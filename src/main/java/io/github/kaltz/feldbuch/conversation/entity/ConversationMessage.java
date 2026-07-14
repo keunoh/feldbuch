@@ -1,4 +1,7 @@
-package io.github.kaltz.feldbuch.conversation.entity;
-
-public class ConversationMessage {
-}
+//package io.github.kaltz.feldbuch.conversation.entity;
+//
+//import jakarta.persistence.Entity;
+//
+//@Entity
+//public class ConversationMessage {
+//}
