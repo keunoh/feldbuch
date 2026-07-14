@@ -1,76 +1,99 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 640" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
   <title id="title">Feldbuch Project Architecture Diagram</title>
-  <desc id="desc">Architecture diagram for the current Feldbuch backend project using Java, Spring Boot, Spring Security, JWT, QueryDSL, JPA, MySQL, H2, Docker, Gradle, and OpenAI.</desc>
+  <desc id="desc">Current Feldbuch backend architecture with Spring Boot, Spring Security, JWT, QueryDSL, JPA, MySQL, Redis, Spring Batch, async AI jobs, and OpenAI.</desc>
   <defs>
     <style>
-      .title { font: 700 28px Arial, Helvetica, sans-serif; fill: #111827; }
-      .label { font: 700 18px Arial, Helvetica, sans-serif; fill: #111827; }
-      .small { font: 500 14px Arial, Helvetica, sans-serif; fill: #374151; }
-      .box { fill: #fff; stroke: #d1d5db; stroke-width: 2; }
-      .group { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 2; }
-      .app { fill: #ecfdf5; stroke: #22c55e; stroke-width: 3; }
-      .ai { fill: #f5f3ff; stroke: #8b5cf6; stroke-width: 2; }
-      .data { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
-      .build { fill: #fff7ed; stroke: #f97316; stroke-width: 2; }
-      .arrow { stroke: #374151; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .title { font: 700 30px Arial, Helvetica, sans-serif; fill: #111827; }
+      .subtitle { font: 500 15px Arial, Helvetica, sans-serif; fill: #4b5563; }
+      .label { font: 700 17px Arial, Helvetica, sans-serif; fill: #111827; }
+      .small { font: 500 13px Arial, Helvetica, sans-serif; fill: #374151; }
+      .tiny { font: 500 12px Arial, Helvetica, sans-serif; fill: #4b5563; }
+      .box { fill: #ffffff; stroke: #d1d5db; stroke-width: 2; }
+      .app { fill: #ecfdf5; stroke: #16a34a; stroke-width: 3; }
+      .module { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 2; }
+      .data { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; }
+      .ai { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 2; }
+      .batch { fill: #fff7ed; stroke: #ea580c; stroke-width: 2; }
+      .runtime { fill: #fefce8; stroke: #ca8a04; stroke-width: 2; }
+      .arrow { stroke: #374151; stroke-width: 2.4; fill: none; marker-end: url(#arrow); }
       .green { stroke: #16a34a; }
-      .purple { stroke: #7c3aed; }
       .blue { stroke: #2563eb; }
+      .purple { stroke: #7c3aed; }
       .orange { stroke: #ea580c; }
+      .yellow { stroke: #a16207; }
     </style>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L0,6 L9,3 z" fill="#374151"/>
     </marker>
   </defs>
 
-  <rect width="1120" height="640" fill="#ffffff"/>
-  <text x="40" y="50" class="title">Feldbuch Project Architecture</text>
-  <text x="40" y="80" class="small">Project URL placeholder: https://io.github.kaltz.feldbuch.local</text>
+  <rect width="1280" height="760" fill="#ffffff"/>
+  <text x="48" y="54" class="title">Feldbuch Project Architecture</text>
+  <text x="48" y="82" class="subtitle">AI 기반 개발 지식 관리 플랫폼의 현재 백엔드 구조</text>
 
-  <rect x="44" y="132" width="190" height="92" rx="18" class="box"/>
-  <text x="139" y="170" text-anchor="middle" class="label">Client</text>
-  <text x="139" y="196" text-anchor="middle" class="small">REST API Consumer</text>
+  <rect x="48" y="150" width="180" height="86" rx="14" class="box"/>
+  <text x="138" y="184" text-anchor="middle" class="label">Client</text>
+  <text x="138" y="210" text-anchor="middle" class="small">REST API Consumer</text>
 
-  <rect x="300" y="104" width="500" height="386" rx="26" class="app"/>
-  <text x="550" y="138" text-anchor="middle" class="label">Spring Boot Application</text>
-  <text x="550" y="164" text-anchor="middle" class="small">Java 21 / Gradle / Spring Boot 3</text>
+  <rect x="292" y="112" width="548" height="462" rx="24" class="app"/>
+  <text x="566" y="146" text-anchor="middle" class="label">Spring Boot Application</text>
+  <text x="566" y="170" text-anchor="middle" class="small">Java 21 / Spring Boot 3 / Gradle</text>
 
-  <rect x="332" y="196" width="172" height="78" rx="16" class="group"/>
-  <text x="418" y="228" text-anchor="middle" class="label">Spring Security</text>
-  <text x="418" y="252" text-anchor="middle" class="small">JWT Filter</text>
+  <rect x="326" y="206" width="194" height="78" rx="12" class="module"/>
+  <text x="423" y="238" text-anchor="middle" class="label">Security</text>
+  <text x="423" y="262" text-anchor="middle" class="small">Spring Security / JWT</text>
 
-  <rect x="574" y="196" width="172" height="78" rx="16" class="group"/>
-  <text x="660" y="228" text-anchor="middle" class="label">Controller</text>
-  <text x="660" y="252" text-anchor="middle" class="small">Auth / Note / AI</text>
+  <rect x="596" y="206" width="194" height="78" rx="12" class="module"/>
+  <text x="693" y="238" text-anchor="middle" class="label">Controllers</text>
+  <text x="693" y="262" text-anchor="middle" class="small">Auth / User / Note / AI / Conversation</text>
 
-  <rect x="332" y="320" width="172" height="78" rx="16" class="group"/>
-  <text x="418" y="352" text-anchor="middle" class="label">Service Layer</text>
-  <text x="418" y="376" text-anchor="middle" class="small">CQRS / Facade / Async</text>
+  <rect x="326" y="326" width="194" height="82" rx="12" class="module"/>
+  <text x="423" y="358" text-anchor="middle" class="label">Service Layer</text>
+  <text x="423" y="382" text-anchor="middle" class="small">Command / Query / Facade</text>
 
-  <rect x="574" y="320" width="172" height="78" rx="16" class="group"/>
-  <text x="660" y="352" text-anchor="middle" class="label">Reader / Mapper</text>
-  <text x="660" y="376" text-anchor="middle" class="small">Repository Boundary</text>
+  <rect x="596" y="326" width="194" height="82" rx="12" class="module"/>
+  <text x="693" y="358" text-anchor="middle" class="label">Domain Helpers</text>
+  <text x="693" y="382" text-anchor="middle" class="small">Reader / Mapper / Handler</text>
 
-  <path d="M234 178h66" class="arrow green"/>
-  <path d="M504 235h70" class="arrow green"/>
-  <path d="M660 274v46" class="arrow green"/>
-  <path d="M574 359h-70" class="arrow green"/>
+  <rect x="326" y="452" width="194" height="76" rx="12" class="module"/>
+  <text x="423" y="482" text-anchor="middle" class="label">Async AI Jobs</text>
+  <text x="423" y="506" text-anchor="middle" class="small">REQUESTED -> COMPLETED</text>
 
-  <rect x="860" y="124" width="202" height="132" rx="20" class="data"/>
-  <text x="961" y="164" text-anchor="middle" class="label">Persistence</text>
-  <text x="961" y="192" text-anchor="middle" class="small">Spring Data JPA</text>
-  <text x="961" y="218" text-anchor="middle" class="small">QueryDSL</text>
-  <text x="961" y="244" text-anchor="middle" class="small">MySQL / H2 Test DB</text>
-  <path d="M746 360c72 0 58-170 114-170" class="arrow blue"/>
+  <rect x="596" y="452" width="194" height="76" rx="12" class="module"/>
+  <text x="693" y="482" text-anchor="middle" class="label">Persistence Boundary</text>
+  <text x="693" y="506" text-anchor="middle" class="small">Repository / QueryDSL</text>
 
-  <rect x="860" y="306" width="202" height="104" rx="20" class="ai"/>
-  <text x="961" y="346" text-anchor="middle" class="label">OpenAI API</text>
-  <text x="961" y="374" text-anchor="middle" class="small">RestClient</text>
-  <text x="961" y="398" text-anchor="middle" class="small">AI Summary</text>
-  <path d="M746 359h114" class="arrow purple"/>
+  <path d="M228 193h64" class="arrow green"/>
+  <path d="M520 245h76" class="arrow green"/>
+  <path d="M693 284v42" class="arrow green"/>
+  <path d="M596 367h-76" class="arrow green"/>
+  <path d="M423 408v44" class="arrow purple"/>
+  <path d="M520 490h76" class="arrow blue"/>
 
-  <rect x="300" y="532" width="500" height="70" rx="20" class="build"/>
-  <text x="550" y="562" text-anchor="middle" class="label">Build &amp; Local Runtime</text>
-  <text x="550" y="588" text-anchor="middle" class="small">Gradle Wrapper / Docker Compose / .env Configuration</text>
-  <path d="M550 532v-42" class="arrow orange"/>
+  <rect x="914" y="118" width="278" height="142" rx="18" class="data"/>
+  <text x="1053" y="154" text-anchor="middle" class="label">Data Stores</text>
+  <text x="1053" y="184" text-anchor="middle" class="small">MySQL 8.4</text>
+  <text x="1053" y="208" text-anchor="middle" class="small">Redis 7.2</text>
+  <text x="1053" y="232" text-anchor="middle" class="small">H2 Test DB</text>
+
+  <rect x="914" y="312" width="278" height="116" rx="18" class="ai"/>
+  <text x="1053" y="350" text-anchor="middle" class="label">OpenAI API</text>
+  <text x="1053" y="380" text-anchor="middle" class="small">RestClient</text>
+  <text x="1053" y="404" text-anchor="middle" class="small">Summary Prompt / Response</text>
+
+  <rect x="914" y="480" width="278" height="116" rx="18" class="batch"/>
+  <text x="1053" y="518" text-anchor="middle" class="label">Spring Batch</text>
+  <text x="1053" y="548" text-anchor="middle" class="small">summaryJob / summaryStep</text>
+  <text x="1053" y="572" text-anchor="middle" class="small">Reader / Processor / Writer</text>
+
+  <path d="M790 490c72 0 62-270 124-300" class="arrow blue"/>
+  <path d="M520 490c170 0 236-120 394-120" class="arrow purple"/>
+  <path d="M790 490h124" class="arrow orange"/>
+
+  <rect x="292" y="636" width="548" height="74" rx="18" class="runtime"/>
+  <text x="566" y="666" text-anchor="middle" class="label">Local Runtime &amp; Configuration</text>
+  <text x="566" y="692" text-anchor="middle" class="small">Docker Compose / application.yml / application-prod.yml / environment variables</text>
+  <path d="M566 636v-62" class="arrow yellow"/>
+
+  <text x="48" y="720" class="tiny">Public endpoints: signup, login. Other endpoints require Bearer JWT.</text>
 </svg>

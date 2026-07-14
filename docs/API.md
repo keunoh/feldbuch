@@ -14,6 +14,7 @@
 - [User](#-user)
 - [Note](#-note)
 - [AI](#-ai)
+- [Conversation](#-conversation)
 - [공통 응답 형식](#-공통-응답-형식)
 - [Enum 타입](#-enum-타입)
 
@@ -215,7 +216,9 @@ GET /api/notes?keyword=Spring&page=0&size=20
     "page": 0,
     "size": 20,
     "totalElements": 1,
-    "totalPages": 1
+    "totalPages": 1,
+    "first": true,
+    "last": true
   }
 }
 ```
@@ -401,7 +404,7 @@ PATCH /api/notes/{noteId}/study-status
 POST /api/ai/notes/{noteId}/summary
 ```
 
-비동기로 처리됩니다. 요청 즉시 응답을 반환하며, AI 요약은 백그라운드에서 처리됩니다.
+비동기로 처리됩니다. 요청 즉시 `jobId`를 반환하며, AI 요약은 백그라운드에서 처리됩니다.
 
 **Headers**
 
@@ -420,11 +423,118 @@ Authorization: Bearer <accessToken>
 ```json
 {
   "success": true,
-  "data": null
+  "data": 1
 }
 ```
 
-> 요약 완료 후 `GET /api/notes/{noteId}` 로 조회하면 `summary` 필드에 결과가 반영됩니다.
+> 반환된 `jobId`로 `GET /api/ai/jobs/{jobId}`를 호출해 처리 상태를 확인할 수 있습니다. 요약 완료 후 `GET /api/notes/{noteId}`로 조회하면 `summary` 필드에 결과가 반영됩니다.
+
+---
+
+### AI Job 상태 조회 🔒
+
+```
+GET /api/ai/jobs/{jobId}
+```
+
+**Headers**
+
+```
+Authorization: Bearer <accessToken>
+```
+
+**Path Variables**
+
+| 파라미터 | 타입 | 설명 |
+|----------|------|------|
+| jobId | Long | AI Job ID |
+
+**Response `200 OK`**
+
+```json
+{
+  "success": true,
+  "data": {
+    "jobId": 1,
+    "noteId": 10,
+    "type": "SUMMARY",
+    "status": "COMPLETED",
+    "requestedAt": "2026-07-14T10:00:00",
+    "startedAt": "2026-07-14T10:00:01",
+    "completedAt": "2026-07-14T10:00:05",
+    "errorMessage": null
+  }
+}
+```
+
+---
+
+## 💬 Conversation
+
+> 모든 Conversation API는 JWT 인증이 필요합니다.
+
+**Headers (공통)**
+
+```
+Authorization: Bearer <accessToken>
+```
+
+---
+
+### 대화 생성 🔒
+
+```
+POST /api/conversations
+```
+
+**Request Body**
+
+```json
+{
+  "title": "Spring Security 질문 정리"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| title | String | ✅ | 대화 제목, 최대 100자 |
+
+**Response `200 OK`**
+
+```json
+{
+  "success": true,
+  "data": 1
+}
+```
+
+---
+
+### 대화 단건 조회 🔒
+
+```
+GET /api/conversations/{conversationId}
+```
+
+**Path Variables**
+
+| 파라미터 | 타입 | 설명 |
+|----------|------|------|
+| conversationId | Long | 대화 ID |
+
+**Response `200 OK`**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "Spring Security 질문 정리",
+    "status": "ACTIVE",
+    "createdAt": "2026-07-14T10:00:00"
+  }
+}
+```
 
 ---
 
@@ -472,3 +582,29 @@ Authorization: Bearer <accessToken>
 | `TODO` | 학습 예정 |
 | `IN_PROGRESS` | 학습 중 |
 | `DONE` | 학습 완료 |
+
+### AiJobType
+
+| 값 | 설명 |
+|----|------|
+| `SUMMARY` | 노트 요약 |
+| `TAG` | 태그 생성 |
+| `QUIZ` | 퀴즈 생성 |
+| `REVIEW` | 코드 리뷰 |
+| `ROADMAP` | 학습 로드맵 |
+
+### AiJobStatus
+
+| 값 | 설명 |
+|----|------|
+| `REQUESTED` | 요청 생성 |
+| `PROCESSING` | 처리 중 |
+| `COMPLETED` | 처리 완료 |
+| `FAILED` | 처리 실패 |
+
+### ConversationStatus
+
+| 값 | 설명 |
+|----|------|
+| `ACTIVE` | 진행 중 |
+| `COMPLETED` | 완료 |
