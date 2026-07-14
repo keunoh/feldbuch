@@ -1,4 +1,8 @@
 $kind: http-request
-url: ""
+name: Summarize Job Status
 method: GET
+url: '{{baseUrl}}/api/ai/jobs/{{jobId}}'
 order: 4300113647239212
+pathVariables:
+  - key: jobId
+    value: '1'
