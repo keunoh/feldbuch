@@ -27,7 +27,12 @@ public enum ErrorCode {
     NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTE-001", "노트를 찾을 수 없습니다."),
 
     // AI
-    AI_JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "AI-001", "AI 작업을 찾을 수 없습니다.");
+    AI_JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "AI-001", "AI 작업을 찾을 수 없습니다."),
+
+    // Conversation
+    CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "CONV-001", "대화를 찾을 수 없습니다."),
+    ;
+
 
     private final HttpStatus status;
     private final String code;
