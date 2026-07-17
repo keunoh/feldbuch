@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 
 public record ConversationMessageResponse(
         Long id,
-        Integer sequence,
         ConversationRole role,
         String content,
         LocalDateTime createdAt
@@ -17,7 +16,6 @@ public record ConversationMessageResponse(
 
         return new ConversationMessageResponse(
                 message.getId(),
-                message.getSequence(),
                 message.getRole(),
                 message.getContent(),
                 message.getCreatedAt()

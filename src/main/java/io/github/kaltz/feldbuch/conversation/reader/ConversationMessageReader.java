@@ -13,7 +13,7 @@ public class ConversationMessageReader {
 
     private final ConversationMessageRepository repository;
 
-    public List<ConversationMessage> getMessages(Long conversationId) {
+    public List<ConversationMessage> findAllByConversationId(Long conversationId) {
 
         return repository.findAllByConversationIdOrderBySequenceAsc(conversationId);
     }
