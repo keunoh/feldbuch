@@ -35,7 +35,7 @@ public enum ErrorCode {
 
     // Conversation
     CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "CONV-001", "대화를 찾을 수 없습니다."),
-    ;
+    ; //aef
 
 
     private final HttpStatus status;
