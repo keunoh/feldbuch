@@ -28,6 +28,10 @@ public enum ErrorCode {
 
     // AI
     AI_JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "AI-001", "AI 작업을 찾을 수 없습니다."),
+    OPENAI_UNAUTHORIZED(HttpStatus.INTERNAL_SERVER_ERROR, "AI-002", "OpenAI API 인증에 실패했습니다."),
+    OPENAI_RATE_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "AI-003", "OpenAI 요청 한도를 초과했습니다."),
+    OPENAI_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "AI-004", "OpenAI 응답 시간이 초과되었습니다."),
+    OPENAI_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "AI-005", "OpenAI 서버 오류가 발생했습니다."),
 
     // Conversation
     CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "CONV-001", "대화를 찾을 수 없습니다."),
