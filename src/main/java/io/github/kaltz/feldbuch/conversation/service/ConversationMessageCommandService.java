@@ -19,9 +19,9 @@ public class ConversationMessageCommandService {
 
     private final ConversationMessageRepository repository;
 
-    public Long create(Long conversationId, CreateConversationMessageRequest request) {
+    public Long create(Long userId, Long conversationId, CreateConversationMessageRequest request) {
 
-        Conversation conversation = conversationReader.get(conversationId);
+        Conversation conversation = conversationReader.get(userId, conversationId);
 
         int sequence = repository.nextSequence(conversationId);
 

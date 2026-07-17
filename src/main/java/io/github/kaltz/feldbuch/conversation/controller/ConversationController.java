@@ -34,12 +34,12 @@ public class ConversationController {
 
     @GetMapping("/{conversationId}")
     public ApiResponse<ConversationResponse> findById(
-            @PathVariable
-            Long conversationId
+            @AuthenticationPrincipal CustomUserDetails user,
+            @PathVariable Long conversationId
     ) {
 
         return ApiResponse.success(
-                queryService.findById(conversationId)
+                queryService.findById(user.getUserId(), conversationId)
         );
     }
 }

@@ -14,9 +14,9 @@ public class ConversationQueryService {
 
     private final ConversationReader conversationReader;
 
-    public ConversationResponse findById(Long conversationId) {
+    public ConversationResponse findById(Long userId, Long conversationId) {
 
-        Conversation conversation = conversationReader.get(conversationId);
+        Conversation conversation = conversationReader.get(userId, conversationId);
 
         return ConversationResponse.from(conversation);
     }

@@ -13,8 +13,8 @@ public class ConversationReader {
 
     private final ConversationRepository repository;
 
-    public Conversation get(Long id) {
-        return repository.findById(id)
+    public Conversation get(Long userId, Long conversationId) {
+        return repository.findByIdAndUserId(conversationId, userId)
                 .orElseThrow(
                         () -> new CustomException(ErrorCode.CONVERSATION_NOT_FOUND)
                 );
