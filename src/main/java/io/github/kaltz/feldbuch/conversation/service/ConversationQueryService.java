@@ -24,7 +24,7 @@ public class ConversationQueryService {
         conversationReader.get(userId, conversationId);
 
         return messageReader
-                .findAllByConversationId(conversationId)
+                .findAll(userId, conversationId)
                 .stream()
                 .map(ConversationMessageResponse::from)
                 .toList();

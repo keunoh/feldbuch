@@ -12,8 +12,11 @@ import java.util.List;
 public class ConversationMessageReader {
 
     private final ConversationMessageRepository repository;
+    private final ConversationReader conversationReader;
 
-    public List<ConversationMessage> findAllByConversationId(Long conversationId) {
+    public List<ConversationMessage> findAll(Long userId, Long conversationId) {
+
+        conversationReader.get(userId, conversationId);
 
         return repository.findAllByConversationIdOrderBySequenceAsc(conversationId);
     }

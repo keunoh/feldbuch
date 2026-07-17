@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/conversations/{{conversationId}}/messages"
+method: GET
+order: 4495649694140758

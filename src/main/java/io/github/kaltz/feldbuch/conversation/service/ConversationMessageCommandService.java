@@ -1,6 +1,5 @@
 package io.github.kaltz.feldbuch.conversation.service;
 
-import io.github.kaltz.feldbuch.conversation.dto.request.CreateConversationMessageRequest;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.conversation.entity.ConversationMessage;
 import io.github.kaltz.feldbuch.conversation.entity.ConversationRole;
@@ -19,18 +18,38 @@ public class ConversationMessageCommandService {
 
     private final ConversationMessageRepository repository;
 
-    public Long create(Long userId, Long conversationId, CreateConversationMessageRequest request) {
+    public Long createUserMessage(Long userId, Long conversationId, String content) {
 
+        return createMessage(
+                userId,
+                conversationId,
+                ConversationRole.USER,
+                content
+        );
+    }
+
+    public Long createAssistantMessage(Long userId, Long conversationId, String content) {
+
+        return createMessage(
+                userId,
+                conversationId,
+                ConversationRole.ASSISTANT,
+                content
+        );
+    }
+
+    private Long createMessage(Long userId, Long conversationId, ConversationRole role, String content) {
         Conversation conversation = conversationReader.get(userId, conversationId);
 
         int sequence = repository.nextSequence(conversationId);
 
-        ConversationMessage message = ConversationMessage.create(
-                conversation,
-                sequence,
-                ConversationRole.USER,
-                request.content()
-        );
+        ConversationMessage message =
+                ConversationMessage.create(
+                        conversation,
+                        sequence,
+                        role,
+                        content
+                );
 
         repository.save(message);
 

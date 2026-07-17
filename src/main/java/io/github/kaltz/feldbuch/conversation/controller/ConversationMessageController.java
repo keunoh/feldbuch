@@ -28,7 +28,7 @@ public class ConversationMessageController {
             @Valid @RequestBody CreateConversationMessageRequest request
     ) {
 
-        Long messageId = commandService.create(user.getUserId(), conversationId, request);
+        Long messageId = commandService.createUserMessage(user.getUserId(), conversationId, request.content());
 
         return ApiResponse.success(messageId);
     }
