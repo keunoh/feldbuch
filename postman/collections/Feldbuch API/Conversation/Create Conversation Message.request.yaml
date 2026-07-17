@@ -1,5 +1,4 @@
 $kind: http-request
-name: Get Message
 url: "{{baseUrl}}/api/conversations/{{conversationId}}/messages"
 method: POST
 order: 3430319109702108
