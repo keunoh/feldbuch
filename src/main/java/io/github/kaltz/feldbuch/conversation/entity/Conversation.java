@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Conversation extends BaseEntity {
 
+    public static final String DEFAULT_TITLE = "새 대화";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,6 +38,10 @@ public class Conversation extends BaseEntity {
         this.status = status;
     }
 
+    public static Conversation create(User user) {
+        return create(user, DEFAULT_TITLE);
+    }
+
     public static Conversation create(User user, String title) {
         return Conversation.builder()
                 .user(user)
@@ -50,5 +56,9 @@ public class Conversation extends BaseEntity {
 
     public void changeTitle(String title) {
         this.title = title;
+    }
+
+    public boolean hasDefaultTitle() {
+        return DEFAULT_TITLE.equals(title);
     }
 }

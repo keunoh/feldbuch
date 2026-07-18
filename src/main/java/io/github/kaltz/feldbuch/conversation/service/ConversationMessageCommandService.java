@@ -39,6 +39,8 @@ public class ConversationMessageCommandService {
     }
 
     private Long createMessage(Long userId, Long conversationId, ConversationRole role, String content) {
+        // TODO:
+        // 동시 채팅 요청 시 sequence 충돌 가능성 검토
         Conversation conversation = conversationReader.get(userId, conversationId);
 
         int sequence = repository.nextSequence(conversationId);
