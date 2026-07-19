@@ -30,19 +30,23 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
+                                "/login",
+                                "/signup",
+
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+
                                 "/api/users/signup",
                                 "/api/auth/login"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-
                 .httpBasic(httpBasic -> httpBasic.disable())
-
                 .formLogin(form -> form.disable())
-
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
