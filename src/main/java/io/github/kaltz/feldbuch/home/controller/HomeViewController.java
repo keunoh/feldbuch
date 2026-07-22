@@ -8,6 +8,6 @@ public class HomeViewController {
 
     @GetMapping("/")
     public String home() {
-        return "home/index";
+        return "redirect:/conversations";
     }
 }

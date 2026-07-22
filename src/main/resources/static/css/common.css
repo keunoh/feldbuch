@@ -1,4 +1,19 @@
-body {
+* {
     margin: 0;
-    font-family: sans-serif;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Pretendard", sans-serif;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+}
+
+textarea {
+    resize: none;
+    outline: none;
 }
