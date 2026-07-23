@@ -1,13 +1,21 @@
+let currentConversationId = null;
+
 const newChatButton =
     document.querySelector(".new-chat-button");
 
-newChatButton.addEventListener("click", createConversation);
+const messageInput =
+    document.querySelector(".chat-input textarea");
+
+const sendButton =
+    document.getElementById("send-button");
 
 document.addEventListener("DOMContentLoaded", initialize);
 
-let currentConversationId = null;
-
 async function initialize() {
+    newChatButton.addEventListener("click", createConversation);
+
+    sendButton.addEventListener("click", sendMessage);
+
     await loadConversations();
 }
 
@@ -79,7 +87,9 @@ async function loadMessages(conversationId) {
 }
 
 function renderMessages(messages) {
-    const container = document.querySelector(".messages");
+
+    const container =
+        document.querySelector(".messages");
 
     container.innerHTML = "";
 
@@ -87,8 +97,45 @@ function renderMessages(messages) {
 
         const div = document.createElement("div");
 
+        div.classList.add("message");
+
+        div.classList.add(message.role.toLowerCase());
+
         div.textContent = message.content;
-        
+
         container.appendChild(div);
     })
+}
+
+async function sendMessage() {
+    if (!currentConversationId) {
+        alert("대화를 먼저 선택하세요.");
+        return;
+    }
+
+    const message = messageInput.value.trim();
+
+    if (!message) {
+        return;
+    }
+
+    try {
+        await api.post(
+            `/api/conversations/${currentConversationId}/chat`,
+            {
+                message: message
+            }
+        );
+
+        messageInput.value = "";
+
+        await loadMessages(currentConversationId);
+
+        await loadConversations();
+
+    } catch (e) {
+        console.error(e);
+        alert("메시지 전송에 실패했습니다.")
+    }
+
 }

@@ -29,7 +29,7 @@ public class ConversationMessage extends BaseEntity {
     private ConversationRole role;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content;
 
     @Builder
