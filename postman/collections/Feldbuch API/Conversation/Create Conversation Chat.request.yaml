@@ -1,4 +1,17 @@
 $kind: http-request
-url: "{{baseUrl}}/api/conversations/{{conversationId}}/messages"
-method: GET
-order: 4495649694140758
+name: Create Conversation Chat
+method: POST
+url: '{{baseUrl}}/api/conversations/{{conversationId}}/chat'
+order: 6000
+headers:
+  - key: Content-Type
+    value: application/json
+pathVariables:
+  - key: conversationId
+    value: '1'
+body:
+  type: json
+  content: |-
+    {
+      "message": "Spring Boot에 대해 설명해주세요."
+    }

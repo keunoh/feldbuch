@@ -1,4 +1,17 @@
 $kind: http-request
-url: "{{baseUrl}}/api/conversations/{{conversationId}}/messages"
+name: Create Conversation Message
 method: POST
-order: 3430319109702108
+url: '{{baseUrl}}/api/conversations/{{conversationId}}/messages'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+pathVariables:
+  - key: conversationId
+    value: '1'
+body:
+  type: json
+  content: |-
+    {
+      "content": "안녕하세요, 질문이 있습니다."
+    }

@@ -1,4 +1,8 @@
 $kind: http-request
-url: "{{baseUrl}}/api/conversations/{{conversationId}}/messages"
+name: Get Conversation Messages
 method: GET
-order: 4488846298243833
+url: '{{baseUrl}}/api/conversations/{{conversationId}}/messages'
+order: 5000
+pathVariables:
+  - key: conversationId
+    value: '1'
