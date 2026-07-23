@@ -5,7 +5,7 @@ import io.github.kaltz.feldbuch.common.response.ApiResponse;
 import io.github.kaltz.feldbuch.conversation.dto.request.CreateConversationMessageRequest;
 import io.github.kaltz.feldbuch.conversation.dto.response.ConversationMessageResponse;
 import io.github.kaltz.feldbuch.conversation.service.ConversationMessageCommandService;
-import io.github.kaltz.feldbuch.conversation.service.ConversationQueryService;
+import io.github.kaltz.feldbuch.conversation.service.ConversationMessageQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,7 +19,7 @@ import java.util.List;
 public class ConversationMessageController {
 
     private final ConversationMessageCommandService commandService;
-    private final ConversationQueryService queryService;
+    private final ConversationMessageQueryService queryService;
 
     @PostMapping
     public ApiResponse<Long> create(

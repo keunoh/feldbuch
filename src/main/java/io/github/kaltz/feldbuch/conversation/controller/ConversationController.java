@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/conversations")
 @RequiredArgsConstructor
@@ -40,6 +42,16 @@ public class ConversationController {
 
         return ApiResponse.success(
                 queryService.findById(user.getUserId(), conversationId)
+        );
+    }
+
+    @GetMapping
+    public ApiResponse<List<ConversationResponse>> findAll11(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+
+        return ApiResponse.success(
+                queryService.findAll(user.getUserId())
         );
     }
 }

@@ -7,6 +7,8 @@ import io.github.kaltz.feldbuch.conversation.repository.ConversationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class ConversationReader {
@@ -18,5 +20,9 @@ public class ConversationReader {
                 .orElseThrow(
                         () -> new CustomException(ErrorCode.CONVERSATION_NOT_FOUND)
                 );
+    }
+
+    public List<Conversation> findAll(Long userId) {
+        return repository.findAllByUserIdOrderByCreatedAtDesc(userId);
     }
 }

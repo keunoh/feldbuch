@@ -1,9 +1,7 @@
 package io.github.kaltz.feldbuch.conversation.service;
 
-import io.github.kaltz.feldbuch.conversation.dto.response.ConversationMessageResponse;
 import io.github.kaltz.feldbuch.conversation.dto.response.ConversationResponse;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
-import io.github.kaltz.feldbuch.conversation.reader.ConversationMessageReader;
 import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,18 +15,6 @@ import java.util.List;
 public class ConversationQueryService {
 
     private final ConversationReader conversationReader;
-    private final ConversationMessageReader messageReader;
-
-    public List<ConversationMessageResponse> findAll(Long userId, Long conversationId) {
-
-        conversationReader.get(userId, conversationId);
-
-        return messageReader
-                .findAll(userId, conversationId)
-                .stream()
-                .map(ConversationMessageResponse::from)
-                .toList();
-    }
 
     public ConversationResponse findById(Long userId, Long conversationId) {
 
@@ -36,4 +22,13 @@ public class ConversationQueryService {
 
         return ConversationResponse.from(conversation);
     }
+
+    public List<ConversationResponse> findAll(Long userId) {
+
+        return conversationReader.findAll(userId)
+                .stream()
+                .map(ConversationResponse::from)
+                .toList();
+    }
+
 }

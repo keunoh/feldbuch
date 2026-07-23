@@ -39,7 +39,8 @@ public abstract class IntegrationTestSupport {
     void setUp() {
         authHelper = new TestAuthHelper(
                 mockMvc,
-                objectMapper
+                objectMapper,
+                userRepository
         );
 
         testDataFactory = new TestDataFactory(
