@@ -5,6 +5,8 @@ newChatButton.addEventListener("click", createConversation);
 
 document.addEventListener("DOMContentLoaded", initialize);
 
+let currentConversationId = null;
+
 async function initialize() {
     await loadConversations();
 }
@@ -49,6 +51,44 @@ function renderConversationList(conversations) {
         li.textContent = conversation.title;
         li.dataset.id = conversation.id;
 
+        li.addEventListener("click", () => {
+            selectConversation(conversation.id);
+        })
+
         list.appendChild(li);
     });
+}
+
+async function selectConversation(conversationId) {
+    currentConversationId = conversationId;
+
+    console.log("현재 선택된 대화 =", currentConversationId);
+
+    await loadMessages(conversationId);
+}
+
+async function loadMessages(conversationId) {
+
+    const result = await api.get(
+        `/api/conversations/${conversationId}/messages`
+    );
+
+    console.log(result.data);
+
+    renderMessages(result.data);
+}
+
+function renderMessages(messages) {
+    const container = document.querySelector(".messages");
+
+    container.innerHTML = "";
+
+    messages.forEach(message => {
+
+        const div = document.createElement("div");
+
+        div.textContent = message.content;
+        
+        container.appendChild(div);
+    })
 }
