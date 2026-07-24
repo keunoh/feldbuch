@@ -1,11 +1,29 @@
-<script setup></script>
+<script setup>
+import {ref} from 'vue'
+
+import ChatInput from "@/components/ChatInput.vue";
+import MessageList from "@/components/MessageList.vue";
+
+const messages = ref([])
+
+function sendMessage(content) {
+  messages.value.push({
+    id: Date.now(),
+    content
+  })
+}
+
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <div>
+    <h1>Feldbuch Chat</h1>
+
+    <MessageList :messages="messages"/>
+
+    <ChatInput @send="sendMessage"/>
+
+  </div>
 </template>
 
 <style scoped></style>

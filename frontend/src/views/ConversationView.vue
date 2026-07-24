@@ -1,12 +1,22 @@
 <script setup>
+import {ref} from 'vue'
 import ChatInput from '@/components/ChatInput.vue'
+import MessageList from '@/components/MessageList.vue'
 
-function sendMessage(message) {
-  console.log(message)
+const messages = ref([]);
+
+function sendMessage(content) {
+
+  messages.value.push({
+    role: "user",
+    content: content
+  })
 }
 </script>
 
 <template>
+
+  <MessageList :messages="messages"/>
 
   <ChatInput @send="sendMessage"/>
 
