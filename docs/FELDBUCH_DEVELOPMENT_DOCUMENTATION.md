@@ -29,23 +29,35 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation 컨텍스트 기반 AI 채팅
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - Thymeleaf 기반 로그인/대화 화면
+- Vue 3 + Vite 프론트엔드 전환 준비
 - Redis, Spring Batch 기반 확장 구성
 
 ### 프로젝트 구조
 
 ```text
-src/main/java
-└── io.github.kaltz.feldbuch
-    ├── ai
-    ├── auth
-    ├── batch
-    ├── common
-    ├── config
-    ├── conversation
-    ├── home
-    ├── note
-    ├── redis
-    └── user
+backend
+└── src/main/java/io.github.kaltz.feldbuch
+    ├── ai               # OpenAI 연동, 요약, 채팅
+    ├── auth             # 로그인, JWT 인증
+    ├── batch            # Spring Batch 요약 파이프라인
+    ├── common           # 공통 응답, 예외
+    ├── config           # Security, Redis, OpenAI, Batch 설정
+    ├── conversation     # 대화, 메시지, 대화형 AI
+    ├── home             # 서버 렌더링 진입점
+    ├── note             # 개발 노트 CRUD/Search
+    ├── redis            # Redis 유틸리티
+    └── user             # 회원, 사용자 조회
+
+legacy-view
+└── src/main/resources
+    ├── templates        # Thymeleaf 비교용 화면
+    └── static           # Thymeleaf 화면용 CSS/JS
+
+frontend
+└── src
+    ├── components       # Vue 컴포넌트
+    ├── router           # Vue Router
+    └── views            # Vue 화면
 ```
 
 ---
@@ -77,7 +89,7 @@ src/main/java
 | AI | OpenAI REST API |
 | Infra | Docker, Redis |
 | Batch | Spring Batch |
-| View | Thymeleaf, Static CSS/JS |
+| View | Thymeleaf, Static CSS/JS, Vue 3, Vite, Vue Router |
 | Test | JUnit5, MockMvc |
 
 ### 기술 로고
@@ -89,6 +101,10 @@ src/main/java
 | Spring Security | JWT | Spring Data JPA | QueryDSL | Redis | Spring Batch | H2 Test DB | RestClient |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 인증/인가 | 토큰 인증 | ORM | 동적 검색 | 캐시/임시 저장소 | 요약 배치 파이프라인 | 테스트 DB | OpenAI API 호출 |
+
+| Vue.js | Vite | Vue Router | Thymeleaf |
+| --- | --- | --- | --- |
+| <img src="./images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | 비교용 서버 렌더링 화면 |
 
 ---
 
@@ -118,6 +134,8 @@ flowchart LR
     --> L[AI Job 상태 관리]
     --> M[Conversation 도메인 추가]
     --> N[Spring Batch 구성]
+    --> O[Thymeleaf 비교 화면 구성]
+    --> P[Vue.js 전환 준비]
 ```
 
 ### 구현 완료
@@ -149,6 +167,8 @@ flowchart LR
 - Conversation Chat API
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - Thymeleaf 기반 로그인/대화 화면
+- `frontend/` Vue 3 + Vite 프로젝트 구성
+- Vue 컴포넌트 초안: `ChatInput`, `MessageList`, `ConversationView`
 - RedisTemplate 구성
 - Spring Batch Summary Job 구성
 
@@ -167,6 +187,9 @@ flowchart LR
 - `TitlePromptFactory` 추가: 기본 제목인 `새 대화` 상태에서 첫 사용자 메시지를 기반으로 짧은 한국어 제목 자동 생성
 - `ChatModelProvider` 전략 추가: `openai.model` 설정값으로 OpenAI 모델 선택
 - Thymeleaf 기반 `/login`, `/conversations` 화면과 정적 CSS/JS 구성
+- Thymeleaf 화면은 Vue.js 화면과 비교하기 위한 기준 구현으로 유지
+- `frontend/`에 Vue 3 + Vite + Vue Router 기반 SPA 프로젝트 추가
+- Vue 채팅 화면 컴포넌트 초안 구성: 입력 컴포넌트에서 부모로 메시지를 emit하고 메시지 목록 컴포넌트가 렌더링
 - Spring Batch 기반 `summaryJob`/`summaryStep` 구성
 - Docker Compose에 MySQL, Redis 로컬 인프라 구성
 - 테스트 확장: Auth, Note, AI, OpenAI Client, Redis, Batch, Conversation 통합 테스트 구성
@@ -186,11 +209,20 @@ flowchart LR
 
 ## Architecture
 
-### 현재 백엔드 아키텍처
+### 현재 아키텍처
+
+현재 서버 내부에는 Thymeleaf 기반 화면이 있으며, 이 화면은 Vue.js 전환 과정에서 비교용 기준 구현으로 유지합니다. 앞으로의 사용자 화면은 `frontend/`의 Vue.js SPA를 중심으로 구성하고, Spring Boot는 REST API 서버 역할에 집중합니다.
 
 ```mermaid
 flowchart TD
-    Client --> Security
+    Browser --> ThymeleafView
+    Browser --> VueSPA
+
+    ThymeleafView --> StaticJS
+    StaticJS --> Api
+    VueSPA --> Api
+
+    Api --> Security
     Security --> Controller
 
     Controller --> CommandService
@@ -222,6 +254,103 @@ flowchart TD
     BatchJob --> ItemReader
     ItemReader --> ItemProcessor
     ItemProcessor --> ItemWriter
+```
+
+### 프론트엔드 전환 방향
+
+```text
+현재
+Browser
+  ↓
+Spring MVC Controller
+  ↓
+Thymeleaf Template + Static JS
+  ↓
+Spring Boot REST API
+
+목표
+Browser
+  ↓
+Vue 3 + Vite SPA
+  ↓
+REST API Client
+  ↓
+Spring Boot REST API
+```
+
+Thymeleaf 화면은 `/login`, `/conversations`에서 동작하는 비교용 화면입니다. Vue 화면은 `frontend/`에서 별도 개발하며, 같은 백엔드 API 계약을 사용해 로그인, 대화 목록, 메시지 조회, AI 채팅 요청을 구현합니다.
+
+### 통신 방식
+
+클라이언트와 서버는 JSON 기반 REST API로 통신합니다.
+
+```text
+Vue or Thymeleaf Static JS
+  ↓ HTTP JSON
+Spring Security + JWT Filter
+  ↓
+Controller
+  ↓
+Service
+  ↓
+Repository / OpenAI
+```
+
+공통 규칙:
+
+- 요청 본문은 JSON을 사용합니다.
+- 응답은 `ApiResponse<T>` 형식으로 통일하고 실제 데이터는 `data` 필드에 담습니다.
+- 로그인 API는 인증 없이 호출합니다.
+- 로그인 성공 시 받은 `accessToken`을 클라이언트 저장소에 보관합니다.
+- 인증 API 호출 시 `Authorization: Bearer <accessToken>` 헤더를 포함합니다.
+- 현재 Thymeleaf 정적 JS는 `fetch`와 `localStorage`를 사용합니다.
+- Vue 전환 후에는 동일한 규칙을 Vue 전용 API client 모듈로 분리합니다.
+
+대표 통신 흐름:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant Security
+    participant Service
+    participant DB
+
+    Client->>API: POST /api/auth/login
+    API-->>Client: accessToken
+    Client->>API: Authorization Bearer token
+    API->>Security: JWT 검증
+    Security->>Service: 인증 사용자 전달
+    Service->>DB: 데이터 조회/저장
+    DB-->>Service: 결과
+    Service-->>API: DTO
+    API-->>Client: ApiResponse data
+```
+
+AI 요약은 즉시 결과를 반환하지 않고 Job 상태 조회 방식으로 처리합니다.
+
+```text
+POST /api/ai/notes/{noteId}/summary
+  ↓
+jobId 반환
+  ↓
+GET /api/ai/jobs/{jobId}
+  ↓
+REQUESTED / PROCESSING / COMPLETED / FAILED 확인
+```
+
+대화형 AI는 현재 단일 요청/응답 방식입니다.
+
+```text
+POST /api/conversations/{conversationId}/chat
+  ↓
+USER 메시지 저장
+  ↓
+OpenAI 호출
+  ↓
+ASSISTANT 메시지 저장
+  ↓
+ChatResponse 반환
 ```
 
 ### JWT 인증 흐름
@@ -390,6 +519,7 @@ docs/images/diagrams/feldbuch-ai-job-flow.svg
 | Batch | Spring Batch | 요약 배치 파이프라인 |
 | Test Database | H2 | 테스트 환경 인메모리 DB |
 | AI | <img src="./images/logos/openai.svg" width="54" alt="OpenAI"> | OpenAI API 기반 AI 요약 |
+| Frontend | <img src="./images/logos/vue.svg" width="42" alt="Vue.js"> | Vue.js 기반 SPA 전환 대상 |
 
 ---
 
@@ -473,6 +603,15 @@ Job 상태 업데이트
 - API 문서화
 - 테스트 커버리지 확장
 
+### Frontend
+
+- Vue.js 기반 로그인 화면 구현
+- Vue.js 기반 대화 목록/메시지 화면 구현
+- Vue API client 모듈 분리
+- JWT 토큰 저장/인증 헤더 주입 흐름 정리
+- Thymeleaf 화면과 Vue 화면 기능 비교
+- Vite 개발 서버와 Spring Boot API 서버 연동 방식 정리
+
 ### Infra
 
 - Docker Compose 정리
@@ -508,6 +647,13 @@ Job 상태 업데이트
 | Redis | `docs/images/logos/redis.svg` | 캐시/임시 저장소 |
 | OpenAI | `docs/images/logos/openai.svg` | AI 요약 API |
 | Gradle | `docs/images/logos/gradle.svg` | 빌드 |
+| Vue.js | `docs/images/logos/vue.svg` | Vue.js 기반 SPA 전환 문서화 |
+
+### 외부 이미지 출처
+
+| 이미지 | 출처 | 라이선스 |
+| --- | --- | --- |
+| Vue.js Logo | [Wikimedia Commons - Vue.js Logo 2.svg](https://commons.wikimedia.org/wiki/File:Vue.js_Logo_2.svg) | CC BY 4.0 |
 
 ### Markdown 이미지 예시
 
@@ -519,6 +665,7 @@ Job 상태 업데이트
 
 ```html
 <img src="./images/logos/springboot.svg" width="48" alt="Spring Boot">
+<img src="./images/logos/vue.svg" width="48" alt="Vue.js">
 <img src="./images/diagrams/feldbuch-architecture.svg" width="720" alt="Feldbuch Project Architecture">
 ```
 
