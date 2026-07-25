@@ -15,6 +15,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 ### 핵심 기능
 
 - JWT 기반 회원가입과 로그인
+- 클라이언트 로그아웃
 - Spring Security 기반 인증/인가
 - 개발 노트 CRUD
 - QueryDSL 기반 검색
@@ -29,7 +30,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation 컨텍스트 기반 AI 채팅
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - Thymeleaf 기반 로그인/대화 화면
-- Vue 3 + Vite 프론트엔드 전환 준비
+- Vue 3 + Vite 로그인/대화 화면 전환
+- Axios API client, Request/Response Interceptor
+- Vue Router Guard 기반 인증 라우팅
 - Redis, Spring Batch 기반 확장 구성
 
 ### 프로젝트 구조
@@ -55,8 +58,10 @@ legacy-view
 
 frontend
 └── src
+    ├── api              # Axios API client와 도메인별 API 함수
     ├── components       # Vue 컴포넌트
     ├── router           # Vue Router
+    ├── utils            # 토큰 저장, 로그아웃 등 인증 유틸리티
     └── views            # Vue 화면
 ```
 
@@ -89,7 +94,7 @@ frontend
 | AI | OpenAI REST API |
 | Infra | Docker, Redis |
 | Batch | Spring Batch |
-| View | Thymeleaf, Static CSS/JS, Vue 3, Vite, Vue Router |
+| View | Thymeleaf, Static CSS/JS, Vue 3, Vite, Vue Router, Axios |
 | Test | JUnit5, MockMvc |
 
 ### 기술 로고
@@ -102,9 +107,9 @@ frontend
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 인증/인가 | 토큰 인증 | ORM | 동적 검색 | 캐시/임시 저장소 | 요약 배치 파이프라인 | 테스트 DB | OpenAI API 호출 |
 
-| Vue.js | Vite | Vue Router | Thymeleaf |
-| --- | --- | --- | --- |
-| <img src="./images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | 비교용 서버 렌더링 화면 |
+| Vue.js | Vite | Vue Router | Axios | Thymeleaf |
+| --- | --- | --- | --- | --- |
+| <img src="./images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | HTTP client / interceptor | 비교용 서버 렌더링 화면 |
 
 ---
 
@@ -136,16 +141,21 @@ flowchart LR
     --> N[Spring Batch 구성]
     --> O[Thymeleaf 비교 화면 구성]
     --> P[Vue.js 전환 준비]
+    --> Q[Axios/Interceptor 인증 통신 구성]
 ```
 
 ### 구현 완료
 
 - Spring Security
 - JWT 로그인
+- JWT Claims 기반 `userId`, `email`, `role` 저장
 - CustomUserDetails
 - JWT Filter
+- JWT AuthenticationEntryPoint 401 처리
+- CORS 설정: Vite 개발 서버 `http://localhost:5173` 허용
 - 회원가입
 - 로그인
+- 클라이언트 로그아웃
 - 노트 생성, 조회, 수정, 삭제
 - QueryDSL 검색
 - Pagination
@@ -168,7 +178,14 @@ flowchart LR
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - Thymeleaf 기반 로그인/대화 화면
 - `frontend/` Vue 3 + Vite 프로젝트 구성
-- Vue 컴포넌트 초안: `ChatInput`, `MessageList`, `ConversationView`
+- Vue 로그인 화면: `LoginView`
+- Vue 대화 화면: `ConversationView`
+- Vue 컴포넌트: `ChatInput`, `MessageList`
+- Axios 공통 API client
+- Axios Request Interceptor 기반 JWT Authorization 헤더 자동 주입
+- Axios Response Interceptor 기반 401 감지, 로그아웃, 로그인 화면 이동
+- Vue Router Guard 기반 인증 라우트 보호
+- `localStorage` 기반 `accessToken`, `userId` 저장/삭제 유틸리티
 - RedisTemplate 구성
 - Spring Batch Summary Job 구성
 
@@ -190,6 +207,13 @@ flowchart LR
 - Thymeleaf 화면은 Vue.js 화면과 비교하기 위한 기준 구현으로 유지
 - `frontend/`에 Vue 3 + Vite + Vue Router 기반 SPA 프로젝트 추가
 - Vue 채팅 화면 컴포넌트 초안 구성: 입력 컴포넌트에서 부모로 메시지를 emit하고 메시지 목록 컴포넌트가 렌더링
+- `authApi`, `conversationApi`로 프론트 API 호출 책임 분리
+- `apiClient`에 Axios baseURL `http://localhost:8080/api` 설정
+- Request Interceptor에서 `localStorage.accessToken`을 `Authorization: Bearer` 헤더로 주입
+- Response Interceptor에서 401 응답 시 토큰과 사용자 ID를 삭제하고 `/login`으로 리다이렉트
+- `router.beforeEach`로 인증이 필요한 `/conversations` 접근 전 토큰 존재 여부 확인
+- 로그아웃 버튼에서 클라이언트 저장 토큰을 삭제하고 로그인 화면으로 이동
+- Spring Security CORS 설정으로 Vite 개발 서버 `http://localhost:5173` 허용
 - Spring Batch 기반 `summaryJob`/`summaryStep` 구성
 - Docker Compose에 MySQL, Redis 로컬 인프라 구성
 - 테스트 확장: Auth, Note, AI, OpenAI Client, Redis, Batch, Conversation 통합 테스트 구성
@@ -273,7 +297,7 @@ Browser
   ↓
 Vue 3 + Vite SPA
   ↓
-REST API Client
+Axios API Client
   ↓
 Spring Boot REST API
 ```
@@ -285,7 +309,11 @@ Thymeleaf 화면은 `/login`, `/conversations`에서 동작하는 비교용 화�
 클라이언트와 서버는 JSON 기반 REST API로 통신합니다.
 
 ```text
-Vue or Thymeleaf Static JS
+Vue
+  ↓
+Axios API Client
+  ↓
+Request Interceptor
   ↓ HTTP JSON
 Spring Security + JWT Filter
   ↓
@@ -301,30 +329,62 @@ Repository / OpenAI
 - 요청 본문은 JSON을 사용합니다.
 - 응답은 `ApiResponse<T>` 형식으로 통일하고 실제 데이터는 `data` 필드에 담습니다.
 - 로그인 API는 인증 없이 호출합니다.
-- 로그인 성공 시 받은 `accessToken`을 클라이언트 저장소에 보관합니다.
-- 인증 API 호출 시 `Authorization: Bearer <accessToken>` 헤더를 포함합니다.
-- 현재 Thymeleaf 정적 JS는 `fetch`와 `localStorage`를 사용합니다.
-- Vue 전환 후에는 동일한 규칙을 Vue 전용 API client 모듈로 분리합니다.
+- 로그인 성공 시 받은 `accessToken`, `userId`를 `localStorage`에 저장합니다.
+- Axios Request Interceptor가 인증 API 호출 전에 `Authorization: Bearer <accessToken>` 헤더를 자동으로 추가합니다.
+- Axios Response Interceptor가 `401 Unauthorized`를 감지하면 `logout()`으로 클라이언트 토큰을 제거하고 `/login`으로 이동합니다.
+- 로그아웃은 stateless JWT 구조에 맞춰 서버 세션 폐기 없이 클라이언트 저장소의 `accessToken`, `userId`를 제거합니다.
+- Vue Router Guard는 `meta.requiresAuth`가 있는 라우트에 진입하기 전에 토큰 존재 여부를 확인합니다.
+- 백엔드는 `JwtAuthenticationEntryPoint`로 미인증 요청에 401을 반환합니다.
+- 백엔드는 Vite 개발 서버인 `http://localhost:5173` origin을 CORS로 허용합니다.
+- 기존 Thymeleaf 정적 JS는 `fetch`와 `localStorage`를 사용하는 비교용 구현으로 유지합니다.
 
 대표 통신 흐름:
 
 ```mermaid
 sequenceDiagram
     participant Client
+    participant Axios
     participant API
     participant Security
     participant Service
     participant DB
 
-    Client->>API: POST /api/auth/login
-    API-->>Client: accessToken
-    Client->>API: Authorization Bearer token
+    Client->>Axios: login(email, password)
+    Axios->>API: POST /api/auth/login
+    API-->>Axios: ApiResponse<LoginResponse>
+    Axios-->>Client: accessToken, userId
+    Client->>Client: localStorage 저장
+    Client->>Axios: 인증 API 호출
+    Axios->>API: Authorization Bearer token
     API->>Security: JWT 검증
     Security->>Service: 인증 사용자 전달
     Service->>DB: 데이터 조회/저장
     DB-->>Service: 결과
     Service-->>API: DTO
-    API-->>Client: ApiResponse data
+    API-->>Axios: ApiResponse data
+    Axios-->>Client: data
+```
+
+401 응답 처리:
+
+```text
+API 401 Unauthorized
+  ↓
+Axios Response Interceptor
+  ↓
+logout()
+  ↓
+localStorage accessToken/userId 삭제
+  ↓
+router.push('/login')
+```
+
+Vue 라우팅:
+
+```text
+/              -> /login redirect
+/login         -> LoginView
+/conversations -> ConversationView, requiresAuth
 ```
 
 AI 요약은 즉시 결과를 반환하지 않고 Job 상태 조회 방식으로 처리합니다.
@@ -358,15 +418,57 @@ ChatResponse 반환
 ```mermaid
 sequenceDiagram
     participant Client
+    participant AuthController
+    participant AuthService
+    participant JwtProvider
     participant Filter
     participant Security
     participant Controller
 
-    Client->>Filter: JWT
-    Filter->>Security: Authentication
-    Security->>Controller: 인증 완료
+    Client->>AuthController: POST /api/auth/login
+    AuthController->>AuthService: login(request)
+    AuthService->>Security: AuthenticationManager 인증
+    AuthService->>JwtProvider: createAccessToken(userId, email, role)
+    JwtProvider-->>AuthService: accessToken
+    AuthService-->>Client: userId, accessToken, tokenType
+    Client->>Filter: Authorization Bearer accessToken
+    Filter->>JwtProvider: validateToken(token)
+    Filter->>Security: Authentication 저장
+    Security->>Controller: 인증 사용자 접근 허용
     Controller-->>Client: Response
 ```
+
+`JwtProvider`는 HS256 계열 HMAC SecretKey를 초기화하고, Access Token의 subject에는 변경되지 않는 사용자 PK인 `userId`를 저장합니다. Claim에는 `email`, `role`을 함께 담아 인증 이후 사용자 식별과 권한 판단에 활용합니다.
+
+JWT 구성:
+
+```text
+subject: userId
+claims:
+  email
+  role
+issuedAt
+expiration
+signature
+```
+
+인증 실패 처리:
+
+```text
+토큰 없음 / 유효하지 않은 토큰 / 만료 토큰
+  ↓
+SecurityContext 인증 없음
+  ↓
+JwtAuthenticationEntryPoint
+  ↓
+401 Unauthorized
+  ↓
+Axios Response Interceptor
+  ↓
+클라이언트 로그아웃 및 /login 이동
+```
+
+현재 로그아웃은 서버 세션을 사용하지 않는 stateless JWT 구조에 맞춘 클라이언트 로그아웃입니다. `frontend/src/utils/auth.js`에서 `accessToken`과 `userId`를 `localStorage`에서 삭제하고, 화면은 Vue Router를 통해 `/login`으로 이동합니다.
 
 ### AI 요약 처리 흐름
 
@@ -605,10 +707,8 @@ Job 상태 업데이트
 
 ### Frontend
 
-- Vue.js 기반 로그인 화면 구현
-- Vue.js 기반 대화 목록/메시지 화면 구현
-- Vue API client 모듈 분리
-- JWT 토큰 저장/인증 헤더 주입 흐름 정리
+- Vue Conversation 메시지 전송 API 연동 마무리
+- Vue 대화 목록/메시지 화면 상태 관리 정리
 - Thymeleaf 화면과 Vue 화면 기능 비교
 - Vite 개발 서버와 Spring Boot API 서버 연동 방식 정리
 
