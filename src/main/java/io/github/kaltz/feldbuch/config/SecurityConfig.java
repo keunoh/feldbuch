@@ -26,6 +26,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -44,7 +45,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/conversations",
                                 "/login",
                                 "/signup",
 
@@ -53,8 +53,7 @@ public class SecurityConfig {
                                 "/images/**",
 
                                 "/api/users/signup",
-                                "/api/auth/login",
-                                "/api/conversations"
+                                "/api/auth/login"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -63,7 +62,9 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
-                );
+                )
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(jwtAuthenticationEntryPoint));
 
         return http.build();
     }

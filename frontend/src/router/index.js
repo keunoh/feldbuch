@@ -24,7 +24,7 @@ const routes = [
 ];
 
 // 1. Router 객체 생성
-const router = createRouter({
+export const router = createRouter({
   history: createWebHistory(),
   routes
 });
