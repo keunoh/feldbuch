@@ -1,5 +1,7 @@
 import {createRouter, createWebHistory} from 'vue-router'
 
+import {isAuthenticated} from "@/utils/auth.js";
+
 import LoginView from "@/views/LoginView.vue";
 import ConversationView from "@/views/ConversationView.vue";
 
@@ -29,10 +31,9 @@ const router = createRouter({
 
 // 2. 모든 페이지 이동 전에 실행되는 Router Guard
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('accessToken');
 
   // 인증이 필요한 페이지인데 토큰이 없으면 로그인 페이지로 이동
-  if (to.meta.requiresAuth && !token) {
+  if (to.meta.requiresAuth && !isAuthenticated()) {
     next('/login');
     return;
   }

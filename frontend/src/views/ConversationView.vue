@@ -1,10 +1,20 @@
 <script setup>
 import {onMounted, ref} from 'vue'
+import {useRouter} from "vue-router";
+
+import {getConversations} from "@/api/conversationApi.js";
+import {logout} from "@/utils/auth.js";
 
 import ChatInput from "@/components/ChatInput.vue";
 import MessageList from "@/components/MessageList.vue";
 
-import {getConversations} from "@/api/conversationApi.js";
+
+const router = useRouter();
+
+function logoutUser() {
+  logout();
+  router.push('/login');
+}
 
 const messages = ref([])
 
@@ -34,6 +44,10 @@ onMounted(async () => {
     <MessageList :messages="messages"/>
 
     <ChatInput @send="sendMessage"/>
+
+    <button @click="logoutUser">
+      로그아웃
+    </button>
 
   </div>
 </template>

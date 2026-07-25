@@ -2,6 +2,7 @@
 import {ref} from 'vue';
 import {login} from "@/api/authApi.js";
 import {useRouter} from "vue-router";
+import {saveAccessToken, saveUserId} from "@/utils/auth.js";
 
 const router = useRouter();
 
@@ -16,15 +17,8 @@ async function loginUser() {
       password: password.value
     });
 
-    localStorage.setItem(
-      'accessToken',
-      response.data.accessToken
-    );
-
-    localStorage.setItem(
-      'userId',
-      response.data.userId
-    );
+    saveAccessToken(response.data.accessToken);
+    saveUserId(response.data.userId);
 
     await router.push('/conversations');
 
