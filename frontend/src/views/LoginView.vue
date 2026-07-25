@@ -26,7 +26,7 @@ async function loginUser() {
       response.data.userId
     );
 
-    await router.push('/conversation');
+    await router.push('/conversations');
 
   } catch (error) {
     console.error(error);

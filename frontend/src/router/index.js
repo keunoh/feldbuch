@@ -13,12 +13,33 @@ const routes = [
     component: LoginView
   },
   {
-    path: '/conversation',
-    component: ConversationView
+    path: '/conversations',
+    component: ConversationView,
+    meta: {
+      requiresAuth: true
+    }
   }
 ];
 
-export default createRouter({
+// 1. Router 객체 생성
+const router = createRouter({
   history: createWebHistory(),
   routes
-})
+});
+
+// 2. 모든 페이지 이동 전에 실행되는 Router Guard
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('accessToken');
+
+  // 인증이 필요한 페이지인데 토큰이 없으면 로그인 페이지로 이동
+  if (to.meta.requiresAuth && !token) {
+    next('/login');
+    return;
+  }
+
+  // 그 외에는 정상 이동
+  next();
+});
+
+// 3. Router 내보내기
+export default router;
