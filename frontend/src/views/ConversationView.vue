@@ -1,27 +1,41 @@
 <script setup>
-import {ref} from 'vue'
-import ChatInput from '@/components/ChatInput.vue'
-import MessageList from '@/components/MessageList.vue'
+import {onMounted, ref} from 'vue'
 
-const messages = ref([]);
+import ChatInput from "@/components/ChatInput.vue";
+import MessageList from "@/components/MessageList.vue";
+
+import {getConversations} from "@/api/conversationApi.js";
+
+const messages = ref([])
 
 function sendMessage(content) {
-
   messages.value.push({
-    role: "user",
-    content: content
+    id: Date.now(),
+    content
   })
 }
+
+onMounted(async () => {
+  try {
+    const conversations = await getConversations();
+
+    console.log(conversations);
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 </script>
 
 <template>
+  <div>
+    <h1>Feldbuch Chat</h1>
 
-  <MessageList :messages="messages"/>
+    <MessageList :messages="messages"/>
 
-  <ChatInput @send="sendMessage"/>
+    <ChatInput @send="sendMessage"/>
 
+  </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -8,6 +8,7 @@ import io.github.kaltz.feldbuch.conversation.service.ConversationCommandService;
 import io.github.kaltz.feldbuch.conversation.service.ConversationQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/conversations")
 @RequiredArgsConstructor
+@Slf4j
 public class ConversationController {
 
     private final ConversationCommandService commandService;
@@ -46,9 +48,11 @@ public class ConversationController {
     }
 
     @GetMapping
-    public ApiResponse<List<ConversationResponse>> findAll11(
+    public ApiResponse<List<ConversationResponse>> findAll(
             @AuthenticationPrincipal CustomUserDetails user
     ) {
+
+        log.debug("대화 컨트롤러 진입");
 
         return ApiResponse.success(
                 queryService.findAll(user.getUserId())
