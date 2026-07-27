@@ -13,6 +13,7 @@ import {logout} from "@/utils/auth.js";
 import ChatInput from "@/components/ChatInput.vue";
 import MessageList from "@/components/MessageList.vue";
 import ConversationSidebar from "@/components/ConversationSidebar.vue";
+import StudyInfoPanel from "@/components/StudyInfoPanel.vue";
 
 const router = useRouter();
 
@@ -118,9 +119,19 @@ onMounted(async () => {
     />
 
     <main class="chat-area">
-      <h1>
-        {{ conversation?.title ?? selectedConversation?.title ?? 'Feldbuch Chat' }}
-      </h1>
+      <header class="chat-header">
+        <h1 class="conversation-title">
+          {{
+            conversation?.title
+            ?? selectedConversation?.title
+            ?? 'Feldbuch Chat'
+          }}
+        </h1>
+
+        <button @click="logoutUser">
+          로그아웃
+        </button>
+      </header>
 
       <div class="messages">
         <MessageList
@@ -131,11 +142,11 @@ onMounted(async () => {
       <ChatInput
         @send="sendMessage"
       />
-
-      <button @click="logoutUser">
-        로그아웃
-      </button>
     </main>
+
+    <StudyInfoPanel
+      :conversation="conversation"
+    />
 
   </div>
 </template>
@@ -143,18 +154,47 @@ onMounted(async () => {
 <style scoped>
 .conversation-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .chat-area {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   padding: 24px;
+  box-sizing: border-box;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.conversation-title {
+  margin: 0;
+  font-size: 24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+}
+
+.logout-button {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
 }
 </style>
