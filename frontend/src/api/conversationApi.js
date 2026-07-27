@@ -34,8 +34,11 @@ export async function getMessages(conversationId) {
 /**
  * 메시지 전송
  * */
-export async function sendMessage(request) {
-  const response = await apiClient.post('/chat', request);
+export async function sendMessage(conversationId, message) {
+  const response = await apiClient.post(
+    `/conversations/${conversationId}/chat`, {
+      message
+    });
 
   return response.data;
 }

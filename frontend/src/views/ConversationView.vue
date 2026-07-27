@@ -2,7 +2,12 @@
 import {computed, onMounted, ref} from 'vue'
 import {useRouter} from "vue-router";
 
-import {getConversation, getConversations} from "@/api/conversationApi.js";
+import {
+  getConversation,
+  getConversations,
+  sendMessage as sendChatMessage
+} from "@/api/conversationApi.js";
+
 import {logout} from "@/utils/auth.js";
 
 import ChatInput from "@/components/ChatInput.vue";
@@ -23,14 +28,24 @@ const selectedConversation = computed(() => {
   );
 })
 
+async function loadConversation(conversationId) {
+  const response = await getConversation(conversationId);
+
+  conversation.value = response.data;
+  messages.value = response.data.messages;
+
+  updateConversationTitle(
+    response.data.id,
+    response.data.title
+  );
+}
+
 async function selectConversation(conversationId) {
   selectedConversationId.value = conversationId;
 
   try {
-    const response = await getConversation(conversationId);
+    await loadConversation(conversationId);
 
-    conversation.value = response.data;
-    messages.value = response.data.messages;
   } catch (error) {
     console.log(error);
 
@@ -39,18 +54,40 @@ async function selectConversation(conversationId) {
   }
 }
 
+function updateConversationTitle(conversationId, title) {
+  const targetConversation = conversations.value.find(
+    conversation => conversation.id === conversationId
+  );
+
+  if (targetConversation) {
+    targetConversation.title = title;
+  }
+}
+
+// ChatInput의 send 이벤트 처리
+async function sendMessage(content) {
+  if (!selectedConversationId.value) {
+    return;
+  }
+
+  try {
+    // 백엔드 API 호출
+    await sendChatMessage(
+      selectedConversationId.value,
+      content
+    );
+
+    await loadConversation(
+      selectedConversationId.value
+    );
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 function logoutUser() {
   logout();
   router.push('/login');
-}
-
-function sendMessage(content) {
-  messages.value.push({
-    id: Date.now(),
-    role: 'USER',
-    content,
-    createdAt: new Date().toISOString(),
-  })
 }
 
 onMounted(async () => {
