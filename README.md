@@ -52,6 +52,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 로그아웃은 stateless JWT 구조에 맞춰 서버 세션을 폐기하지 않고, 클라이언트의 `accessToken`과 `userId`를 제거합니다.
 - 공통 응답은 `ApiResponse<T>` 형식이며, 실제 데이터는 `data` 필드에 담습니다.
 - 대화형 AI 요청은 `POST /api/conversations/{conversationId}/chat`으로 전송합니다.
+- 대화 상세 조회는 `GET /api/conversations/{conversationId}`로 수행하며, 대화 메타데이터와 메시지 목록을 함께 받습니다.
 - AI 요약은 요청 즉시 `jobId`를 반환하고, 클라이언트는 `GET /api/ai/jobs/{jobId}`로 처리 상태를 조회합니다.
 - 백엔드는 Vite 개발 서버(`http://localhost:5173`)에서 오는 요청을 CORS로 허용합니다.
 - 기존 Thymeleaf 정적 JS는 `fetch`와 `localStorage` 기반 비교용 구현으로 남겨둡니다.
@@ -77,6 +78,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Vue 3 + Vite 로그인/대화 화면 전환
 - Axios API client, Request/Response Interceptor
 - Vue Router Guard 기반 인증 라우팅
+- Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
 - Redis, Spring Batch 기반 확장 구성
 
 ## Architecture
@@ -116,6 +118,38 @@ flowchart TD
     ItemReader --> ItemProcessor
     ItemProcessor --> ItemWriter
 ```
+
+## Client Architecture
+
+```mermaid
+flowchart TD
+    Browser --> VueApp
+    VueApp --> Router
+    Router --> LoginView
+    Router --> ConversationView
+
+    Router --> RouterGuard
+    RouterGuard --> AuthUtil
+
+    LoginView --> AuthApi
+    ConversationView --> ConversationApi
+    ConversationView --> ConversationSidebar
+    ConversationView --> MessageList
+    ConversationView --> ChatInput
+    ConversationView --> StudyInfoPanel
+
+    AuthApi --> ApiClient
+    ConversationApi --> ApiClient
+    ApiClient --> RequestInterceptor
+    ApiClient --> ResponseInterceptor
+    RequestInterceptor --> LocalStorage
+    ResponseInterceptor --> AuthUtil
+    ResponseInterceptor --> Router
+
+    ApiClient --> SpringBootApi
+```
+
+Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용합니다. 대화 목록은 `ConversationSidebar`, 메시지는 `MessageList`, 입력은 `ChatInput`, 학습 메타 정보는 `StudyInfoPanel`이 담당하고, 백엔드 통신은 `authApi`와 `conversationApi`가 Axios `apiClient`를 통해 수행합니다.
 
 ## Project Structure
 
@@ -159,12 +193,13 @@ frontend
 - Request/Response Interceptor
 - Router Guard 기반 인증 화면 보호
 - Stateless JWT Logout
+- Component-based Client Architecture
 - Profile 기반 외부 설정 관리
 
 ## Roadmap
 
-- Vue Conversation 메시지 전송 API 연동 마무리
 - Vue 화면 상태 관리 구조 정리
+- Vue 대화 생성/수정/삭제 UI 정리
 - AI 태그 생성
 - 코드 리뷰
 - 학습 퀴즈 생성

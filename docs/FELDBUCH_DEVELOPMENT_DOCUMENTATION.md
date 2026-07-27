@@ -33,6 +33,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Vue 3 + Vite 로그인/대화 화면 전환
 - Axios API client, Request/Response Interceptor
 - Vue Router Guard 기반 인증 라우팅
+- Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
 - Redis, Spring Batch 기반 확장 구성
 
 ### 프로젝트 구조
@@ -59,7 +60,7 @@ legacy-view
 frontend
 └── src
     ├── api              # Axios API client와 도메인별 API 함수
-    ├── components       # Vue 컴포넌트
+    ├── components       # Vue 컴포넌트: Sidebar, MessageList, ChatInput, StudyInfoPanel
     ├── router           # Vue Router
     ├── utils            # 토큰 저장, 로그아웃 등 인증 유틸리티
     └── views            # Vue 화면
@@ -140,7 +141,7 @@ flowchart LR
     --> M[Conversation 도메인 추가]
     --> N[Spring Batch 구성]
     --> O[Thymeleaf 비교 화면 구성]
-    --> P[Vue.js 전환 준비]
+    --> P[Vue.js 로그인/대화 화면 전환]
     --> Q[Axios/Interceptor 인증 통신 구성]
 ```
 
@@ -180,7 +181,7 @@ flowchart LR
 - `frontend/` Vue 3 + Vite 프로젝트 구성
 - Vue 로그인 화면: `LoginView`
 - Vue 대화 화면: `ConversationView`
-- Vue 컴포넌트: `ChatInput`, `MessageList`
+- Vue 컴포넌트: `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`
 - Axios 공통 API client
 - Axios Request Interceptor 기반 JWT Authorization 헤더 자동 주입
 - Axios Response Interceptor 기반 401 감지, 로그아웃, 로그인 화면 이동
@@ -213,6 +214,11 @@ flowchart LR
 - Response Interceptor에서 401 응답 시 토큰과 사용자 ID를 삭제하고 `/login`으로 리다이렉트
 - `router.beforeEach`로 인증이 필요한 `/conversations` 접근 전 토큰 존재 여부 확인
 - 로그아웃 버튼에서 클라이언트 저장 토큰을 삭제하고 로그인 화면으로 이동
+- `ConversationView`에서 대화 목록 조회, 첫 대화 자동 선택, 단건 대화 상세 조회, 메시지 전송 후 상세 재조회 흐름 구성
+- `ConversationSidebar`에서 대화 목록과 선택 상태 렌더링
+- `MessageList`에서 `USER`, `ASSISTANT` 메시지 버블 렌더링
+- `StudyInfoPanel`에서 대화 제목, 상태, 메시지 수, 생성일 표시
+- `ConversationDetailResponse`에 대화 메타데이터, 메시지 목록, 메시지 수 포함
 - Spring Security CORS 설정으로 Vite 개발 서버 `http://localhost:5173` 허용
 - Spring Batch 기반 `summaryJob`/`summaryStep` 구성
 - Docker Compose에 MySQL, Redis 로컬 인프라 구성
@@ -304,6 +310,86 @@ Spring Boot REST API
 
 Thymeleaf 화면은 `/login`, `/conversations`에서 동작하는 비교용 화면입니다. Vue 화면은 `frontend/`에서 별도 개발하며, 같은 백엔드 API 계약을 사용해 로그인, 대화 목록, 메시지 조회, AI 채팅 요청을 구현합니다.
 
+### 클라이언트 아키텍처
+
+```mermaid
+flowchart TD
+    Browser --> VueApp
+    VueApp --> Router
+    Router --> LoginView
+    Router --> ConversationView
+
+    Router --> RouterGuard
+    RouterGuard --> AuthUtil
+
+    LoginView --> AuthApi
+    ConversationView --> ConversationApi
+    ConversationView --> ConversationSidebar
+    ConversationView --> MessageList
+    ConversationView --> ChatInput
+    ConversationView --> StudyInfoPanel
+
+    AuthApi --> ApiClient
+    ConversationApi --> ApiClient
+    ApiClient --> RequestInterceptor
+    ApiClient --> ResponseInterceptor
+    RequestInterceptor --> LocalStorage
+    ResponseInterceptor --> AuthUtil
+    ResponseInterceptor --> Router
+
+    ApiClient --> SpringBootApi
+```
+
+클라이언트 책임 분리:
+
+- `App.vue`: `RouterView`를 렌더링하는 Vue 앱 루트
+- `router/index.js`: `/login`, `/conversations` 라우트와 인증 Guard 관리
+- `LoginView.vue`: 로그인 폼, 로그인 API 호출, 토큰 저장, 대화 화면 이동
+- `ConversationView.vue`: 대화 화면 컨테이너, 대화 목록/선택 대화/메시지 상태 관리
+- `ConversationSidebar.vue`: 대화 목록과 현재 선택 상태 렌더링
+- `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링
+- `ChatInput.vue`: 사용자 입력을 `send` 이벤트로 상위 컴포넌트에 전달
+- `StudyInfoPanel.vue`: 선택한 대화의 학습 주제, 상태, 메시지 수, 생성일 표시
+- `apiClient.js`: Axios instance, baseURL, Request/Response Interceptor 관리
+- `authApi.js`, `conversationApi.js`: 도메인별 API 호출 함수 제공
+- `utils/auth.js`: `accessToken`, `userId` 저장/조회/삭제와 로그인 여부 판단
+
+대화 화면 데이터 흐름:
+
+```text
+ConversationView mounted
+  ↓
+getConversations()
+  ↓
+대화 목록 저장
+  ↓
+첫 번째 대화 자동 선택
+  ↓
+getConversation(conversationId)
+  ↓
+conversation / messages 상태 갱신
+  ↓
+Sidebar / MessageList / StudyInfoPanel 렌더링
+```
+
+메시지 전송 흐름:
+
+```text
+ChatInput send event
+  ↓
+ConversationView.sendMessage(content)
+  ↓
+conversationApi.sendMessage(conversationId, message)
+  ↓
+POST /api/conversations/{conversationId}/chat
+  ↓
+AI 응답 저장 후 반환
+  ↓
+getConversation(conversationId) 재조회
+  ↓
+메시지 목록과 제목 최신화
+```
+
 ### 통신 방식
 
 클라이언트와 서버는 JSON 기반 REST API로 통신합니다.
@@ -334,6 +420,9 @@ Repository / OpenAI
 - Axios Response Interceptor가 `401 Unauthorized`를 감지하면 `logout()`으로 클라이언트 토큰을 제거하고 `/login`으로 이동합니다.
 - 로그아웃은 stateless JWT 구조에 맞춰 서버 세션 폐기 없이 클라이언트 저장소의 `accessToken`, `userId`를 제거합니다.
 - Vue Router Guard는 `meta.requiresAuth`가 있는 라우트에 진입하기 전에 토큰 존재 여부를 확인합니다.
+- 대화 목록은 `GET /api/conversations`로 조회합니다.
+- 대화 상세는 `GET /api/conversations/{conversationId}`로 조회하며, `ConversationDetailResponse`가 대화 정보와 메시지 목록, 메시지 수를 함께 반환합니다.
+- 메시지 전송은 `POST /api/conversations/{conversationId}/chat`로 처리하고, 전송 후 상세를 재조회해 사용자 메시지, AI 응답, 자동 생성 제목을 한 번에 최신화합니다.
 - 백엔드는 `JwtAuthenticationEntryPoint`로 미인증 요청에 401을 반환합니다.
 - 백엔드는 Vite 개발 서버인 `http://localhost:5173` origin을 CORS로 허용합니다.
 - 기존 Thymeleaf 정적 JS는 `fetch`와 `localStorage`를 사용하는 비교용 구현으로 유지합니다.
@@ -707,8 +796,8 @@ Job 상태 업데이트
 
 ### Frontend
 
-- Vue Conversation 메시지 전송 API 연동 마무리
 - Vue 대화 목록/메시지 화면 상태 관리 정리
+- Vue 대화 생성/수정/삭제 UI 정리
 - Thymeleaf 화면과 Vue 화면 기능 비교
 - Vite 개발 서버와 Spring Boot API 서버 연동 방식 정리
 
