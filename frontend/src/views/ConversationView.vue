@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {useRouter} from "vue-router";
 
 import {getConversations} from "@/api/conversationApi.js";
@@ -12,7 +12,18 @@ import ConversationSidebar from "@/components/ConversationSidebar.vue";
 const router = useRouter();
 
 const conversations = ref([]);
-const messages = ref([])
+const selectedConversationId = ref(null);
+const messages = ref([]);
+
+const selectedConversation = computed(() => {
+  return conversations.value.find(
+    conversation => conversation.id === selectedConversationId.value
+  );
+})
+
+function selectConversation(conversationId) {
+  selectedConversationId.value = conversationId;
+}
 
 function logoutUser() {
   logout();
@@ -31,6 +42,10 @@ onMounted(async () => {
     const response = await getConversations();
 
     conversations.value = response.data;
+
+    if (conversations.value.length > 0) {
+      selectedConversationId.value = conversations.value[0].id;
+    }
   } catch (error) {
     console.error(error);
   }
@@ -39,14 +54,18 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container">
+  <div class="conversation-layout">
 
     <ConversationSidebar
       :conversations="conversations"
+      :selected-conversation-id="selectedConversationId"
+      @select="selectConversation"
     />
 
-    <main class="content">
-      <h1>Feldbuch Chat</h1>
+    <main class="chat-area">
+      <h1>
+        {{ selectedConversation?.title ?? 'Feldbuch Chat' }}
+      </h1>
 
       <MessageList :messages="messages"/>
 
@@ -61,14 +80,13 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.container {
+.conversation-layout {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
 }
 
-.content {
+.chat-area {
   flex: 1;
-  padding: 20px;
+  padding: 24px;
 }
-
 </style>

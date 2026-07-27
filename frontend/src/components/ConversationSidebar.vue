@@ -3,12 +3,18 @@ defineProps({
   conversations: {
     type: Array,
     required: true
+  },
+  selectedConversationId: {
+    type: Number,
+    default: null
   }
 });
+
+const emit = defineEmits(['select']);
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside class="conversation-sidebar">
     <h2>대화 목록</h2>
 
     <ul>
@@ -16,25 +22,36 @@ defineProps({
         v-for="conversation in conversations"
         :key="conversation.id"
       >
-        {{ conversation.title }}
+        <button
+          type="button"
+          :class="{
+            selected: conversation.id === selectedConversationId
+          }"
+          @click="emit('select', conversation.id)"
+        >
+          {{ conversation.title }}
+        </button>
       </li>
     </ul>
   </aside>
 </template>
 
 <style scoped>
-.sidebar {
-  width: 260px;
-  border-right: 1px solid #ddd;
-  padding: 16px;
-}
-
 ul {
-  list-style: none;
   padding: 0;
+  list-style: none;
 }
 
-li {
+button {
   padding: 8px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+button.selected {
+  font-weight: bold;
+  text-decoration: underline;
 }
 </style>
