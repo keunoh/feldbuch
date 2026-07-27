@@ -1,6 +1,6 @@
 <script setup>
 
-const props = defineProps({
+defineProps({
   messages: {
     type: Array,
     default: () => [],
@@ -17,48 +17,109 @@ const props = defineProps({
       아직 메시지가 없습니다.
     </p>
 
-    <article
+    <div
       v-for="message in messages"
       :key="message.id"
-      class="message"
+      class="message-row"
+      :class="{
+        user: message.role === 'USER',
+        assistant: message.role === 'ASSISTANT'
+      }"
     >
-      <strong class="message-role">
-        {{ message.role }}
-      </strong>
+      <div class="bubble">
+        <div class="role">
+          {{ message.role === 'USER' ? '👤 나' : '🤖 Feldbuch' }}
+        </div>
 
-      <p class="message-content">
-        {{ message.content }}
-      </p>
-    </article>
+        <div class="content">
+          {{ message.content }}
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
 
 <style scoped>
+
 .message-list {
+
   display: flex;
+
   flex-direction: column;
-  gap: 16px;
-  margin: 24px 0;
+
+  gap: 18px;
+
+  padding: 20px;
+
+  overflow-y: auto;
+
 }
 
-.message {
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+.message-row {
+
+  display: flex;
+
 }
 
-.message-role {
-  display: block;
+.user {
+
+  justify-content: flex-end;
+
+}
+
+.assistant {
+
+  justify-content: flex-start;
+
+}
+
+.bubble {
+
+  max-width: 70%;
+
+  padding: 14px 18px;
+
+  border-radius: 14px;
+
+}
+
+.user .bubble {
+
+  background: #dbeafe;
+
+}
+
+.assistant .bubble {
+
+  background: #f3f4f6;
+
+}
+
+.role {
+
+  font-size: 13px;
+
+  font-weight: bold;
+
   margin-bottom: 8px;
+
 }
 
-.message-content {
-  margin: 0;
+.content {
+
   white-space: pre-wrap;
+
+  line-height: 1.6;
+
 }
 
 .empty-message {
-  color: #777;
+
+  text-align: center;
+
+  color: #888;
+
 }
+
 </style>

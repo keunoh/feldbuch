@@ -122,9 +122,11 @@ onMounted(async () => {
         {{ conversation?.title ?? selectedConversation?.title ?? 'Feldbuch Chat' }}
       </h1>
 
-      <MessageList
-        :messages="messages"
-      />
+      <div class="messages">
+        <MessageList
+          :messages="messages"
+        />
+      </div>
 
       <ChatInput
         @send="sendMessage"
@@ -145,7 +147,14 @@ onMounted(async () => {
 }
 
 .chat-area {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   padding: 24px;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
 }
 </style>
