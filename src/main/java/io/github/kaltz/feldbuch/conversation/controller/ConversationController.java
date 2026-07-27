@@ -3,6 +3,7 @@ package io.github.kaltz.feldbuch.conversation.controller;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
 import io.github.kaltz.feldbuch.common.response.ApiResponse;
 import io.github.kaltz.feldbuch.conversation.dto.request.CreateConversationRequest;
+import io.github.kaltz.feldbuch.conversation.dto.response.ConversationDetailResponse;
 import io.github.kaltz.feldbuch.conversation.dto.response.ConversationResponse;
 import io.github.kaltz.feldbuch.conversation.service.ConversationCommandService;
 import io.github.kaltz.feldbuch.conversation.service.ConversationQueryService;
@@ -37,7 +38,7 @@ public class ConversationController {
     }
 
     @GetMapping("/{conversationId}")
-    public ApiResponse<ConversationResponse> findById(
+    public ApiResponse<ConversationDetailResponse> findById(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long conversationId
     ) {
