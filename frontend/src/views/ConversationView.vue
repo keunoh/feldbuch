@@ -7,16 +7,17 @@ import {logout} from "@/utils/auth.js";
 
 import ChatInput from "@/components/ChatInput.vue";
 import MessageList from "@/components/MessageList.vue";
-
+import ConversationSidebar from "@/components/ConversationSidebar.vue";
 
 const router = useRouter();
+
+const conversations = ref([]);
+const messages = ref([])
 
 function logoutUser() {
   logout();
   router.push('/login');
 }
-
-const messages = ref([])
 
 function sendMessage(content) {
   messages.value.push({
@@ -27,9 +28,9 @@ function sendMessage(content) {
 
 onMounted(async () => {
   try {
-    const conversations = await getConversations();
+    const response = await getConversations();
 
-    console.log(conversations);
+    conversations.value = response.data;
   } catch (error) {
     console.error(error);
   }
@@ -38,18 +39,36 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
-    <h1>Feldbuch Chat</h1>
+  <div class="container">
 
-    <MessageList :messages="messages"/>
+    <ConversationSidebar
+      :conversations="conversations"
+    />
 
-    <ChatInput @send="sendMessage"/>
+    <main class="content">
+      <h1>Feldbuch Chat</h1>
 
-    <button @click="logoutUser">
-      로그아웃
-    </button>
+      <MessageList :messages="messages"/>
+
+      <ChatInput @send="sendMessage"/>
+
+      <button @click="logoutUser">
+        로그아웃
+      </button>
+    </main>
 
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+}
+
+</style>
