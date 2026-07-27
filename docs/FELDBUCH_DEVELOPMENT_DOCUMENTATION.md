@@ -312,6 +312,8 @@ Thymeleaf 화면은 `/login`, `/conversations`에서 동작하는 비교용 화�
 
 ### 클라이언트 아키텍처
 
+![Feldbuch Client Architecture](./images/diagrams/feldbuch-client-architecture.svg)
+
 ```mermaid
 flowchart TD
     Browser --> VueApp
@@ -689,10 +691,15 @@ AI 요약 요청과 Job 상태 흐름은 별도 SVG로 관리합니다.
 
 ![Feldbuch AI Job Flow](./images/diagrams/feldbuch-ai-job-flow.svg)
 
+Vue 클라이언트의 라우팅, 컴포넌트, API client, Interceptor 흐름은 별도 SVG로 관리합니다.
+
+![Feldbuch Client Architecture](./images/diagrams/feldbuch-client-architecture.svg)
+
 이미지 파일 경로:
 
 ```text
 docs/images/diagrams/feldbuch-architecture.svg
+docs/images/diagrams/feldbuch-client-architecture.svg
 docs/images/diagrams/feldbuch-ai-job-flow.svg
 ```
 
@@ -829,6 +836,7 @@ Job 상태 업데이트
 | 이름 | 경로 | 용도 |
 | --- | --- | --- |
 | Feldbuch Project Architecture | `docs/images/diagrams/feldbuch-architecture.svg` | 현재 프로젝트의 Spring Boot, Security, QueryDSL, JPA, MySQL, H2, Docker, OpenAI 구조 |
+| Feldbuch Client Architecture | `docs/images/diagrams/feldbuch-client-architecture.svg` | Vue Router, View, Component, Axios API client, Interceptor, Spring Boot API 통신 구조 |
 | Feldbuch AI Job Flow | `docs/images/diagrams/feldbuch-ai-job-flow.svg` | AI 요약 요청, Job 상태 변경, OpenAI 호출 흐름 |
 | Spring Boot | `docs/images/logos/springboot.svg` | 백엔드 API |
 | Docker | `docs/images/logos/docker.svg` | 컨테이너 실행 환경 |
@@ -848,6 +856,7 @@ Job 상태 업데이트
 
 ```markdown
 ![Feldbuch Project Architecture](./images/diagrams/feldbuch-architecture.svg)
+![Feldbuch Client Architecture](./images/diagrams/feldbuch-client-architecture.svg)
 ```
 
 ### HTML 이미지 예시
@@ -856,6 +865,7 @@ Job 상태 업데이트
 <img src="./images/logos/springboot.svg" width="48" alt="Spring Boot">
 <img src="./images/logos/vue.svg" width="48" alt="Vue.js">
 <img src="./images/diagrams/feldbuch-architecture.svg" width="720" alt="Feldbuch Project Architecture">
+<img src="./images/diagrams/feldbuch-client-architecture.svg" width="720" alt="Feldbuch Client Architecture">
 ```
 
 ---

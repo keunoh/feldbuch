@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 780" role="img" aria-labelledby="title desc">
+  <title id="title">Feldbuch Client Architecture Diagram</title>
+  <desc id="desc">Vue client architecture with Vue Router, router guard, views, components, Axios API client, interceptors, localStorage, and Spring Boot API.</desc>
+  <defs>
+    <style>
+      .title { font: 700 30px Arial, Helvetica, sans-serif; fill: #111827; }
+      .subtitle { font: 500 15px Arial, Helvetica, sans-serif; fill: #4b5563; }
+      .label { font: 700 16px Arial, Helvetica, sans-serif; fill: #111827; }
+      .small { font: 500 13px Arial, Helvetica, sans-serif; fill: #374151; }
+      .tiny { font: 500 12px Arial, Helvetica, sans-serif; fill: #4b5563; }
+      .shell { fill: #ecfdf5; stroke: #16a34a; stroke-width: 3; }
+      .view { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; }
+      .component { fill: #f8fafc; stroke: #64748b; stroke-width: 2; }
+      .api { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 2; }
+      .auth { fill: #fff7ed; stroke: #ea580c; stroke-width: 2; }
+      .storage { fill: #fefce8; stroke: #ca8a04; stroke-width: 2; }
+      .server { fill: #f0fdf4; stroke: #15803d; stroke-width: 2; }
+      .arrow { stroke: #374151; stroke-width: 2.3; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke-dasharray: 7 6; }
+      .green { stroke: #16a34a; }
+      .blue { stroke: #2563eb; }
+      .purple { stroke: #7c3aed; }
+      .orange { stroke: #ea580c; }
+      .yellow { stroke: #a16207; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#374151"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="780" fill="#ffffff"/>
+  <text x="48" y="54" class="title">Feldbuch Client Architecture</text>
+  <text x="48" y="82" class="subtitle">Vue 3 + Vite SPA client with JWT auth, Axios interceptors, and conversation UI components</text>
+
+  <rect x="48" y="138" width="180" height="84" rx="14" class="component"/>
+  <text x="138" y="172" text-anchor="middle" class="label">Browser</text>
+  <text x="138" y="196" text-anchor="middle" class="small">User interaction</text>
+
+  <rect x="292" y="106" width="610" height="360" rx="24" class="shell"/>
+  <text x="597" y="142" text-anchor="middle" class="label">Vue Application</text>
+  <text x="597" y="166" text-anchor="middle" class="small">frontend/src / Vue 3 / Vite</text>
+
+  <rect x="326" y="206" width="172" height="70" rx="12" class="view"/>
+  <text x="412" y="236" text-anchor="middle" class="label">App.vue</text>
+  <text x="412" y="258" text-anchor="middle" class="small">RouterView</text>
+
+  <rect x="560" y="206" width="172" height="70" rx="12" class="view"/>
+  <text x="646" y="236" text-anchor="middle" class="label">Vue Router</text>
+  <text x="646" y="258" text-anchor="middle" class="small">/login /conversations</text>
+
+  <rect x="326" y="326" width="172" height="70" rx="12" class="view"/>
+  <text x="412" y="356" text-anchor="middle" class="label">LoginView</text>
+  <text x="412" y="378" text-anchor="middle" class="small">login form</text>
+
+  <rect x="560" y="326" width="172" height="70" rx="12" class="view"/>
+  <text x="646" y="356" text-anchor="middle" class="label">ConversationView</text>
+  <text x="646" y="378" text-anchor="middle" class="small">screen state container</text>
+
+  <rect x="768" y="206" width="104" height="190" rx="12" class="auth"/>
+  <text x="820" y="244" text-anchor="middle" class="label">Router</text>
+  <text x="820" y="266" text-anchor="middle" class="label">Guard</text>
+  <text x="820" y="298" text-anchor="middle" class="small">requiresAuth</text>
+  <text x="820" y="320" text-anchor="middle" class="small">token check</text>
+  <text x="820" y="342" text-anchor="middle" class="small">redirect</text>
+
+  <path d="M228 180h64" class="arrow green"/>
+  <path d="M498 241h62" class="arrow green"/>
+  <path d="M646 276v50" class="arrow blue"/>
+  <path d="M646 276c0 66-234-16-234 50" class="arrow blue"/>
+  <path d="M732 241h36" class="arrow orange"/>
+
+  <rect x="104" y="520" width="206" height="70" rx="12" class="component"/>
+  <text x="207" y="550" text-anchor="middle" class="label">ConversationSidebar</text>
+  <text x="207" y="572" text-anchor="middle" class="small">conversation list / selection</text>
+
+  <rect x="358" y="520" width="174" height="70" rx="12" class="component"/>
+  <text x="445" y="550" text-anchor="middle" class="label">MessageList</text>
+  <text x="445" y="572" text-anchor="middle" class="small">USER / ASSISTANT bubbles</text>
+
+  <rect x="580" y="520" width="174" height="70" rx="12" class="component"/>
+  <text x="667" y="550" text-anchor="middle" class="label">ChatInput</text>
+  <text x="667" y="572" text-anchor="middle" class="small">send event</text>
+
+  <rect x="802" y="520" width="206" height="70" rx="12" class="component"/>
+  <text x="905" y="550" text-anchor="middle" class="label">StudyInfoPanel</text>
+  <text x="905" y="572" text-anchor="middle" class="small">title / status / count / date</text>
+
+  <path d="M646 396c0 86-439 38-439 124" class="arrow blue"/>
+  <path d="M646 396c0 86-201 38-201 124" class="arrow blue"/>
+  <path d="M646 396c0 86 21 38 21 124" class="arrow blue"/>
+  <path d="M646 396c0 86 259 38 259 124" class="arrow blue"/>
+
+  <rect x="974" y="106" width="244" height="360" rx="24" class="api"/>
+  <text x="1096" y="142" text-anchor="middle" class="label">API Layer</text>
+  <text x="1096" y="166" text-anchor="middle" class="small">Axios based communication</text>
+
+  <rect x="1008" y="206" width="176" height="66" rx="12" class="component"/>
+  <text x="1096" y="234" text-anchor="middle" class="label">authApi</text>
+  <text x="1096" y="254" text-anchor="middle" class="small">POST /auth/login</text>
+
+  <rect x="1008" y="306" width="176" height="76" rx="12" class="component"/>
+  <text x="1096" y="334" text-anchor="middle" class="label">conversationApi</text>
+  <text x="1096" y="356" text-anchor="middle" class="small">list / detail / chat</text>
+
+  <rect x="1008" y="410" width="176" height="66" rx="12" class="api"/>
+  <text x="1096" y="438" text-anchor="middle" class="label">apiClient</text>
+  <text x="1096" y="458" text-anchor="middle" class="small">baseURL + interceptors</text>
+
+  <path d="M498 361c168 0 342-122 510-122" class="arrow purple"/>
+  <path d="M732 361h276" class="arrow purple"/>
+  <path d="M1096 272v34" class="arrow purple"/>
+  <path d="M1096 382v28" class="arrow purple"/>
+
+  <rect x="80" y="660" width="260" height="70" rx="12" class="storage"/>
+  <text x="210" y="690" text-anchor="middle" class="label">localStorage</text>
+  <text x="210" y="712" text-anchor="middle" class="small">accessToken / userId</text>
+
+  <rect x="410" y="660" width="220" height="70" rx="12" class="auth"/>
+  <text x="520" y="690" text-anchor="middle" class="label">Request Interceptor</text>
+  <text x="520" y="712" text-anchor="middle" class="small">Authorization: Bearer</text>
+
+  <rect x="700" y="660" width="220" height="70" rx="12" class="auth"/>
+  <text x="810" y="690" text-anchor="middle" class="label">Response Interceptor</text>
+  <text x="810" y="712" text-anchor="middle" class="small">401 -> logout -> /login</text>
+
+  <rect x="990" y="660" width="210" height="70" rx="12" class="server"/>
+  <text x="1095" y="690" text-anchor="middle" class="label">Spring Boot API</text>
+  <text x="1095" y="712" text-anchor="middle" class="small">http://localhost:8080/api</text>
+
+  <path d="M1008 443c-150 0-132 217-488 217" class="arrow orange"/>
+  <path d="M410 695h-70" class="arrow yellow dashed"/>
+  <path d="M630 695h70" class="arrow orange"/>
+  <path d="M920 695h70" class="arrow green"/>
+  <path d="M810 660c0-78-398-8-398-264" class="arrow orange dashed"/>
+
+  <text x="48" y="760" class="tiny">Auth flow: login saves token, request interceptor injects Bearer JWT, response interceptor clears token on 401.</text>
+</svg>

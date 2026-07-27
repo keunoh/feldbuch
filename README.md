@@ -10,6 +10,8 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 ![Feldbuch Project Architecture](docs/images/diagrams/feldbuch-architecture.svg)
 
+![Feldbuch Client Architecture](docs/images/diagrams/feldbuch-client-architecture.svg)
+
 ![Feldbuch AI Job Flow](docs/images/diagrams/feldbuch-ai-job-flow.svg)
 
 ## Tech Stack
@@ -120,6 +122,8 @@ flowchart TD
 ```
 
 ## Client Architecture
+
+![Feldbuch Client Architecture](docs/images/diagrams/feldbuch-client-architecture.svg)
 
 ```mermaid
 flowchart TD
