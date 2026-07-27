@@ -2,7 +2,7 @@
 import {computed, onMounted, ref} from 'vue'
 import {useRouter} from "vue-router";
 
-import {getConversations} from "@/api/conversationApi.js";
+import {getConversation, getConversations} from "@/api/conversationApi.js";
 import {logout} from "@/utils/auth.js";
 
 import ChatInput from "@/components/ChatInput.vue";
@@ -11,18 +11,32 @@ import ConversationSidebar from "@/components/ConversationSidebar.vue";
 
 const router = useRouter();
 
+const conversation = ref(null);
 const conversations = ref([]);
 const selectedConversationId = ref(null);
 const messages = ref([]);
 
 const selectedConversation = computed(() => {
   return conversations.value.find(
-    conversation => conversation.id === selectedConversationId.value
+    conversation =>
+      conversation.id === selectedConversationId.value
   );
 })
 
-function selectConversation(conversationId) {
+async function selectConversation(conversationId) {
   selectedConversationId.value = conversationId;
+
+  try {
+    const response = await getConversation(conversationId);
+
+    conversation.value = response.data;
+    messages.value = response.data.messages;
+  } catch (error) {
+    console.log(error);
+
+    conversation.value = null;
+    messages.value = [];
+  }
 }
 
 function logoutUser() {
@@ -33,7 +47,9 @@ function logoutUser() {
 function sendMessage(content) {
   messages.value.push({
     id: Date.now(),
-    content
+    role: 'USER',
+    content,
+    createdAt: new Date().toISOString(),
   })
 }
 
@@ -44,7 +60,9 @@ onMounted(async () => {
     conversations.value = response.data;
 
     if (conversations.value.length > 0) {
-      selectedConversationId.value = conversations.value[0].id;
+      const firstConversationId = conversations.value[0].id;
+
+      await selectConversation(firstConversationId)
     }
   } catch (error) {
     console.error(error);
@@ -64,12 +82,16 @@ onMounted(async () => {
 
     <main class="chat-area">
       <h1>
-        {{ selectedConversation?.title ?? 'Feldbuch Chat' }}
+        {{ conversation?.title ?? selectedConversation?.title ?? 'Feldbuch Chat' }}
       </h1>
 
-      <MessageList :messages="messages"/>
+      <MessageList
+        :messages="messages"
+      />
 
-      <ChatInput @send="sendMessage"/>
+      <ChatInput
+        @send="sendMessage"
+      />
 
       <button @click="logoutUser">
         로그아웃

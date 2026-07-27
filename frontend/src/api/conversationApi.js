@@ -1,10 +1,22 @@
 import apiClient from "@/api/apiClient.js";
 
 /**
+ * 특정 대화 상세 조회
+ * */
+export async function getConversation(conversationId) {
+  const response = await apiClient.get(
+    `/conversations/${conversationId}`
+  );
+
+  return response.data;
+}
+
+/**
  * 대화 목록 조회
  * */
 export async function getConversations() {
   const response = await apiClient.get('/conversations');
+
   return response.data;
 }
 
@@ -12,7 +24,10 @@ export async function getConversations() {
  * 특정 대화 메시지 조회
  * */
 export async function getMessages(conversationId) {
-  const response = await apiClient.get(`/conversations/${conversationId}/messages`);
+  const response = await apiClient.get(
+    `/conversations/${conversationId}/messages`
+  );
+
   return response.data;
 }
 
@@ -21,5 +36,6 @@ export async function getMessages(conversationId) {
  * */
 export async function sendMessage(request) {
   const response = await apiClient.post('/chat', request);
+
   return response.data;
 }
