@@ -59,4 +59,15 @@ public class ConversationController {
                 queryService.findAll(user.getUserId())
         );
     }
+
+    @DeleteMapping("/{conversationId}")
+    public ApiResponse<Void> delete(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @PathVariable Long conversationId
+    ) {
+
+        commandService.delete(user.getUserId(), conversationId);
+
+        return ApiResponse.success(null);
+    }
 }

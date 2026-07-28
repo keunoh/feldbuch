@@ -1,7 +1,10 @@
 package io.github.kaltz.feldbuch.conversation.service;
 
+import io.github.kaltz.feldbuch.common.exception.CustomException;
+import io.github.kaltz.feldbuch.common.exception.ErrorCode;
 import io.github.kaltz.feldbuch.conversation.dto.request.CreateConversationRequest;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
+import io.github.kaltz.feldbuch.conversation.repository.ConversationMessageRepository;
 import io.github.kaltz.feldbuch.conversation.repository.ConversationRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.reader.UserReader;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ConversationCommandService {
 
     private final ConversationRepository repository;
+    private final ConversationMessageRepository messageRepository;
     private final UserReader userReader;
 
     public Long create(Long userId, CreateConversationRequest request) {
@@ -26,5 +30,15 @@ public class ConversationCommandService {
         repository.save(conversation);
 
         return conversation.getId();
+    }
+
+    public void delete(Long userId, Long conversationId) {
+
+        Conversation conversation = repository.findByIdAndUserId(conversationId, userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CONVERSATION_NOT_FOUND));
+
+        messageRepository.deleteAllByConversationId(conversationId);
+
+        repository.delete(conversation);
     }
 }

@@ -1,0 +1,7 @@
+$kind: http-request
+name: Delete Conversation
+url: "{{baseUrl}}/api/conversations/{{conversationId}}"
+method: DELETE
+pathVariables:
+  conversationId: "1"
+order: 1233132867031300

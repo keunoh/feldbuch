@@ -12,6 +12,8 @@ public interface ConversationMessageRepository extends JpaRepository<Conversatio
 
     List<ConversationMessage> findAllByConversationIdOrderBySequenceAsc(Long conversationId);
 
+    void deleteAllByConversationId(Long conversationId);
+
     default int nextSequence(Long conversationId) {
         return findTopByConversationIdOrderBySequenceDesc(conversationId)
                 .map(message -> message.getSequence() + 1)
