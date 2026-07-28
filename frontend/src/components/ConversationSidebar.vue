@@ -13,13 +13,23 @@ defineProps({
   creating: {
     type: Boolean,
     default: false
+  },
+
+  deletingConversationId: {
+    type: Number,
+    default: null
   }
 });
 
 const emit = defineEmits([
   'select',
   'create',
+  'delete'
 ]);
+
+function deleteConversation(conversationId) {
+  emit('delete', conversationId);
+}
 </script>
 
 <template>
@@ -41,6 +51,7 @@ const emit = defineEmits([
       <li
         v-for="conversation in conversations"
         :key="conversation.id"
+        class="conversation-item"
       >
         <button
           type="button"
@@ -51,6 +62,20 @@ const emit = defineEmits([
           @click="emit('select', conversation.id)"
         >
           {{ conversation.title }}
+        </button>
+
+        <button
+          type="button"
+          class="delete-button"
+          :disabled="deletingConversationId === conversation.id"
+          aria-label="대화 삭제"
+          @click.stop="deleteConversation(conversation.id)"
+        >
+          {{
+            deletingConversationId === conversation.id
+              ? '...'
+              : 'x'
+          }}
         </button>
       </li>
     </ul>
@@ -108,8 +133,15 @@ const emit = defineEmits([
   list-style: none;
 }
 
+.conversation-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .conversation-button {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 10px 12px;
   border: none;
   border-radius: 8px;
@@ -130,5 +162,28 @@ const emit = defineEmits([
   background: #dbeafe;
   color: #1d4ed8;
   font-weight: 600;
+}
+
+.delete-button {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #9ca3af;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.delete-button:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.delete-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 </style>

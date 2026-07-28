@@ -12,6 +12,17 @@ export async function getConversation(conversationId) {
 }
 
 /**
+ * 특정 대화 삭제
+ * */
+export async function deleteConversation(conversationId) {
+  const response = await apiClient.delete(
+    `/conversations/${conversationId}`
+  );
+
+  return response.data;
+}
+
+/**
  * 대화 목록 조회
  * */
 export async function getConversations() {

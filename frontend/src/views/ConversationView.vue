@@ -4,6 +4,7 @@ import {useRouter} from "vue-router";
 
 import {
   createConversation,
+  deleteConversation,
   getConversation,
   getConversations,
   sendMessage as sendChatMessage
@@ -25,6 +26,7 @@ const messages = ref([]);
 const messageContainer = ref(null);
 
 const creatingConversation = ref(false);
+const deletingConversationId = ref(null);
 const sendingMessage = ref(false);
 
 async function scrollToBottom() {
@@ -84,7 +86,7 @@ async function createNewConversation() {
     return;
   }
 
-  createConversation.value = true;
+  creatingConversation.value = true;
 
   try {
     const response = await createConversation('새 대화');
@@ -99,6 +101,55 @@ async function createNewConversation() {
     console.error(error);
   } finally {
     creatingConversation.value = false;
+  }
+}
+
+async function removeConversation(conversationId) {
+  if (deletingConversationId.value !== null) {
+    return;
+  }
+
+  const targetConversation = conversations.value.find(
+    conversation => conversation.id === conversationId
+  );
+
+  const confirmed = window.confirm(
+    `"${targetConversation?.title ?? '이 대화'}"를 삭제하시겠습니까?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  deletingConversationId.value = conversationId;
+
+  try {
+    await deleteConversation(conversationId);
+
+    conversations.value = conversations.value.filter(
+      conversation => conversation.id !== conversationId
+    );
+
+    const deletedSelectedConversation
+      = selectedConversationId.value === conversationId;
+
+    if (!deletedSelectedConversation) {
+      return;
+    }
+
+    conversation.value = null;
+    messages.value = [];
+    selectedConversationId.value = null;
+
+    const nextConversation = conversations.value[0];
+
+    if (nextConversation) {
+      await selectConversation(nextConversation.id);
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    deletingConversationId.value = null;
   }
 }
 
@@ -175,8 +226,10 @@ onMounted(async () => {
       :conversations="conversations"
       :selected-conversation-id="selectedConversationId"
       :creating="creatingConversation"
+      :deleting-conversation-id="deletingConversationId"
       @select="selectConversation"
       @create="createNewConversation"
+      @delete="removeConversation"
     />
 
     <main class="chat-area">
