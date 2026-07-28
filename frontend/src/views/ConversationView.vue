@@ -25,6 +25,7 @@ const messages = ref([]);
 const messageContainer = ref(null);
 
 const creatingConversation = ref(false);
+const sendingMessage = ref(false);
 
 async function scrollToBottom() {
   await nextTick();
@@ -117,6 +118,14 @@ async function sendMessage(content) {
     return;
   }
 
+  if (sendingMessage.value) {
+    return;
+  }
+
+  sendingMessage.value = true;
+
+  await scrollToBottom();
+
   try {
     // 백엔드 API 호출
     await sendChatMessage(
@@ -131,6 +140,10 @@ async function sendMessage(content) {
     await scrollToBottom();
   } catch (error) {
     console.log(error);
+  } finally {
+    sendingMessage.value = false;
+
+    await scrollToBottom();
   }
 }
 
@@ -190,10 +203,12 @@ onMounted(async () => {
       >
         <MessageList
           :messages="messages"
+          :loading="sendingMessage"
         />
       </div>
 
       <ChatInput
+        :loading="sendingMessage"
         @send="sendMessage"
       />
     </main>
