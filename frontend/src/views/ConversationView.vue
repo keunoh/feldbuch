@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, ref} from 'vue'
+import {computed, nextTick, onMounted, ref} from 'vue'
 import {useRouter} from "vue-router";
 
 import {
@@ -22,8 +22,21 @@ const conversation = ref(null);
 const conversations = ref([]);
 const selectedConversationId = ref(null);
 const messages = ref([]);
+const messageContainer = ref(null);
 
 const creatingConversation = ref(false);
+
+async function scrollToBottom() {
+  await nextTick();
+
+  const container = messageContainer.value;
+
+  if (!container) {
+    return;
+  }
+
+  container.scrollTop = container.scrollHeight;
+}
 
 const selectedConversation = computed(() => {
   return conversations.value.find(
@@ -56,6 +69,7 @@ async function selectConversation(conversationId) {
   try {
     await loadConversation(conversationId);
 
+    await scrollToBottom();
   } catch (error) {
     console.log(error);
 
@@ -113,6 +127,8 @@ async function sendMessage(content) {
     await loadConversation(
       selectedConversationId.value
     );
+
+    await scrollToBottom();
   } catch (error) {
     console.log(error);
   }
@@ -168,7 +184,10 @@ onMounted(async () => {
         </button>
       </header>
 
-      <div class="messages">
+      <div
+        ref="messageContainer"
+        class="messages"
+      >
         <MessageList
           :messages="messages"
         />
