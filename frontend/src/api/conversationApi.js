@@ -21,6 +21,19 @@ export async function getConversations() {
 }
 
 /**
+ * 새 대화 생성
+ * */
+export async function createConversation(title = '새 대화') {
+  const response = await apiClient.post(
+    `/conversations`, {
+      title
+    }
+  );
+
+  return response.data;
+}
+
+/**
  * 특정 대화 메시지 조회
  * */
 export async function getMessages(conversationId) {

@@ -3,6 +3,7 @@ import {computed, onMounted, ref} from 'vue'
 import {useRouter} from "vue-router";
 
 import {
+  createConversation,
   getConversation,
   getConversations,
   sendMessage as sendChatMessage
@@ -22,12 +23,20 @@ const conversations = ref([]);
 const selectedConversationId = ref(null);
 const messages = ref([]);
 
+const creatingConversation = ref(false);
+
 const selectedConversation = computed(() => {
   return conversations.value.find(
     conversation =>
       conversation.id === selectedConversationId.value
   );
 })
+
+async function loadConversations() {
+  const response = await getConversations();
+
+  conversations.value = response.data;
+}
 
 async function loadConversation(conversationId) {
   const response = await getConversation(conversationId);
@@ -52,6 +61,29 @@ async function selectConversation(conversationId) {
 
     conversation.value = null;
     messages.value = [];
+  }
+}
+
+async function createNewConversation() {
+  if (creatingConversation.value) {
+    return;
+  }
+
+  createConversation.value = true;
+
+  try {
+    const response = await createConversation('새 대화');
+
+    const createdConversationId = response.data;
+
+    await loadConversations();
+
+    // 생성한 대화를 자동으로 선택한다.
+    await selectConversation(createdConversationId);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    creatingConversation.value = false;
   }
 }
 
@@ -93,14 +125,12 @@ function logoutUser() {
 
 onMounted(async () => {
   try {
-    const response = await getConversations();
-
-    conversations.value = response.data;
+    await loadConversations();
 
     if (conversations.value.length > 0) {
-      const firstConversationId = conversations.value[0].id;
-
-      await selectConversation(firstConversationId)
+      await selectConversation(
+        conversations.value[0].id
+      );
     }
   } catch (error) {
     console.error(error);
@@ -115,7 +145,9 @@ onMounted(async () => {
     <ConversationSidebar
       :conversations="conversations"
       :selected-conversation-id="selectedConversationId"
+      :creating="creatingConversation"
       @select="selectConversation"
+      @create="createNewConversation"
     />
 
     <main class="chat-area">
@@ -128,7 +160,10 @@ onMounted(async () => {
           }}
         </h1>
 
-        <button @click="logoutUser">
+        <button
+          class="logout-button"
+          @click="logoutUser"
+        >
           로그아웃
         </button>
       </header>

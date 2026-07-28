@@ -4,26 +4,47 @@ defineProps({
     type: Array,
     required: true
   },
+
   selectedConversationId: {
     type: Number,
     default: null
+  },
+
+  creating: {
+    type: Boolean,
+    default: false
   }
 });
 
-const emit = defineEmits(['select']);
+const emit = defineEmits([
+  'select',
+  'create',
+]);
 </script>
 
 <template>
   <aside class="conversation-sidebar">
-    <h2>대화 목록</h2>
+    <div class="sidebar-header">
+      <h2>대화 목록</h2>
 
-    <ul>
+      <button
+        type="button"
+        class="create-button"
+        :disabled="creating"
+        @click="emit('create')"
+      >
+        {{ creating ? '생성 중...' : '+ 새 학습 시작' }}
+      </button>
+    </div>
+
+    <ul class="conversation-list">
       <li
         v-for="conversation in conversations"
         :key="conversation.id"
       >
         <button
           type="button"
+          class="conversation-button"
           :class="{
             selected: conversation.id === selectedConversationId
           }"
@@ -37,21 +58,77 @@ const emit = defineEmits(['select']);
 </template>
 
 <style scoped>
-ul {
+.conversation-sidebar {
+  width: 240px;
+  min-width: 240px;
+  height: 100vh;
+  padding: 20px;
+  border-right: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  margin-bottom: 20px;
+}
+
+.sidebar-header h2 {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.create-button {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.create-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.create-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.conversation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-button {
-  padding: 8px 0;
+.conversation-button {
+  width: 100%;
+  padding: 10px 12px;
   border: none;
+  border-radius: 8px;
   background: none;
+  color: #374151;
   cursor: pointer;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-button.selected {
-  font-weight: bold;
-  text-decoration: underline;
+.conversation-button:hover {
+  background: #f3f4f6;
+}
+
+.conversation-button.selected {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
 }
 </style>
