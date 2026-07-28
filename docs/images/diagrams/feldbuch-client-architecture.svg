@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 780" role="img" aria-labelledby="title desc">
   <title id="title">Feldbuch Client Architecture Diagram</title>
-  <desc id="desc">Vue client architecture with Vue Router, router guard, views, components, Axios API client, interceptors, localStorage, and Spring Boot API.</desc>
+  <desc id="desc">Vue client architecture with Vue Router, router guard, views, create/delete conversation UI, Markdown message rendering, Axios API client, interceptors, localStorage, and Spring Boot API.</desc>
   <defs>
     <style>
       .title { font: 700 30px Arial, Helvetica, sans-serif; fill: #111827; }
@@ -71,15 +71,15 @@
 
   <rect x="104" y="520" width="206" height="70" rx="12" class="component"/>
   <text x="207" y="550" text-anchor="middle" class="label">ConversationSidebar</text>
-  <text x="207" y="572" text-anchor="middle" class="small">conversation list / selection</text>
+  <text x="207" y="572" text-anchor="middle" class="small">list / select / create / delete</text>
 
   <rect x="358" y="520" width="174" height="70" rx="12" class="component"/>
   <text x="445" y="550" text-anchor="middle" class="label">MessageList</text>
-  <text x="445" y="572" text-anchor="middle" class="small">USER / ASSISTANT bubbles</text>
+  <text x="445" y="572" text-anchor="middle" class="small">Markdown / sanitize / loading</text>
 
   <rect x="580" y="520" width="174" height="70" rx="12" class="component"/>
   <text x="667" y="550" text-anchor="middle" class="label">ChatInput</text>
-  <text x="667" y="572" text-anchor="middle" class="small">send event</text>
+  <text x="667" y="572" text-anchor="middle" class="small">send event / disabled state</text>
 
   <rect x="802" y="520" width="206" height="70" rx="12" class="component"/>
   <text x="905" y="550" text-anchor="middle" class="label">StudyInfoPanel</text>
@@ -100,7 +100,7 @@
 
   <rect x="1008" y="306" width="176" height="76" rx="12" class="component"/>
   <text x="1096" y="334" text-anchor="middle" class="label">conversationApi</text>
-  <text x="1096" y="356" text-anchor="middle" class="small">list / detail / chat</text>
+  <text x="1096" y="356" text-anchor="middle" class="small">list / detail / create / delete / chat</text>
 
   <rect x="1008" y="410" width="176" height="66" rx="12" class="api"/>
   <text x="1096" y="438" text-anchor="middle" class="label">apiClient</text>

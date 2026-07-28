@@ -26,6 +26,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 비동기 AI 처리
 - AI Job 생성 및 상태 조회
 - Conversation 생성, 목록 조회, 단건 조회
+- Conversation 삭제
 - Conversation Message 저장 및 조회
 - Conversation 컨텍스트 기반 AI 채팅
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
@@ -34,6 +35,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Axios API client, Request/Response Interceptor
 - Vue Router Guard 기반 인증 라우팅
 - Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
+- 새 대화 생성/삭제 UI와 중복 요청 방지 상태
+- AI 응답 Markdown 렌더링 및 DOMPurify sanitize 처리
+- 메시지 전송 중 로딩 표시와 자동 스크롤
 - Redis, Spring Batch 기반 확장 구성
 
 ### 프로젝트 구조
@@ -95,7 +99,7 @@ frontend
 | AI | OpenAI REST API |
 | Infra | Docker, Redis |
 | Batch | Spring Batch |
-| View | Thymeleaf, Static CSS/JS, Vue 3, Vite, Vue Router, Axios |
+| View | Thymeleaf, Static CSS/JS, Vue 3, Vite, Vue Router, Axios, marked, DOMPurify |
 | Test | JUnit5, MockMvc |
 
 ### 기술 로고
@@ -108,9 +112,9 @@ frontend
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 인증/인가 | 토큰 인증 | ORM | 동적 검색 | 캐시/임시 저장소 | 요약 배치 파이프라인 | 테스트 DB | OpenAI API 호출 |
 
-| Vue.js | Vite | Vue Router | Axios | Thymeleaf |
-| --- | --- | --- | --- | --- |
-| <img src="./images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | HTTP client / interceptor | 비교용 서버 렌더링 화면 |
+| Vue.js | Vite | Vue Router | Axios | marked | DOMPurify | Thymeleaf |
+| --- | --- | --- | --- | --- | --- | --- |
+| <img src="./images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | HTTP client / interceptor | Markdown 렌더링 | HTML sanitize | 비교용 서버 렌더링 화면 |
 
 ---
 
@@ -172,6 +176,7 @@ flowchart LR
 - AI Job Entity, Reader, Service, Controller
 - AI Job 상태 조회 API
 - Conversation Entity, Controller, Command/Query Service
+- Conversation 삭제 API
 - ConversationMessage Entity, Controller, Command/Query Service
 - Conversation별 메시지 순서 저장
 - 대화 내역을 OpenAI Chat Completion 메시지 컨텍스트로 변환
@@ -182,6 +187,13 @@ flowchart LR
 - Vue 로그인 화면: `LoginView`
 - Vue 대화 화면: `ConversationView`
 - Vue 컴포넌트: `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`
+- 새 대화 생성 UI
+- 대화 삭제 UI
+- 대화 생성/삭제/메시지 전송 중복 요청 방지 상태
+- 메시지 전송 중 AI 응답 작성 로딩 표시
+- 메시지 목록 자동 스크롤
+- AI 응답 Markdown 렌더링
+- DOMPurify 기반 렌더링 HTML sanitize
 - Axios 공통 API client
 - Axios Request Interceptor 기반 JWT Authorization 헤더 자동 주입
 - Axios Response Interceptor 기반 401 감지, 로그아웃, 로그인 화면 이동
@@ -215,8 +227,14 @@ flowchart LR
 - `router.beforeEach`로 인증이 필요한 `/conversations` 접근 전 토큰 존재 여부 확인
 - 로그아웃 버튼에서 클라이언트 저장 토큰을 삭제하고 로그인 화면으로 이동
 - `ConversationView`에서 대화 목록 조회, 첫 대화 자동 선택, 단건 대화 상세 조회, 메시지 전송 후 상세 재조회 흐름 구성
-- `ConversationSidebar`에서 대화 목록과 선택 상태 렌더링
+- `ConversationView`에서 새 대화 생성 후 목록을 재조회하고 생성한 대화를 자동 선택
+- `ConversationView`에서 대화 삭제 전 확인창을 띄우고, 삭제한 대화가 선택 상태이면 다음 대화를 자동 선택
+- `ConversationView`에서 `creatingConversation`, `deletingConversationId`, `sendingMessage`로 중복 요청 방지
+- `ConversationView`에서 `nextTick` 이후 메시지 컨테이너를 하단으로 자동 스크롤
+- `ConversationSidebar`에서 대화 목록, 선택 상태, 생성 버튼, 삭제 버튼 렌더링
 - `MessageList`에서 `USER`, `ASSISTANT` 메시지 버블 렌더링
+- `MessageList`에서 `marked`와 `DOMPurify`로 AI 응답 Markdown을 안전하게 렌더링
+- `ChatInput`에서 메시지 전송 중 입력과 버튼 비활성화
 - `StudyInfoPanel`에서 대화 제목, 상태, 메시지 수, 생성일 표시
 - `ConversationDetailResponse`에 대화 메타데이터, 메시지 목록, 메시지 수 포함
 - Spring Security CORS 설정으로 Vite 개발 서버 `http://localhost:5173` 허용
@@ -347,10 +365,10 @@ flowchart TD
 - `App.vue`: `RouterView`를 렌더링하는 Vue 앱 루트
 - `router/index.js`: `/login`, `/conversations` 라우트와 인증 Guard 관리
 - `LoginView.vue`: 로그인 폼, 로그인 API 호출, 토큰 저장, 대화 화면 이동
-- `ConversationView.vue`: 대화 화면 컨테이너, 대화 목록/선택 대화/메시지 상태 관리
-- `ConversationSidebar.vue`: 대화 목록과 현재 선택 상태 렌더링
-- `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링
-- `ChatInput.vue`: 사용자 입력을 `send` 이벤트로 상위 컴포넌트에 전달
+- `ConversationView.vue`: 대화 화면 컨테이너, 대화 목록/선택 대화/메시지/요청 중 상태 관리
+- `ConversationSidebar.vue`: 대화 목록, 현재 선택 상태, 새 대화 생성 버튼, 대화 삭제 버튼 렌더링
+- `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링, AI 응답 Markdown 렌더링, 로딩 메시지 표시
+- `ChatInput.vue`: 사용자 입력을 `send` 이벤트로 상위 컴포넌트에 전달하고 전송 중 입력을 비활성화
 - `StudyInfoPanel.vue`: 선택한 대화의 학습 주제, 상태, 메시지 수, 생성일 표시
 - `apiClient.js`: Axios instance, baseURL, Request/Response Interceptor 관리
 - `authApi.js`, `conversationApi.js`: 도메인별 API 호출 함수 제공
@@ -374,12 +392,48 @@ conversation / messages 상태 갱신
 Sidebar / MessageList / StudyInfoPanel 렌더링
 ```
 
+새 대화 생성 흐름:
+
+```text
+ConversationSidebar create event
+  ↓
+ConversationView.createNewConversation()
+  ↓
+creatingConversation = true
+  ↓
+POST /api/conversations
+  ↓
+getConversations()
+  ↓
+생성된 conversationId 자동 선택
+  ↓
+creatingConversation = false
+```
+
+대화 삭제 흐름:
+
+```text
+ConversationSidebar delete event
+  ↓
+window.confirm()
+  ↓
+deletingConversationId 설정
+  ↓
+DELETE /api/conversations/{conversationId}
+  ↓
+목록에서 제거
+  ↓
+삭제한 대화가 선택 상태이면 다음 대화 자동 선택
+```
+
 메시지 전송 흐름:
 
 ```text
 ChatInput send event
   ↓
 ConversationView.sendMessage(content)
+  ↓
+sendingMessage = true
   ↓
 conversationApi.sendMessage(conversationId, message)
   ↓
@@ -390,6 +444,8 @@ AI 응답 저장 후 반환
 getConversation(conversationId) 재조회
   ↓
 메시지 목록과 제목 최신화
+  ↓
+메시지 컨테이너 하단으로 자동 스크롤
 ```
 
 ### 통신 방식
@@ -424,6 +480,8 @@ Repository / OpenAI
 - Vue Router Guard는 `meta.requiresAuth`가 있는 라우트에 진입하기 전에 토큰 존재 여부를 확인합니다.
 - 대화 목록은 `GET /api/conversations`로 조회합니다.
 - 대화 상세는 `GET /api/conversations/{conversationId}`로 조회하며, `ConversationDetailResponse`가 대화 정보와 메시지 목록, 메시지 수를 함께 반환합니다.
+- 새 대화는 `POST /api/conversations`로 생성하고, 응답으로 생성된 `conversationId`를 받습니다.
+- 대화 삭제는 `DELETE /api/conversations/{conversationId}`로 처리하며, 백엔드는 해당 대화의 메시지를 먼저 삭제한 뒤 대화를 삭제합니다.
 - 메시지 전송은 `POST /api/conversations/{conversationId}/chat`로 처리하고, 전송 후 상세를 재조회해 사용자 메시지, AI 응답, 자동 생성 제목을 한 번에 최신화합니다.
 - 백엔드는 `JwtAuthenticationEntryPoint`로 미인증 요청에 401을 반환합니다.
 - 백엔드는 Vite 개발 서버인 `http://localhost:5173` origin을 CORS로 허용합니다.
@@ -615,7 +673,7 @@ COMPLETED
 
 ### Conversation 도메인
 
-Conversation은 사용자별 AI 대화 세션을 저장하기 위한 도메인입니다. 현재 구현 범위는 대화 생성, 목록 조회, 단건 조회, 메시지 저장/조회, 대화 컨텍스트 기반 AI 채팅입니다.
+Conversation은 사용자별 AI 대화 세션을 저장하기 위한 도메인입니다. 현재 구현 범위는 대화 생성, 목록 조회, 단건 조회, 삭제, 메시지 저장/조회, 대화 컨텍스트 기반 AI 채팅입니다.
 
 ```text
 ConversationController
@@ -626,6 +684,8 @@ ConversationReader
   ↓
 ConversationRepository
 ```
+
+대화 삭제는 사용자 소유권을 `findByIdAndUserId`로 확인한 뒤 `ConversationMessageRepository.deleteAllByConversationId`로 메시지를 먼저 삭제하고, 마지막에 Conversation을 삭제합니다.
 
 Conversation 메시지는 별도 엔티티로 저장합니다.
 
@@ -804,7 +864,8 @@ Job 상태 업데이트
 ### Frontend
 
 - Vue 대화 목록/메시지 화면 상태 관리 정리
-- Vue 대화 생성/수정/삭제 UI 정리
+- Vue 대화 제목 수정 UI 정리
+- Vue 삭제 확인 UX 개선
 - Thymeleaf 화면과 Vue 화면 기능 비교
 - Vite 개발 서버와 Spring Boot API 서버 연동 방식 정리
 
