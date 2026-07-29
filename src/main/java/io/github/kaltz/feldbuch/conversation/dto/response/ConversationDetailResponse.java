@@ -10,6 +10,7 @@ public record ConversationDetailResponse(
         String title,
         String status,
         LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         List<ConversationMessageResponse> messages,
         Long messageCount
 ) {
@@ -23,6 +24,7 @@ public record ConversationDetailResponse(
                 conversation.getTitle(),
                 conversation.getStatus().name(),
                 conversation.getCreatedAt(),
+                conversation.getUpdatedAt(),
                 messages,
                 (long) messages.size()
         );
