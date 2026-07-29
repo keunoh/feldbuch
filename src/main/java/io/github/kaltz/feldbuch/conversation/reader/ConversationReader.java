@@ -23,6 +23,6 @@ public class ConversationReader {
     }
 
     public List<Conversation> findAll(Long userId) {
-        return repository.findAllByUserIdOrderByCreatedAtDesc(userId);
+        return repository.findAllByUserIdOrderByUpdatedAtDesc(userId);
     }
 }

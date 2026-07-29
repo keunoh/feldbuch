@@ -52,6 +52,7 @@ dependencies {
     annotationProcessor("com.querydsl:querydsl-apt:5.1.0:jakarta")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
+    implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.11.0")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.7")

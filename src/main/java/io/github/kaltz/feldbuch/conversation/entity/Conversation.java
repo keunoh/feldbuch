@@ -61,4 +61,8 @@ public class Conversation extends BaseEntity {
     public boolean hasDefaultTitle() {
         return DEFAULT_TITLE.equals(title);
     }
+
+    public void touch() {
+        super.touch();
+    }
 }

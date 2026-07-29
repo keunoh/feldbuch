@@ -1,5 +1,4 @@
 spring:
-
   application:
     name: feldbuch
 
@@ -10,23 +9,38 @@ spring:
     hibernate:
       ddl-auto: update
 
-    show-sql: true
+    show-sql: false
 
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
 openai:
   base-url: https://api.openai.com/v1
   model: gpt-4.1-nano
 
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+      multiline: true
+      logging: slf4j
+
 logging:
   level:
     root: INFO
+
     org.springframework: INFO
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
+
+    # Hibernate SQL 로그는 P6Spy와 중복되므르 끈다.
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+
+    # Feldbuch 애플리케이션 로그
     io.github.kaltz.feldbuch: DEBUG
+
+    # P6Spy SQL 로그
+    p6spy: INFO
 

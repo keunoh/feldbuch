@@ -6,16 +6,19 @@ import io.github.kaltz.feldbuch.conversation.entity.ConversationRole;
 import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
 import io.github.kaltz.feldbuch.conversation.repository.ConversationMessageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class ConversationMessageCommandService {
 
-    private final ConversationReader conversationReader;
+    private static final String ACTIVITY_LOG = "[CONVERSATION_ACTIVITY]";
 
+    private final ConversationReader conversationReader;
     private final ConversationMessageRepository repository;
 
     public Long createUserMessage(Long userId, Long conversationId, String content) {
@@ -54,6 +57,17 @@ public class ConversationMessageCommandService {
                 );
 
         repository.save(message);
+
+        conversation.touch();
+
+        log.debug(
+                "{} conversationId={} userId={} role={} sequence={}",
+                ACTIVITY_LOG,
+                conversationId,
+                userId,
+                role,
+                sequence
+        );
 
         return message.getId();
     }
