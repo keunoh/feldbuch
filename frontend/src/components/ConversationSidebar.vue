@@ -1,4 +1,6 @@
 <script setup>
+import {nextTick, ref} from "vue";
+
 defineProps({
   conversations: {
     type: Array,
@@ -18,18 +20,75 @@ defineProps({
   deletingConversationId: {
     type: Number,
     default: null
+  },
+
+  updatingConversationId: {
+    type: Number,
+    default: null
   }
 });
 
 const emit = defineEmits([
   'select',
   'create',
-  'delete'
+  'delete',
+  'update-title'
 ]);
 
-function deleteConversation(conversationId) {
-  emit('delete', conversationId);
+// 현재 어떤 대화를 수정하고 있는지 저장
+const editingConversationId = ref(null);
+// 입력창에 작성 중인 제목 저장
+const editingTitle = ref('');
+const titleInput = ref(null);
+
+function setTitleInput(element) {
+  titleInput.value = element;
 }
+
+async function startEditing(conversation) {
+  if (editingConversationId.value !== null) {
+    return;
+  }
+
+  editingConversationId.value = conversation.id;
+  editingTitle.value = conversation.title;
+
+  await nextTick();
+
+  titleInput.value?.focus();
+  titleInput.value?.select();
+}
+
+function cancelEditing() {
+  editingConversationId.value = null;
+  editingTitle.value = '';
+}
+
+function submitEditing(conversation) {
+  const title = editingTitle.value.trim();
+
+  if (!title) {
+    cancelEditing();
+    return;
+  }
+
+  if (title === conversation.title) {
+    cancelEditing();
+    return;
+  }
+
+  emit('update-title', {
+    conversationId: conversation.id,
+    title
+  });
+
+  cancelEditing();
+}
+
+function handleBlur(conversation) {
+  submitEditing(conversation);
+}
+
 </script>
 
 <template>
@@ -53,13 +112,29 @@ function deleteConversation(conversationId) {
         :key="conversation.id"
         class="conversation-item"
       >
+        <input
+          v-if="editingConversationId === conversation.id"
+          :ref="setTitleInput"
+          v-model="editingTitle"
+          type="text"
+          maxlength="100"
+          class="conversation-title-input"
+          :disabled="updatingConversationId === conversation.id"
+          @keydown.enter.prevent="submitEditing(conversation)"
+          @keydown.esc.prevent="cancelEditing"
+          @blur="handleBlur(conversation)"
+        />
+
         <button
+          v-else
           type="button"
           class="conversation-button"
           :class="{
             selected: conversation.id === selectedConversationId
           }"
+          title="더블클릭하여 제목 수정"
           @click="emit('select', conversation.id)"
+          @dblclick="startEditing(conversation)"
         >
           {{ conversation.title }}
         </button>
@@ -67,9 +142,12 @@ function deleteConversation(conversationId) {
         <button
           type="button"
           class="delete-button"
-          :disabled="deletingConversationId === conversation.id"
+          :disabled="
+           deletingConversationId === conversation.id
+           || updatingConversationId === conversation.id
+          "
           aria-label="대화 삭제"
-          @click.stop="deleteConversation(conversation.id)"
+          @click.stop="emit('delete', conversation.id)"
         >
           {{
             deletingConversationId === conversation.id
@@ -162,6 +240,27 @@ function deleteConversation(conversationId) {
   background: #dbeafe;
   color: #1d4ed8;
   font-weight: 600;
+}
+
+.conversation-title-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  outline: none;
+  color: #111827;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.conversation-title-input:focus {
+  box-shadow: 0 0 0 2px #dbeafe;
+}
+
+.conversation-title-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .delete-button {

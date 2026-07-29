@@ -7,7 +7,8 @@ import {
   deleteConversation,
   getConversation,
   getConversations,
-  sendMessage as sendChatMessage
+  sendMessage as sendChatMessage,
+  updateConversationTitle
 } from "@/api/conversationApi.js";
 
 import {logout} from "@/utils/auth.js";
@@ -27,6 +28,7 @@ const messageContainer = ref(null);
 
 const creatingConversation = ref(false);
 const deletingConversationId = ref(null);
+const updatingConversationId = ref(null);
 const sendingMessage = ref(false);
 
 async function scrollToBottom() {
@@ -60,7 +62,7 @@ async function loadConversation(conversationId) {
   conversation.value = response.data;
   messages.value = response.data.messages;
 
-  updateConversationTitle(
+  updateConversationTitleInState(
     response.data.id,
     response.data.title
   );
@@ -153,13 +155,37 @@ async function removeConversation(conversationId) {
   }
 }
 
-function updateConversationTitle(conversationId, title) {
+function updateConversationTitleInState(conversationId, title) {
   const targetConversation = conversations.value.find(
     conversation => conversation.id === conversationId
   );
 
   if (targetConversation) {
     targetConversation.title = title;
+  }
+
+  if (conversation.value?.id === conversationId) {
+    conversation.value.title = title;
+  }
+}
+
+async function renameConversation({conversationId, title}) {
+  if (updatingConversationId.value !== null) {
+    return;
+  }
+
+  updatingConversationId.value = conversationId;
+
+  try {
+    // API 호출
+    await updateConversationTitle(conversationId, title);
+
+    // 화면 상태 변경
+    updateConversationTitleInState(conversationId, title);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    updatingConversationId.value = null;
   }
 }
 
@@ -227,9 +253,11 @@ onMounted(async () => {
       :selected-conversation-id="selectedConversationId"
       :creating="creatingConversation"
       :deleting-conversation-id="deletingConversationId"
+      :updating-conversation-id="updatingConversationId"
       @select="selectConversation"
       @create="createNewConversation"
       @delete="removeConversation"
+      @update-title="renameConversation"
     />
 
     <main class="chat-area">

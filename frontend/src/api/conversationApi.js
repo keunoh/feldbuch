@@ -66,3 +66,17 @@ export async function sendMessage(conversationId, message) {
 
   return response.data;
 }
+
+/**
+ * 특정 대화 제목 수정
+ * */
+export async function updateConversationTitle(conversationId, title) {
+  const response = await apiClient.patch(
+    `/conversations/${conversationId}`,
+    {
+      title
+    }
+  );
+
+  return response.data;
+}
