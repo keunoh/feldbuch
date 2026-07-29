@@ -27,14 +27,18 @@ decorator:
       logging: slf4j
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p ${PID:-} --- [%15.15t] [%X{requestId:-NO_REQUEST}] %-40.40logger{39} : %m%n"
   level:
     root: INFO
+
+    org.springframework.web.client.DefaultRestClient: INFO
 
     org.springframework: INFO
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
 
-    # Hibernate SQL 로그는 P6Spy와 중복되므르 끈다.
+    # Hibernate SQL 로그는 P6Spy와 중복되므로 끈다.
     org.hibernate.SQL: OFF
     org.hibernate.orm.jdbc.bind: OFF
 
