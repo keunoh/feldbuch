@@ -3,6 +3,7 @@ package io.github.kaltz.feldbuch.conversation.controller;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
 import io.github.kaltz.feldbuch.common.response.ApiResponse;
 import io.github.kaltz.feldbuch.conversation.dto.request.CreateConversationRequest;
+import io.github.kaltz.feldbuch.conversation.dto.request.UpdateConversationRequest;
 import io.github.kaltz.feldbuch.conversation.dto.response.ConversationDetailResponse;
 import io.github.kaltz.feldbuch.conversation.dto.response.ConversationResponse;
 import io.github.kaltz.feldbuch.conversation.service.ConversationCommandService;
@@ -67,6 +68,22 @@ public class ConversationController {
     ) {
 
         commandService.delete(user.getUserId(), conversationId);
+
+        return ApiResponse.success(null);
+    }
+
+    @PatchMapping("/{conversationId}")
+    public ApiResponse<Void> update(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @PathVariable Long conversationId,
+            @Valid @RequestBody UpdateConversationRequest request
+    ) {
+
+        commandService.update(
+                user.getUserId(),
+                conversationId,
+                request
+        );
 
         return ApiResponse.success(null);
     }

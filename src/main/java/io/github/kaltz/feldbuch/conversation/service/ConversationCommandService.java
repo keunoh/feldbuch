@@ -3,6 +3,7 @@ package io.github.kaltz.feldbuch.conversation.service;
 import io.github.kaltz.feldbuch.common.exception.CustomException;
 import io.github.kaltz.feldbuch.common.exception.ErrorCode;
 import io.github.kaltz.feldbuch.conversation.dto.request.CreateConversationRequest;
+import io.github.kaltz.feldbuch.conversation.dto.request.UpdateConversationRequest;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.conversation.repository.ConversationMessageRepository;
 import io.github.kaltz.feldbuch.conversation.repository.ConversationRepository;
@@ -40,5 +41,16 @@ public class ConversationCommandService {
         messageRepository.deleteAllByConversationId(conversationId);
 
         repository.delete(conversation);
+    }
+
+    public void update(Long userId, Long conversationId, UpdateConversationRequest request) {
+
+        Conversation conversation =
+                repository.findByIdAndUserId(conversationId, userId)
+                        .orElseThrow(() ->
+                                new CustomException(ErrorCode.CONVERSATION_NOT_FOUND)
+                        );
+
+        conversation.changeTitle(request.title());
     }
 }

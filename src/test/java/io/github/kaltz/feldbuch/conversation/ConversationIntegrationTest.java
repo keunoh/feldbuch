@@ -1,6 +1,7 @@
 package io.github.kaltz.feldbuch.conversation;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.kaltz.feldbuch.conversation.dto.request.UpdateConversationRequest;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.conversation.entity.ConversationMessage;
 import io.github.kaltz.feldbuch.conversation.entity.ConversationRole;
@@ -194,5 +195,103 @@ class ConversationIntegrationTest extends IntegrationTestSupport {
                 conversationMessageRepository
                         .findAllByConversationIdOrderBySequenceAsc(conversationId)
         ).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("대화 제목을 수정한다")
+    void updateConversationTitle() throws Exception {
+
+        // given
+        String token = authHelper.createAccessToken();
+
+        String request = """
+                {
+                    "title": "새 대화"
+                }
+                """;
+
+        MvcResult result = mockMvc.perform(post("/api/conversations")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+
+        Long conversationId = json.get("data").asLong();
+
+        UpdateConversationRequest updateRequest
+                = new UpdateConversationRequest("Spring Batch 정리");
+
+        // when
+        mockMvc.perform(patch("/api/conversations/{conversationId}", conversationId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        // then
+        Conversation conversation =
+                conversationRepository.findById(conversationId)
+                        .orElseThrow();
+
+        assertThat(conversation.getTitle())
+                .isEqualTo("Spring Batch 정리");
+
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 대화 제목은 수정할 수 없다")
+    void cannotUpdateOtherUsersConversationTitle() throws Exception {
+
+        // given
+        String ownToken = authHelper.createAccessToken();
+        String otherUserToken = authHelper.createAccessToken();
+
+        String request = """
+                {
+                    "title": "소유자의 대화"
+                }
+                """;
+
+        MvcResult result = mockMvc.perform(post("/api/conversations")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ownToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+
+        // 소유자의 대화 아이디
+        Long conversationId = json.get("data").asLong();
+
+        UpdateConversationRequest updateRequest =
+                new UpdateConversationRequest("무단 수정");
+
+        // when
+        mockMvc.perform(patch("/api/conversations/{conversationId}", conversationId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherUserToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("CONV-001"));
+
+        // then
+        Conversation conversation =
+                conversationRepository.findById(conversationId)
+                        .orElseThrow();
+
+        assertThat(conversation.getTitle())
+                .isEqualTo("소유자의 대화");
     }
 }
