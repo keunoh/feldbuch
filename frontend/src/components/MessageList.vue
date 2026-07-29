@@ -90,6 +90,7 @@ function renderMessage(message) {
 
 .message-row {
   display: flex;
+  animation: messageFadeIn 0.22s ease-out;
 }
 
 .user {
@@ -103,7 +104,15 @@ function renderMessage(message) {
 .bubble {
   max-width: 70%;
   padding: 14px 18px;
-  border-radius: 14px;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  transition: transform 0.16s ease,
+  box-shadow 0.16s ease;
+}
+
+.bubble:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.1);
 }
 
 .user .bubble {
@@ -245,6 +254,18 @@ function renderMessage(message) {
 
   40% {
     opacity: 1;
+  }
+}
+
+@keyframes messageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

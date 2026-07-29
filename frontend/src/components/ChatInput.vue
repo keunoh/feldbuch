@@ -50,30 +50,36 @@ function submit() {
       :disabled="loading || !input.trim()"
       @click="submit"
     >
-      {{ loading ? '답변 중...' : '전송' }}
+      {{ loading ? "…" : "➜" }}
     </button>
   </div>
 </template>
 
 <style scoped>
 .chat-input {
+  position: relative;
   display: flex;
-  gap: 10px;
-  padding-top: 16px;
+  align-items: center;
 }
 
 input {
-  flex: 1;
-  min-width: 0;
-  padding: 12px 14px;
+  width: 100%;
+  padding: 14px 56px 14px 16px;
+
   border: 1px solid #d1d5db;
-  border-radius: 10px;
+  border-radius: 16px;
+
   font-size: 15px;
+
+  transition: border-color .15s,
+  box-shadow .15s;
 }
 
 input:focus {
-  outline: none;
+
   border-color: #2563eb;
+
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
 }
 
 input:disabled {
@@ -82,18 +88,35 @@ input:disabled {
 }
 
 button {
-  flex-shrink: 0;
-  padding: 0 20px;
+
+  position: absolute;
+
+  right: 8px;
+
+  width: 40px;
+  height: 40px;
+
   border: none;
-  border-radius: 10px;
+
+  border-radius: 50%;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   background: #2563eb;
+
   color: white;
-  font-weight: 600;
-  cursor: pointer;
+
+  transition: background .15s,
+  transform .15s;
 }
 
 button:hover:not(:disabled) {
-  background: #1d4ed8;
+
+  transform: scale(1.05);
 }
 
 button:disabled {

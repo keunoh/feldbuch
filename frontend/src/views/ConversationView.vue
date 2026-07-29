@@ -215,6 +215,15 @@ async function sendMessage(content) {
     return;
   }
 
+  const conversationId = selectedConversationId.value;
+
+  const optimisticMessage = {
+    id: `temp-${Date.now()}`,
+    role: 'USER',
+    content
+  };
+
+  messages.value.push(optimisticMessage);
   sendingMessage.value = true;
 
   await scrollToBottom();
@@ -237,6 +246,10 @@ async function sendMessage(content) {
     await scrollToBottom();
   } catch (error) {
     console.log(error);
+
+    messages.value = messages.value.filter(
+      message => message.id !== optimisticMessage.id
+    );
   } finally {
     sendingMessage.value = false;
 
