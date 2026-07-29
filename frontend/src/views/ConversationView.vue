@@ -224,12 +224,12 @@ async function sendMessage(content) {
 
     // 백엔드 API 호출
     await sendChatMessage(
-      selectedConversationId.value,
+      conversationId,
       content
     );
 
     await loadConversation(
-      selectedConversationId.value
+      conversationId
     );
 
     moveConversationToTop(conversationId);

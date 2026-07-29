@@ -24,7 +24,7 @@ function submit() {
   }
 
   // 부모로 데이터를 보낸다.
-  emit("send", input.value)
+  emit("send", message);
 
   // 현재 인풋을 초기화 한다.
   input.value = ""
