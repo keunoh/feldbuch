@@ -189,6 +189,22 @@ async function renameConversation({conversationId, title}) {
   }
 }
 
+function moveConversationToTop(conversationId) {
+
+  const index = conversations.value.findIndex(
+    conversation => conversation.id === conversationId
+  );
+
+  if (index <= 0) {
+    return;
+  }
+
+  const conversation =
+    conversations.value.splice(index, 1)[0];
+
+  conversations.value.unshift(conversation);
+}
+
 // ChatInput의 send 이벤트 처리
 async function sendMessage(content) {
   if (!selectedConversationId.value) {
@@ -204,6 +220,8 @@ async function sendMessage(content) {
   await scrollToBottom();
 
   try {
+    const conversationId = selectedConversationId.value;
+
     // 백엔드 API 호출
     await sendChatMessage(
       selectedConversationId.value,
@@ -213,6 +231,8 @@ async function sendMessage(content) {
     await loadConversation(
       selectedConversationId.value
     );
+
+    moveConversationToTop(conversationId);
 
     await scrollToBottom();
   } catch (error) {
