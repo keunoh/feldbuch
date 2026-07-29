@@ -2,6 +2,8 @@
 import {marked} from "marked";
 import DOMPurify from "dompurify";
 
+import {onBeforeUnmount, onMounted} from "vue";
+
 defineProps({
   messages: {
     type: Array,
@@ -14,15 +16,151 @@ defineProps({
   },
 });
 
+function handleCodeCopy(event) {
+
+  const button = event.target.closest(".code-copy-button");
+
+  if (!button) {
+    return;
+  }
+
+  const encoded = button.dataset.code;
+
+  if (!encoded) {
+    return;
+  }
+
+  const code = decodeURIComponent(encoded);
+
+  navigator.clipboard.writeText(code);
+
+  button.textContent = "✓ COPIED";
+
+  button.classList.add("copied");
+
+  setTimeout(() => {
+
+    button.textContent = "COPY";
+
+    button.classList.remove("copied");
+
+  }, 2000);
+
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function createMarkdownRenderer() {
+  const renderer = new marked.Renderer();
+
+  renderer.code = function (tokenOrCode, infostring) {
+    /*
+     * 최신 Marked:
+     * renderer.code({ text, lang })
+     *
+     * 이전 Marked:
+     * renderer.code(code, infostring)
+     *
+     * 프로젝트의 Marked 버전에 관계없이 동작하도록 양쪽 형식을 처리한다.
+     */
+    const isTokenObject =
+      typeof tokenOrCode === 'object'
+      && tokenOrCode !== null;
+
+    const code = isTokenObject
+      ? tokenOrCode.text
+      : tokenOrCode;
+
+    const languageValue = isTokenObject
+      ? tokenOrCode.lang
+      : infostring;
+
+    const language = languageValue
+        ?.trim()
+        .split(/\s+/)[0]
+      || 'text';
+
+    const escapedCode = escapeHtml(code);
+    const escapedLanguage = escapeHtml(language);
+
+    return `
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-language">
+            ${escapedLanguage.toUpperCase()}
+          </span>
+
+          <button
+            type="button"
+            class="code-copy-button"
+            data-code="${encodeURIComponent(code)}"
+            aria-label="코드 복사"
+          >
+            COPY
+          </button>
+        </div>
+
+        <pre><code class="language-${escapedLanguage}">${escapedCode}</code></pre>
+      </div>
+    `;
+  };
+
+  return renderer;
+}
+
 function renderMessage(message) {
   if (message.role === 'USER') {
     return DOMPurify.sanitize(message.content);
   }
 
-  const html = marked.parse(message.content);
+  const renderer = createMarkdownRenderer();
+
+  const html = marked.parse(message.content, {
+    renderer
+  });
 
   return DOMPurify.sanitize(html);
 }
+
+function formatMessageTime(createdAt) {
+  if (!createdAt) {
+    return '';
+  }
+
+  const date = new Date(createdAt);
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).format(date);
+}
+
+onMounted(() => {
+
+  document.addEventListener(
+    "click",
+    handleCodeCopy
+  );
+
+});
+
+onBeforeUnmount(() => {
+
+  document.removeEventListener(
+    "click",
+    handleCodeCopy
+  );
+
+});
+
 </script>
 
 <template>
@@ -55,17 +193,27 @@ function renderMessage(message) {
 
       <div class="message-column">
         <div class="role">
-          <span
-            v-if="message.role === 'USER'"
-            class="user-symbol"
-            aria-hidden="true"
-          >
-            USER
-          </span>
+          <div class="role-identity">
+            <span
+              v-if="message.role === 'USER'"
+              class="user-symbol"
+              aria-hidden="true"
+            >
+              USER
+            </span>
 
-          <span class="role-name">
-            {{ message.role === 'USER' ? '' : 'Feldbuch' }}
-          </span>
+            <span class="role-name">
+              {{ message.role === 'USER' ? '나' : 'Feldbuch' }}
+            </span>
+          </div>
+
+          <time
+            v-if="message.createdAt"
+            class="message-time"
+            :datetime="message.createdAt"
+          >
+            {{ formatMessageTime(message.createdAt) }}
+          </time>
         </div>
 
         <div class="bubble">
@@ -93,13 +241,15 @@ function renderMessage(message) {
 
       <div class="message-column">
         <div class="role">
-          <span class="role-name">
-            Feldbuch
-          </span>
+          <div class="role-identity">
+            <span class="role-name">
+              Feldbuch
+            </span>
 
-          <span class="processing-label">
-            PROCESSING
-          </span>
+            <span class="processing-label">
+              PROCESSING
+            </span>
+          </div>
         </div>
 
         <div class="bubble loading-bubble">
@@ -225,7 +375,9 @@ function renderMessage(message) {
 .role {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
   min-height: 22px;
   margin-bottom: 8px;
   color: var(--color-primary);
@@ -233,6 +385,33 @@ function renderMessage(message) {
   "SFMono-Regular",
   Consolas,
   monospace;
+}
+
+.role-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.message-time {
+  flex-shrink: 0;
+  color: var(--color-text-disabled);
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.assistant .message-time {
+  color: var(--color-text-muted);
+}
+
+.user .message-time {
+  color: rgba(196, 181, 253, 0.7);
 }
 
 .role-name {
@@ -247,7 +426,6 @@ function renderMessage(message) {
 }
 
 .user .role {
-  justify-content: flex-end;
   color: var(--color-accent-purple);
 }
 
@@ -390,27 +568,125 @@ function renderMessage(message) {
   font-size: 0.9em;
 }
 
-.content :deep(pre) {
+/* 코드 블록 전체 */
+.content :deep(.code-block) {
   margin: 16px 0;
-  padding: 18px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-medium);
+  background: var(--color-bg-deep);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025),
+  0 8px 28px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+
+/* 코드 블록 헤더 */
+.content :deep(.code-block-header) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 0 12px 0 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(
+    90deg,
+    rgba(66, 245, 123, 0.055),
+    transparent 55%
+  ),
+  var(--color-surface-raised);
+}
+
+/* 언어 표시 */
+.content :deep(.code-language) {
+  color: var(--color-primary);
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 10px rgba(66, 245, 123, 0.18);
+}
+
+/* COPY 버튼 자리 */
+.content :deep(.code-copy-button) {
+  min-width: 58px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.025);
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: color var(--transition-fast),
+  border-color var(--transition-fast),
+  background var(--transition-fast),
+  box-shadow var(--transition-fast),
+  transform var(--transition-fast);
+}
+
+.content :deep(.code-copy-button:hover) {
+  transform: translateY(-1px);
+  color: var(--color-primary);
+  border-color: rgba(66, 245, 123, 0.38);
+  background: rgba(66, 245, 123, 0.08);
+  box-shadow: 0 0 14px rgba(66, 245, 123, 0.08);
+}
+
+.content :deep(.code-copy-button:active) {
+  transform: translateY(0);
+}
+
+.content :deep(.code-copy-button.copied) {
+  color: var(--color-primary);
+  border-color: rgba(66, 245, 123, 0.48);
+  background: rgba(66, 245, 123, 0.12);
+  box-shadow: inset 0 0 10px rgba(66, 245, 123, 0.04),
+  0 0 16px rgba(66, 245, 123, 0.1);
+  text-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+.content :deep(.code-copy-button:active) {
+  transform: translateY(0);
+}
+
+/* 실제 코드 영역 */
+.content :deep(.code-block pre) {
+  margin: 0;
+  padding: 18px;
+  border: 0;
+  border-radius: 0;
   background: linear-gradient(
     180deg,
-    rgba(66, 245, 123, 0.025),
+    rgba(66, 245, 123, 0.02),
     transparent 35%
   ),
   var(--color-bg-deep);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
+  box-shadow: none;
   overflow-x: auto;
 }
 
-.content :deep(pre code) {
+/* 코드 블록 내부 code */
+.content :deep(.code-block pre code) {
+  display: block;
   padding: 0;
   border: 0;
+  border-radius: 0;
   color: var(--color-text-soft);
   background: transparent;
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
+  font-size: 13px;
   line-height: 1.65;
+  white-space: pre;
 }
 
 .content :deep(table) {
