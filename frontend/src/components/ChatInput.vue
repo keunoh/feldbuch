@@ -33,6 +33,13 @@ function submit() {
 
 <template>
   <div class="chat-input">
+    <span
+      class="prompt"
+      aria-hidden="true"
+    >
+      &gt;_
+    </span>
+
     <input
       v-model="input"
       type="text"
@@ -50,77 +57,146 @@ function submit() {
       :disabled="loading || !input.trim()"
       @click="submit"
     >
-      {{ loading ? "…" : "➜" }}
+      {{ loading ? "●" : "➜" }}
     </button>
   </div>
 </template>
 
 <style scoped>
 .chat-input {
+
   position: relative;
+
   display: flex;
   align-items: center;
+
+  margin-top: 20px;
+}
+
+.prompt {
+
+  position: absolute;
+
+  left: 18px;
+
+  color: var(--color-primary);
+
+  font-family: "JetBrains Mono",
+  monospace;
+
+  font-weight: 700;
+
+  pointer-events: none;
+
+  text-shadow: 0 0 10px var(--color-primary-glow);
+
+  animation: promptBlink 1.2s steps(1) infinite;
 }
 
 input {
+
   width: 100%;
-  padding: 14px 56px 14px 16px;
 
-  border: 1px solid #d1d5db;
-  border-radius: 16px;
+  padding: 16px 64px 16px 56px;
 
-  font-size: 15px;
+  border: 1px solid var(--color-border);
 
-  transition: border-color .15s,
-  box-shadow .15s;
+  border-radius: 18px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(66, 245, 123, .03),
+    transparent 45%
+  ),
+  var(--color-surface);
+
+  color: var(--color-text);
+
+  box-shadow: var(--shadow-card);
+
+  transition: border-color var(--transition-fast),
+  box-shadow var(--transition-fast),
+  background var(--transition-fast);
+}
+
+input::placeholder {
+
+  color: var(--color-text-muted);
 }
 
 input:focus {
 
-  border-color: #2563eb;
+  border-color: var(--color-border-primary);
 
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+  box-shadow: 0 0 0 4px rgba(66, 245, 123, .08),
+  0 0 24px rgba(66, 245, 123, .08);
+
+  outline: none;
 }
 
 input:disabled {
-  background: #f3f4f6;
+
   cursor: not-allowed;
+
+  opacity: .7;
 }
 
 button {
 
   position: absolute;
 
-  right: 8px;
+  right: 10px;
 
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
 
   border: none;
 
   border-radius: 50%;
 
-  padding: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(66, 245, 123, .18),
+    rgba(66, 245, 123, .06)
+  );
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--color-primary);
 
-  background: #2563eb;
+  font-size: 18px;
 
-  color: white;
+  cursor: pointer;
 
-  transition: background .15s,
-  transform .15s;
+  transition: transform var(--transition-fast),
+  background var(--transition-fast),
+  box-shadow var(--transition-fast);
 }
 
 button:hover:not(:disabled) {
 
-  transform: scale(1.05);
+  transform: translateY(-1px);
+
+  box-shadow: 0 0 18px rgba(66, 245, 123, .15);
 }
 
 button:disabled {
-  opacity: 0.6;
+
+  color: var(--color-text-disabled);
+
   cursor: not-allowed;
+
+  opacity: .7;
+}
+
+@keyframes promptBlink {
+
+  0%, 45% {
+
+    opacity: 1;
+  }
+
+  46%, 100% {
+
+    opacity: .25;
+  }
 }
 </style>

@@ -84,8 +84,8 @@ function renderMessage(message) {
 .message-list {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 20px;
+  gap: 28px;
+  padding: 16px 20px 28px;
 }
 
 .message-row {
@@ -101,36 +101,86 @@ function renderMessage(message) {
   justify-content: flex-start;
 }
 
+/* 공통 말풍선 */
 .bubble {
-  max-width: 70%;
-  padding: 14px 18px;
-  border-radius: 16px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
-  transition: transform 0.16s ease,
-  box-shadow 0.16s ease;
+  position: relative;
+  max-width: min(76%, 820px);
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  color: var(--color-text-soft);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-fast),
+  border-color var(--transition-fast),
+  box-shadow var(--transition-fast);
 }
 
 .bubble:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.1);
+  border-color: rgba(66, 245, 123, 0.3);
+  box-shadow: var(--shadow-card),
+  0 0 24px rgba(66, 245, 123, 0.05);
 }
 
-.user .bubble {
-  background: #dbeafe;
-}
-
+/* Feldbuch 메시지 */
 .assistant .bubble {
-  background: #f3f4f6;
+  border-left: 3px solid var(--color-primary);
+  border-top-left-radius: 4px;
+  background: linear-gradient(
+    135deg,
+    rgba(66, 245, 123, 0.035),
+    transparent 42%
+  ),
+  var(--color-surface);
 }
 
+/* 사용자 메시지 */
+.user .bubble {
+  max-width: min(58%, 540px);
+  border-color: var(--color-border-primary);
+  border-bottom-right-radius: 4px;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.16),
+    rgba(66, 245, 123, 0.07)
+  ),
+  var(--color-surface-raised);
+  box-shadow: var(--shadow-card),
+  0 0 20px rgba(139, 92, 246, 0.07);
+}
+
+/* 작성자 */
 .role {
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  color: var(--color-primary);
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
+.assistant .role::before {
+  color: var(--color-primary);
+  content: ">_";
+  text-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+.user .role {
+  color: var(--color-accent-purple);
+}
+
+/* 메시지 본문 */
 .content {
-  line-height: 1.6;
+  color: var(--color-text-soft);
+  line-height: 1.72;
+  overflow-wrap: anywhere;
 }
 
 .content :deep(p) {
@@ -145,7 +195,8 @@ function renderMessage(message) {
 .content :deep(h2),
 .content :deep(h3),
 .content :deep(h4) {
-  margin: 20px 0 10px;
+  margin: 22px 0 10px;
+  color: var(--color-text);
   line-height: 1.35;
 }
 
@@ -158,82 +209,151 @@ function renderMessage(message) {
 
 .content :deep(ul),
 .content :deep(ol) {
-  margin: 10px 0;
+  margin: 12px 0;
   padding-left: 24px;
 }
 
 .content :deep(li) {
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
+.content :deep(li::marker) {
+  color: var(--color-primary);
+}
+
+/* 인용문 */
 .content :deep(blockquote) {
-  margin: 12px 0;
-  padding: 8px 14px;
-  border-left: 4px solid #9ca3af;
-  background: #e5e7eb;
-}
-
-.content :deep(code) {
-  padding: 2px 5px;
-  border-radius: 4px;
-  background: #e5e7eb;
-  font-family: monospace;
-}
-
-.content :deep(pre) {
   margin: 14px 0;
-  padding: 16px;
-  border-radius: 10px;
-  background: #1f2937;
+  padding: 10px 14px;
+  border-left: 3px solid var(--color-accent-cyan);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+  color: var(--color-text-soft);
+  background: rgba(94, 234, 212, 0.06);
+}
+
+/* 인라인 코드 */
+.content :deep(code) {
+  padding: 2px 6px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 5px;
+  color: var(--color-primary);
+  background: var(--color-bg-deep);
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
+  font-size: 0.9em;
+}
+
+/* 코드 블록 */
+.content :deep(pre) {
+  margin: 16px 0;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: linear-gradient(
+    180deg,
+    rgba(66, 245, 123, 0.025),
+    transparent 35%
+  ),
+  var(--color-bg-deep);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
   overflow-x: auto;
 }
 
 .content :deep(pre code) {
   padding: 0;
+  border: 0;
+  color: var(--color-text-soft);
   background: transparent;
-  color: #f9fafb;
+  line-height: 1.65;
 }
 
+/* 표 */
 .content :deep(table) {
   width: 100%;
-  margin: 14px 0;
+  margin: 16px 0;
   border-collapse: collapse;
+  overflow: hidden;
 }
 
 .content :deep(th),
 .content :deep(td) {
-  padding: 8px 10px;
-  border: 1px solid #d1d5db;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
   text-align: left;
 }
 
 .content :deep(th) {
-  background: #e5e7eb;
+  color: var(--color-primary);
+  background: var(--color-surface-raised);
+}
+
+.content :deep(td) {
+  background: rgba(13, 19, 26, 0.65);
 }
 
 .content :deep(a) {
-  color: #2563eb;
-  text-decoration: underline;
+  color: var(--color-accent-cyan);
+  text-decoration-color: rgba(94, 234, 212, 0.45);
+  text-underline-offset: 3px;
 }
 
+.content :deep(hr) {
+  margin: 22px 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 빈 대화 */
 .empty-message {
+  margin: auto;
+  padding: 36px;
+  color: var(--color-text-muted);
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
   text-align: center;
-  color: #888;
 }
 
+.empty-message::before {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--color-primary);
+  content: "> waiting_for_input";
+}
+
+/* 로딩 메시지 */
 .loading-bubble {
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .loading-content {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
   line-height: 1.6;
+}
+
+.loading-content::before {
+  color: var(--color-primary);
+  content: "$";
+}
+
+.dots {
+  display: inline-flex;
+  gap: 2px;
 }
 
 .dots span {
   display: inline-block;
+  color: var(--color-primary);
   animation: blink 1.4s infinite;
 }
 
@@ -249,11 +369,12 @@ function renderMessage(message) {
   0%,
   80%,
   100% {
-    opacity: 0.25;
+    opacity: 0.2;
   }
 
   40% {
     opacity: 1;
+    text-shadow: 0 0 8px var(--color-primary-glow);
   }
 }
 
@@ -266,6 +387,20 @@ function renderMessage(message) {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .message-list {
+    padding-inline: 10px;
+  }
+
+  .bubble {
+    max-width: 88%;
+  }
+
+  .user .bubble {
+    max-width: 76%;
   }
 }
 </style>

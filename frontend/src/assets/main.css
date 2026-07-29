@@ -1,0 +1,161 @@
+:root {
+  /* Background */
+  --color-bg: #080c11;
+  --color-bg-deep: #05080c;
+
+  /* Surfaces */
+  --color-surface: #0d131a;
+  --color-surface-raised: #111922;
+  --color-surface-hover: #15202a;
+
+  /* Brand */
+  --color-primary: #42f57b;
+  --color-primary-strong: #22e864;
+  --color-primary-soft: rgba(66, 245, 123, 0.12);
+  --color-primary-glow: rgba(66, 245, 123, 0.25);
+
+  /* Supporting accents */
+  --color-accent-cyan: #5eead4;
+  --color-accent-purple: #8b5cf6;
+
+  /* Text */
+  --color-text: #e7edf3;
+  --color-text-soft: #c2ccd6;
+  --color-text-muted: #7f8b99;
+  --color-text-disabled: #56616d;
+
+  /* Borders */
+  --color-border: #26313c;
+  --color-border-soft: rgba(148, 163, 184, 0.14);
+  --color-border-primary: rgba(66, 245, 123, 0.55);
+
+  /* Status */
+  --color-success: #42f57b;
+  --color-danger: #fb7185;
+  --color-warning: #facc15;
+
+  /* Shadows */
+  --shadow-panel: 0 18px 50px rgba(0, 0, 0, 0.35);
+
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.22);
+
+  --shadow-glow: 0 0 24px rgba(66, 245, 123, 0.12);
+
+  /* Radius */
+  --radius-small: 8px;
+  --radius-medium: 12px;
+  --radius-large: 18px;
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --study-panel-width: 280px;
+
+  /* Motion */
+  --transition-fast: 150ms ease;
+  --transition-normal: 220ms ease;
+
+  color: var(--color-text);
+  background: var(--color-bg);
+
+  font-family: "Pretendard Variable",
+  Pretendard,
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  sans-serif;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--color-bg-deep);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+
+  color: var(--color-text);
+  background: radial-gradient(
+    circle at 50% -20%,
+    rgba(66, 245, 123, 0.06),
+    transparent 32%
+  ),
+  linear-gradient(
+    180deg,
+    var(--color-bg) 0%,
+    var(--color-bg-deep) 100%
+  );
+}
+
+body,
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+input,
+textarea {
+  color: inherit;
+}
+
+button {
+  border: 0;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--color-accent-cyan);
+}
+
+::selection {
+  color: #031108;
+  background: var(--color-primary);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--color-bg);
+  border-radius: 999px;
+  background: #2a3540;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4855;
+}
+
+#app {
+  min-height: 100vh;
+}

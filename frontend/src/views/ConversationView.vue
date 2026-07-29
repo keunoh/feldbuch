@@ -229,8 +229,6 @@ async function sendMessage(content) {
   await scrollToBottom();
 
   try {
-    const conversationId = selectedConversationId.value;
-
     // 백엔드 API 호출
     await sendChatMessage(
       conversationId,
@@ -339,15 +337,24 @@ onMounted(async () => {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  color: var(--color-text);
+  background: var(--color-bg);
 }
 
 .chat-area {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   padding: 24px;
   box-sizing: border-box;
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(66, 245, 123, 0.035),
+    transparent 34%
+  ),
+  var(--color-bg);
 }
 
 .chat-header {
@@ -356,28 +363,49 @@ onMounted(async () => {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .conversation-title {
   margin: 0;
-  font-size: 24px;
   overflow: hidden;
+  color: var(--color-text);
+  font-size: 24px;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.conversation-title::before {
+  margin-right: 10px;
+  color: var(--color-primary);
+  content: ">_";
+  text-shadow: 0 0 14px var(--color-primary-glow);
+}
+
+.logout-button {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  color: var(--color-text-soft);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: color var(--transition-fast),
+  border-color var(--transition-fast),
+  background var(--transition-fast);
+}
+
+.logout-button:hover {
+  color: var(--color-primary);
+  border-color: var(--color-border-primary);
+  background: var(--color-primary-soft);
 }
 
 .messages {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-}
-
-.logout-button {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
 }
 </style>
