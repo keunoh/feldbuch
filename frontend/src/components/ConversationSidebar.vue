@@ -89,6 +89,55 @@ function handleBlur(conversation) {
   submitEditing(conversation);
 }
 
+function formatConversationTime(conversation) {
+  const value = conversation.updatedAt ?? conversation.createdAt;
+
+  if (!value) {
+    return '-';
+  }
+
+  const date = new Date(value);
+  const now = new Date();
+
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  const startOfTargetDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+  const dayDifference = Math.floor(
+    (startOfToday - startOfTargetDate) / millisecondsPerDay
+  );
+
+  if (dayDifference === 0) {
+    return new Intl.DateTimeFormat('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(date);
+  }
+
+  if (dayDifference === 1) {
+    return '어제';
+  }
+
+  if (dayDifference >= 2 && dayDifference <= 6) {
+    return `${dayDifference}일 전`;
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
 </script>
 
 <template>
@@ -170,6 +219,13 @@ function handleBlur(conversation) {
         >
           {{ conversation.title }}
         </button>
+
+        <span
+          v-if="editingConversationId !== conversation.id"
+          class="conversation-time"
+        >
+          {{ formatConversationTime(conversation) }}
+        </span>
 
         <button
           type="button"
@@ -498,10 +554,35 @@ function handleBlur(conversation) {
 }
 
 .conversation-item:hover .delete-button,
-.conversation-item:focus-within .delete-button,
-.conversation-item.selected .delete-button {
+.conversation-item:focus-within .delete-button {
   opacity: 1;
   transform: translateX(0);
+}
+
+.conversation-item:hover .conversation-time,
+.conversation-item:focus-within .conversation-time {
+  display: none;
+}
+
+.conversation-time {
+  flex-shrink: 0;
+  color: var(--color-text-disabled);
+  font-family: "JetBrains Mono",
+  "SFMono-Regular",
+  Consolas,
+  monospace;
+  font-size: 11px;
+  letter-spacing: -0.02em;
+  transition: color var(--transition-fast),
+  opacity var(--transition-fast);
+}
+
+.conversation-item:hover .conversation-time {
+  color: var(--color-text-muted);
+}
+
+.conversation-item.selected .conversation-time {
+  color: var(--color-primary);
 }
 
 .delete-button:hover:not(:disabled) {
