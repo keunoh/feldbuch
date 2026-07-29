@@ -26,6 +26,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 비동기 AI 처리
 - AI Job 생성 및 상태 조회
 - Conversation 생성, 목록 조회, 단건 조회
+- Conversation 제목 수정
 - Conversation 삭제
 - Conversation Message 저장 및 조회
 - Conversation 컨텍스트 기반 AI 채팅
@@ -35,9 +36,10 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Axios API client, Request/Response Interceptor
 - Vue Router Guard 기반 인증 라우팅
 - Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
-- 새 대화 생성/삭제 UI와 중복 요청 방지 상태
+- 새 대화 생성/제목 수정/삭제 UI와 중복 요청 방지 상태
 - AI 응답 Markdown 렌더링 및 DOMPurify sanitize 처리
 - 메시지 전송 중 로딩 표시와 자동 스크롤
+- Request ID 기반 요청 추적과 `X-Request-Id` 응답 헤더
 - Redis, Spring Batch 기반 확장 구성
 
 ### 프로젝트 구조
@@ -48,7 +50,7 @@ backend
     ├── ai               # OpenAI 연동, 요약, 채팅
     ├── auth             # 로그인, JWT 인증
     ├── batch            # Spring Batch 요약 파이프라인
-    ├── common           # 공통 응답, 예외
+    ├── common           # 공통 응답, 예외, 요청 추적 로깅
     ├── config           # Security, Redis, OpenAI, Batch 설정
     ├── conversation     # 대화, 메시지, 대화형 AI
     ├── home             # 서버 렌더링 진입점
@@ -147,6 +149,7 @@ flowchart LR
     --> O[Thymeleaf 비교 화면 구성]
     --> P[Vue.js 로그인/대화 화면 전환]
     --> Q[Axios/Interceptor 인증 통신 구성]
+    --> R[대화 제목 수정과 Request ID 추적]
 ```
 
 ### 구현 완료
@@ -176,6 +179,7 @@ flowchart LR
 - AI Job Entity, Reader, Service, Controller
 - AI Job 상태 조회 API
 - Conversation Entity, Controller, Command/Query Service
+- Conversation 제목 수정 API
 - Conversation 삭제 API
 - ConversationMessage Entity, Controller, Command/Query Service
 - Conversation별 메시지 순서 저장
@@ -188,12 +192,16 @@ flowchart LR
 - Vue 대화 화면: `ConversationView`
 - Vue 컴포넌트: `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`
 - 새 대화 생성 UI
+- 대화 제목 인라인 수정 UI
 - 대화 삭제 UI
-- 대화 생성/삭제/메시지 전송 중복 요청 방지 상태
+- 대화 생성/수정/삭제/메시지 전송 중복 요청 방지 상태
 - 메시지 전송 중 AI 응답 작성 로딩 표시
 - 메시지 목록 자동 스크롤
 - AI 응답 Markdown 렌더링
 - DOMPurify 기반 렌더링 HTML sanitize
+- Request ID Filter
+- SLF4J MDC 기반 requestId 저장/해제
+- `X-Request-Id` 응답 헤더
 - Axios 공통 API client
 - Axios Request Interceptor 기반 JWT Authorization 헤더 자동 주입
 - Axios Response Interceptor 기반 401 감지, 로그아웃, 로그인 화면 이동
@@ -228,16 +236,20 @@ flowchart LR
 - 로그아웃 버튼에서 클라이언트 저장 토큰을 삭제하고 로그인 화면으로 이동
 - `ConversationView`에서 대화 목록 조회, 첫 대화 자동 선택, 단건 대화 상세 조회, 메시지 전송 후 상세 재조회 흐름 구성
 - `ConversationView`에서 새 대화 생성 후 목록을 재조회하고 생성한 대화를 자동 선택
+- `ConversationView`에서 대화 제목 수정 후 목록과 상세 상태를 함께 갱신
 - `ConversationView`에서 대화 삭제 전 확인창을 띄우고, 삭제한 대화가 선택 상태이면 다음 대화를 자동 선택
-- `ConversationView`에서 `creatingConversation`, `deletingConversationId`, `sendingMessage`로 중복 요청 방지
+- `ConversationView`에서 메시지 전송 후 해당 대화를 목록 최상단으로 이동
+- `ConversationView`에서 `creatingConversation`, `updatingConversationId`, `deletingConversationId`, `sendingMessage`로 중복 요청 방지
 - `ConversationView`에서 `nextTick` 이후 메시지 컨테이너를 하단으로 자동 스크롤
-- `ConversationSidebar`에서 대화 목록, 선택 상태, 생성 버튼, 삭제 버튼 렌더링
+- `ConversationSidebar`에서 대화 목록, 선택 상태, 생성 버튼, 인라인 제목 수정 입력, 삭제 버튼 렌더링
+- `ConversationSidebar`에서 더블클릭으로 제목 수정 모드 진입, Enter/blur로 저장, Esc로 취소
 - `MessageList`에서 `USER`, `ASSISTANT` 메시지 버블 렌더링
 - `MessageList`에서 `marked`와 `DOMPurify`로 AI 응답 Markdown을 안전하게 렌더링
 - `ChatInput`에서 메시지 전송 중 입력과 버튼 비활성화
 - `StudyInfoPanel`에서 대화 제목, 상태, 메시지 수, 생성일 표시
 - `ConversationDetailResponse`에 대화 메타데이터, 메시지 목록, 메시지 수 포함
 - Spring Security CORS 설정으로 Vite 개발 서버 `http://localhost:5173` 허용
+- `RequestIdFilter`에서 요청마다 UUID를 생성하고 MDC와 `X-Request-Id` 응답 헤더에 기록
 - Spring Batch 기반 `summaryJob`/`summaryStep` 구성
 - Docker Compose에 MySQL, Redis 로컬 인프라 구성
 - 테스트 확장: Auth, Note, AI, OpenAI Client, Redis, Batch, Conversation 통합 테스트 구성
@@ -270,7 +282,8 @@ flowchart TD
     StaticJS --> Api
     VueSPA --> Api
 
-    Api --> Security
+    Api --> RequestIdFilter
+    RequestIdFilter --> Security
     Security --> Controller
 
     Controller --> CommandService
@@ -366,7 +379,7 @@ flowchart TD
 - `router/index.js`: `/login`, `/conversations` 라우트와 인증 Guard 관리
 - `LoginView.vue`: 로그인 폼, 로그인 API 호출, 토큰 저장, 대화 화면 이동
 - `ConversationView.vue`: 대화 화면 컨테이너, 대화 목록/선택 대화/메시지/요청 중 상태 관리
-- `ConversationSidebar.vue`: 대화 목록, 현재 선택 상태, 새 대화 생성 버튼, 대화 삭제 버튼 렌더링
+- `ConversationSidebar.vue`: 대화 목록, 현재 선택 상태, 새 대화 생성 버튼, 인라인 제목 수정 입력, 대화 삭제 버튼 렌더링
 - `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링, AI 응답 Markdown 렌더링, 로딩 메시지 표시
 - `ChatInput.vue`: 사용자 입력을 `send` 이벤트로 상위 컴포넌트에 전달하고 전송 중 입력을 비활성화
 - `StudyInfoPanel.vue`: 선택한 대화의 학습 주제, 상태, 메시지 수, 생성일 표시
@@ -426,6 +439,24 @@ DELETE /api/conversations/{conversationId}
 삭제한 대화가 선택 상태이면 다음 대화 자동 선택
 ```
 
+대화 제목 수정 흐름:
+
+```text
+ConversationSidebar double click
+  ↓
+editingConversationId / editingTitle 설정
+  ↓
+Enter 또는 blur
+  ↓
+ConversationView.renameConversation()
+  ↓
+updatingConversationId 설정
+  ↓
+PATCH /api/conversations/{conversationId}
+  ↓
+목록과 현재 상세 conversation 제목 갱신
+```
+
 메시지 전송 흐름:
 
 ```text
@@ -481,9 +512,11 @@ Repository / OpenAI
 - 대화 목록은 `GET /api/conversations`로 조회합니다.
 - 대화 상세는 `GET /api/conversations/{conversationId}`로 조회하며, `ConversationDetailResponse`가 대화 정보와 메시지 목록, 메시지 수를 함께 반환합니다.
 - 새 대화는 `POST /api/conversations`로 생성하고, 응답으로 생성된 `conversationId`를 받습니다.
+- 대화 제목 수정은 `PATCH /api/conversations/{conversationId}`로 처리하며, 제목은 필수이고 최대 100자입니다.
 - 대화 삭제는 `DELETE /api/conversations/{conversationId}`로 처리하며, 백엔드는 해당 대화의 메시지를 먼저 삭제한 뒤 대화를 삭제합니다.
 - 메시지 전송은 `POST /api/conversations/{conversationId}/chat`로 처리하고, 전송 후 상세를 재조회해 사용자 메시지, AI 응답, 자동 생성 제목을 한 번에 최신화합니다.
 - 백엔드는 `JwtAuthenticationEntryPoint`로 미인증 요청에 401을 반환합니다.
+- 백엔드는 `RequestIdFilter`로 모든 요청에 UUID 기반 `requestId`를 부여하고, MDC와 `X-Request-Id` 응답 헤더에 기록합니다.
 - 백엔드는 Vite 개발 서버인 `http://localhost:5173` origin을 CORS로 허용합니다.
 - 기존 Thymeleaf 정적 JS는 `fetch`와 `localStorage`를 사용하는 비교용 구현으로 유지합니다.
 
@@ -619,6 +652,33 @@ Axios Response Interceptor
 
 현재 로그아웃은 서버 세션을 사용하지 않는 stateless JWT 구조에 맞춘 클라이언트 로그아웃입니다. `frontend/src/utils/auth.js`에서 `accessToken`과 `userId`를 `localStorage`에서 삭제하고, 화면은 Vue Router를 통해 `/login`으로 이동합니다.
 
+### Request ID 추적 흐름
+
+`RequestIdFilter`는 모든 HTTP 요청마다 UUID 기반 `requestId`를 생성합니다. 생성한 값은 SLF4J MDC에 저장되어 같은 요청 범위의 로그를 추적할 수 있고, 클라이언트가 문제 상황을 함께 전달할 수 있도록 응답 헤더 `X-Request-Id`에도 기록합니다.
+
+```text
+HTTP Request
+  ↓
+RequestIdFilter
+  ↓
+UUID requestId 생성
+  ↓
+MDC.put("requestId", requestId)
+  ↓
+response header X-Request-Id 설정
+  ↓
+Controller / Service / Repository
+  ↓
+finally MDC.remove("requestId")
+```
+
+요청 추적 규칙:
+
+- MDC key: `requestId`
+- Response header: `X-Request-Id`
+- 생성 방식: `UUID.randomUUID()`
+- 정리 방식: 요청 처리 완료 후 `finally` 블록에서 MDC 제거
+
 ### AI 요약 처리 흐름
 
 ```text
@@ -673,7 +733,7 @@ COMPLETED
 
 ### Conversation 도메인
 
-Conversation은 사용자별 AI 대화 세션을 저장하기 위한 도메인입니다. 현재 구현 범위는 대화 생성, 목록 조회, 단건 조회, 삭제, 메시지 저장/조회, 대화 컨텍스트 기반 AI 채팅입니다.
+Conversation은 사용자별 AI 대화 세션을 저장하기 위한 도메인입니다. 현재 구현 범위는 대화 생성, 목록 조회, 단건 조회, 제목 수정, 삭제, 메시지 저장/조회, 대화 컨텍스트 기반 AI 채팅입니다.
 
 ```text
 ConversationController
@@ -686,6 +746,8 @@ ConversationRepository
 ```
 
 대화 삭제는 사용자 소유권을 `findByIdAndUserId`로 확인한 뒤 `ConversationMessageRepository.deleteAllByConversationId`로 메시지를 먼저 삭제하고, 마지막에 Conversation을 삭제합니다.
+
+대화 제목 수정은 사용자 소유권을 확인한 뒤 `Conversation.changeTitle`로 제목을 변경합니다. 요청 DTO는 `UpdateConversationRequest`이며 제목은 빈 문자열을 허용하지 않고 최대 100자까지 허용합니다.
 
 Conversation 메시지는 별도 엔티티로 저장합니다.
 
@@ -770,6 +832,7 @@ docs/images/diagrams/feldbuch-ai-job-flow.svg
 | Build | <img src="./images/logos/gradle.svg" width="42" alt="Gradle"> | Gradle로 Spring Boot 애플리케이션 빌드 |
 | Runtime | <img src="./images/logos/docker.svg" width="42" alt="Docker"> | Docker Compose 기반 로컬 인프라 실행 |
 | Backend | <img src="./images/logos/springboot.svg" width="42" alt="Spring Boot"> | API 서버 |
+| Logging | Request ID | `RequestIdFilter`, MDC, `X-Request-Id` 기반 요청 추적 |
 | Security | JWT | Spring Security 기반 토큰 인증 |
 | Query | QueryDSL | 동적 검색 |
 | Database | <img src="./images/logos/mysql.svg" width="42" alt="MySQL"> | 운영 데이터 저장 |
@@ -864,7 +927,6 @@ Job 상태 업데이트
 ### Frontend
 
 - Vue 대화 목록/메시지 화면 상태 관리 정리
-- Vue 대화 제목 수정 UI 정리
 - Vue 삭제 확인 UX 개선
 - Thymeleaf 화면과 Vue 화면 기능 비교
 - Vite 개발 서버와 Spring Boot API 서버 연동 방식 정리
@@ -896,7 +958,7 @@ Job 상태 업데이트
 
 | 이름 | 경로 | 용도 |
 | --- | --- | --- |
-| Feldbuch Project Architecture | `docs/images/diagrams/feldbuch-architecture.svg` | 현재 프로젝트의 Spring Boot, Security, QueryDSL, JPA, MySQL, H2, Docker, OpenAI 구조 |
+| Feldbuch Project Architecture | `docs/images/diagrams/feldbuch-architecture.svg` | 현재 프로젝트의 Spring Boot, RequestIdFilter, Security, QueryDSL, JPA, MySQL, H2, Docker, OpenAI 구조 |
 | Feldbuch Client Architecture | `docs/images/diagrams/feldbuch-client-architecture.svg` | Vue Router, View, Component, Axios API client, Interceptor, Spring Boot API 통신 구조 |
 | Feldbuch AI Job Flow | `docs/images/diagrams/feldbuch-ai-job-flow.svg` | AI 요약 요청, Job 상태 변경, OpenAI 호출 흐름 |
 | Spring Boot | `docs/images/logos/springboot.svg` | 백엔드 API |

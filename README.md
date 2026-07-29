@@ -56,8 +56,10 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 대화형 AI 요청은 `POST /api/conversations/{conversationId}/chat`으로 전송합니다.
 - 대화 상세 조회는 `GET /api/conversations/{conversationId}`로 수행하며, 대화 메타데이터와 메시지 목록을 함께 받습니다.
 - 새 대화 생성은 `POST /api/conversations`, 대화 삭제는 `DELETE /api/conversations/{conversationId}`로 처리합니다.
+- 대화 제목 수정은 `PATCH /api/conversations/{conversationId}`로 처리합니다.
 - 메시지 전송 후에는 선택한 대화를 다시 조회해 사용자 메시지, AI 응답, 자동 생성 제목을 최신화합니다.
 - AI 요약은 요청 즉시 `jobId`를 반환하고, 클라이언트는 `GET /api/ai/jobs/{jobId}`로 처리 상태를 조회합니다.
+- 서버는 모든 요청에 UUID 기반 `requestId`를 생성하고 `X-Request-Id` 응답 헤더로 내려줍니다.
 - 백엔드는 Vite 개발 서버(`http://localhost:5173`)에서 오는 요청을 CORS로 허용합니다.
 - 기존 Thymeleaf 정적 JS는 `fetch`와 `localStorage` 기반 비교용 구현으로 남겨둡니다.
 
@@ -75,6 +77,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 비동기 AI 처리
 - AI Job 생성 및 상태 조회
 - Conversation 생성, 목록 조회, 단건 조회
+- Conversation 제목 수정
 - Conversation 삭제
 - Conversation Message 저장 및 조회
 - Conversation 컨텍스트 기반 AI 채팅
@@ -84,16 +87,18 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Axios API client, Request/Response Interceptor
 - Vue Router Guard 기반 인증 라우팅
 - Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
-- 새 대화 생성/삭제 UI와 중복 요청 방지 상태
+- 새 대화 생성/제목 수정/삭제 UI와 중복 요청 방지 상태
 - AI 응답 Markdown 렌더링 및 DOMPurify sanitize 처리
 - 메시지 전송 중 로딩 표시와 자동 스크롤
+- Request ID 기반 요청 추적과 `X-Request-Id` 응답 헤더
 - Redis, Spring Batch 기반 확장 구성
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    Client --> Security
+    Client --> RequestIdFilter
+    RequestIdFilter --> Security
     Security --> Controller
 
     Controller --> CommandService
@@ -159,7 +164,7 @@ flowchart TD
     ApiClient --> SpringBootApi
 ```
 
-Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용합니다. 대화 목록과 생성/삭제는 `ConversationSidebar`, 메시지는 `MessageList`, 입력과 전송 중 비활성화는 `ChatInput`, 학습 메타 정보는 `StudyInfoPanel`이 담당합니다. 백엔드 통신은 `authApi`와 `conversationApi`가 Axios `apiClient`를 통해 수행합니다.
+Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용합니다. 대화 목록과 생성/제목 수정/삭제는 `ConversationSidebar`, 메시지는 `MessageList`, 입력과 전송 중 비활성화는 `ChatInput`, 학습 메타 정보는 `StudyInfoPanel`이 담당합니다. 백엔드 통신은 `authApi`와 `conversationApi`가 Axios `apiClient`를 통해 수행합니다.
 
 ## Project Structure
 
@@ -205,12 +210,12 @@ frontend
 - Stateless JWT Logout
 - Component-based Client Architecture
 - Markdown Rendering and Sanitizing
+- Request ID 기반 요청 추적
 - Profile 기반 외부 설정 관리
 
 ## Roadmap
 
 - Vue 화면 상태 관리 구조 정리
-- Vue 대화 제목 수정 UI 정리
 - Vue 삭제 확인 UX 개선
 - AI 태그 생성
 - 코드 리뷰
