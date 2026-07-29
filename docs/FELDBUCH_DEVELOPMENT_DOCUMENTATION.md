@@ -12,6 +12,12 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 단순한 메모 앱이 아니라 AI가 개발 노트를 이해하여 요약, 태깅, 추천, 코드 리뷰까지 수행하는 서비스를 목표로 합니다.
 
+### 메인 화면
+
+![Feldbuch Main Chat Screen](./images/screenshots/feldbuch-main-chat-screen.png)
+
+현재 메인 화면은 Vue 3 기반 AI 학습 대화 화면입니다. 왼쪽 사이드바는 대화 목록과 새 학습 시작을 담당하고, 중앙 영역은 사용자 메시지와 AI 응답을 Markdown으로 렌더링하며, 오른쪽 패널은 선택한 대화의 주제, 상태, 메시지 수, 생성일, 수정일을 한눈에 보여줍니다.
+
 ### 핵심 기능
 
 - JWT 기반 회원가입과 로그인
@@ -38,7 +44,11 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
 - 새 대화 생성/제목 수정/삭제 UI와 중복 요청 방지 상태
 - AI 응답 Markdown 렌더링 및 DOMPurify sanitize 처리
+- 코드 블록 언어 표시와 클립보드 COPY 버튼
 - 메시지 전송 중 로딩 표시와 자동 스크롤
+- 사용자 메시지 낙관적 표시 후 대화 상세 재조회
+- 다크 터미널 스타일의 Vue 메인 채팅 화면
+- 선택한 대화의 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
 - Request ID 기반 요청 추적과 `X-Request-Id` 응답 헤더
 - Redis, Spring Batch 기반 확장 구성
 
@@ -66,6 +76,7 @@ legacy-view
 frontend
 └── src
     ├── api              # Axios API client와 도메인별 API 함수
+    ├── assets           # Vue 전역 스타일과 디자인 토큰
     ├── components       # Vue 컴포넌트: Sidebar, MessageList, ChatInput, StudyInfoPanel
     ├── router           # Vue Router
     ├── utils            # 토큰 저장, 로그아웃 등 인증 유틸리티
@@ -150,6 +161,7 @@ flowchart LR
     --> P[Vue.js 로그인/대화 화면 전환]
     --> Q[Axios/Interceptor 인증 통신 구성]
     --> R[대화 제목 수정과 Request ID 추적]
+    --> S[Vue 메인 채팅 UI 고도화]
 ```
 
 ### 구현 완료
@@ -240,14 +252,18 @@ flowchart LR
 - `ConversationView`에서 대화 삭제 전 확인창을 띄우고, 삭제한 대화가 선택 상태이면 다음 대화를 자동 선택
 - `ConversationView`에서 메시지 전송 후 해당 대화를 목록 최상단으로 이동
 - `ConversationView`에서 `creatingConversation`, `updatingConversationId`, `deletingConversationId`, `sendingMessage`로 중복 요청 방지
+- `ConversationView`에서 사용자 메시지를 먼저 낙관적으로 표시하고, API 응답 후 상세를 재조회해 최종 상태로 동기화
 - `ConversationView`에서 `nextTick` 이후 메시지 컨테이너를 하단으로 자동 스크롤
 - `ConversationSidebar`에서 대화 목록, 선택 상태, 생성 버튼, 인라인 제목 수정 입력, 삭제 버튼 렌더링
 - `ConversationSidebar`에서 더블클릭으로 제목 수정 모드 진입, Enter/blur로 저장, Esc로 취소
 - `MessageList`에서 `USER`, `ASSISTANT` 메시지 버블 렌더링
 - `MessageList`에서 `marked`와 `DOMPurify`로 AI 응답 Markdown을 안전하게 렌더링
+- `MessageList`에서 코드 블록 언어 라벨과 클립보드 COPY 버튼 제공
+- `MessageList`에서 전송 중 `PROCESSING` 라벨과 터미널 스타일 로딩 메시지 표시
 - `ChatInput`에서 메시지 전송 중 입력과 버튼 비활성화
-- `StudyInfoPanel`에서 대화 제목, 상태, 메시지 수, 생성일 표시
-- `ConversationDetailResponse`에 대화 메타데이터, 메시지 목록, 메시지 수 포함
+- `StudyInfoPanel`에서 대화 제목, 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
+- `frontend/src/assets/main.css`에서 다크 터미널 톤의 전역 색상 토큰, 레이아웃 폭, 스크롤바, 포커스 스타일 관리
+- `ConversationDetailResponse`에 대화 메타데이터, 메시지 목록, 메시지 수, 수정일 포함
 - Spring Security CORS 설정으로 Vite 개발 서버 `http://localhost:5173` 허용
 - `RequestIdFilter`에서 요청마다 UUID를 생성하고 MDC와 `X-Request-Id` 응답 헤더에 기록
 - Spring Batch 기반 `summaryJob`/`summaryStep` 구성
@@ -380,9 +396,10 @@ flowchart TD
 - `LoginView.vue`: 로그인 폼, 로그인 API 호출, 토큰 저장, 대화 화면 이동
 - `ConversationView.vue`: 대화 화면 컨테이너, 대화 목록/선택 대화/메시지/요청 중 상태 관리
 - `ConversationSidebar.vue`: 대화 목록, 현재 선택 상태, 새 대화 생성 버튼, 인라인 제목 수정 입력, 대화 삭제 버튼 렌더링
-- `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링, AI 응답 Markdown 렌더링, 로딩 메시지 표시
+- `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링, AI 응답 Markdown 렌더링, 코드 블록 COPY 버튼, 로딩 메시지 표시
 - `ChatInput.vue`: 사용자 입력을 `send` 이벤트로 상위 컴포넌트에 전달하고 전송 중 입력을 비활성화
-- `StudyInfoPanel.vue`: 선택한 대화의 학습 주제, 상태, 메시지 수, 생성일 표시
+- `StudyInfoPanel.vue`: 선택한 대화의 학습 주제, 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
+- `assets/main.css`: Vue 앱의 다크 터미널 톤 디자인 토큰, 레이아웃 폭, 공통 포커스/스크롤 스타일 관리
 - `apiClient.js`: Axios instance, baseURL, Request/Response Interceptor 관리
 - `authApi.js`, `conversationApi.js`: 도메인별 API 호출 함수 제공
 - `utils/auth.js`: `accessToken`, `userId` 저장/조회/삭제와 로그인 여부 판단
@@ -510,7 +527,7 @@ Repository / OpenAI
 - 로그아웃은 stateless JWT 구조에 맞춰 서버 세션 폐기 없이 클라이언트 저장소의 `accessToken`, `userId`를 제거합니다.
 - Vue Router Guard는 `meta.requiresAuth`가 있는 라우트에 진입하기 전에 토큰 존재 여부를 확인합니다.
 - 대화 목록은 `GET /api/conversations`로 조회합니다.
-- 대화 상세는 `GET /api/conversations/{conversationId}`로 조회하며, `ConversationDetailResponse`가 대화 정보와 메시지 목록, 메시지 수를 함께 반환합니다.
+- 대화 상세는 `GET /api/conversations/{conversationId}`로 조회하며, `ConversationDetailResponse`가 `id`, `title`, `status`, `createdAt`, `updatedAt`, `messages`, `messageCount`를 함께 반환합니다.
 - 새 대화는 `POST /api/conversations`로 생성하고, 응답으로 생성된 `conversationId`를 받습니다.
 - 대화 제목 수정은 `PATCH /api/conversations/{conversationId}`로 처리하며, 제목은 필수이고 최대 100자입니다.
 - 대화 삭제는 `DELETE /api/conversations/{conversationId}`로 처리하며, 백엔드는 해당 대화의 메시지를 먼저 삭제한 뒤 대화를 삭제합니다.
@@ -805,6 +822,10 @@ SummaryItemWriter
 
 ### 프로젝트 아키텍처 이미지
 
+GitHub README에서 프로젝트의 현재 화면을 바로 확인할 수 있도록 메인 화면 스크린샷을 별도 자산으로 관리합니다.
+
+![Feldbuch Main Chat Screen](./images/screenshots/feldbuch-main-chat-screen.png)
+
 아래 이미지는 현재 프로젝트에서 실제로 사용하는 기술을 기준으로 정리한 아키텍처 SVG입니다.
 
 ![Feldbuch Project Architecture](./images/diagrams/feldbuch-architecture.svg)
@@ -820,6 +841,7 @@ Vue 클라이언트의 라우팅, 컴포넌트, API client, Interceptor 흐름�
 이미지 파일 경로:
 
 ```text
+docs/images/screenshots/feldbuch-main-chat-screen.png
 docs/images/diagrams/feldbuch-architecture.svg
 docs/images/diagrams/feldbuch-client-architecture.svg
 docs/images/diagrams/feldbuch-ai-job-flow.svg

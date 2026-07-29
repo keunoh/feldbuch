@@ -6,6 +6,12 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 단순 CRUD를 넘어, AI가 개발 노트를 이해해 요약, 태깅, 추천, 코드 리뷰까지 수행하는 개발 지식 관리 플랫폼을 목표로 합니다.
 
+## Main Screen
+
+![Feldbuch Main Chat Screen](docs/images/screenshots/feldbuch-main-chat-screen.png)
+
+현재 메인 화면은 Vue 3 기반 AI 학습 대화 화면입니다. 왼쪽은 대화 목록과 새 학습 시작, 가운데는 Markdown으로 렌더링되는 AI 채팅, 오른쪽은 선택한 대화의 학습 정보를 보여주는 3분할 구조로 구성했습니다.
+
 ## Overview
 
 ![Feldbuch Project Architecture](docs/images/diagrams/feldbuch-architecture.svg)
@@ -43,6 +49,8 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 앞으로의 프론트엔드 작업은 `frontend/`의 Vue 3 + Vite 프로젝트를 중심으로 진행합니다.
 - Vue 화면은 Spring Boot API 서버와 분리된 SPA로 구성하고, 백엔드와는 REST API로 통신합니다.
 - Vue Router로 `/login`, `/conversations` 라우트를 구성하고, 인증이 필요한 화면은 Router Guard로 보호합니다.
+- 메인 대화 화면은 `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`을 조합한 3분할 학습 채팅 UI입니다.
+- 전역 스타일은 `frontend/src/assets/main.css`에서 관리하며, 다크 터미널 톤의 색상 토큰, 레이아웃 폭, 기본 인터랙션 스타일을 정의합니다.
 
 ## Communication
 
@@ -57,6 +65,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 대화 상세 조회는 `GET /api/conversations/{conversationId}`로 수행하며, 대화 메타데이터와 메시지 목록을 함께 받습니다.
 - 새 대화 생성은 `POST /api/conversations`, 대화 삭제는 `DELETE /api/conversations/{conversationId}`로 처리합니다.
 - 대화 제목 수정은 `PATCH /api/conversations/{conversationId}`로 처리합니다.
+- 대화 상세 응답은 `ConversationDetailResponse`로 `id`, `title`, `status`, `createdAt`, `updatedAt`, `messages`, `messageCount`를 함께 제공합니다.
 - 메시지 전송 후에는 선택한 대화를 다시 조회해 사용자 메시지, AI 응답, 자동 생성 제목을 최신화합니다.
 - AI 요약은 요청 즉시 `jobId`를 반환하고, 클라이언트는 `GET /api/ai/jobs/{jobId}`로 처리 상태를 조회합니다.
 - 서버는 모든 요청에 UUID 기반 `requestId`를 생성하고 `X-Request-Id` 응답 헤더로 내려줍니다.
@@ -89,7 +98,11 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
 - 새 대화 생성/제목 수정/삭제 UI와 중복 요청 방지 상태
 - AI 응답 Markdown 렌더링 및 DOMPurify sanitize 처리
+- 코드 블록 언어 표시와 클립보드 COPY 버튼
 - 메시지 전송 중 로딩 표시와 자동 스크롤
+- 사용자 메시지 낙관적 표시 후 대화 상세 재조회
+- 다크 터미널 스타일의 Vue 메인 채팅 화면
+- 선택한 대화의 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
 - Request ID 기반 요청 추적과 `X-Request-Id` 응답 헤더
 - Redis, Spring Batch 기반 확장 구성
 
@@ -164,7 +177,7 @@ flowchart TD
     ApiClient --> SpringBootApi
 ```
 
-Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용합니다. 대화 목록과 생성/제목 수정/삭제는 `ConversationSidebar`, 메시지는 `MessageList`, 입력과 전송 중 비활성화는 `ChatInput`, 학습 메타 정보는 `StudyInfoPanel`이 담당합니다. 백엔드 통신은 `authApi`와 `conversationApi`가 Axios `apiClient`를 통해 수행합니다.
+Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용합니다. 대화 목록과 생성/제목 수정/삭제는 `ConversationSidebar`, Markdown 메시지와 코드 복사는 `MessageList`, 입력과 전송 중 비활성화는 `ChatInput`, 학습 주제/상태/메시지 수/생성일/수정일 표시는 `StudyInfoPanel`이 담당합니다. 백엔드 통신은 `authApi`와 `conversationApi`가 Axios `apiClient`를 통해 수행합니다.
 
 ## Project Structure
 
@@ -185,6 +198,7 @@ src/main/java
 frontend
 └── src
     ├── api
+    ├── assets
     ├── components
     ├── router
     ├── utils
@@ -210,6 +224,10 @@ frontend
 - Stateless JWT Logout
 - Component-based Client Architecture
 - Markdown Rendering and Sanitizing
+- Code Block Copy UX
+- Optimistic User Message Rendering
+- Dark Terminal Chat UI
+- Three-pane Learning Session Layout
 - Request ID 기반 요청 추적
 - Profile 기반 외부 설정 관리
 
