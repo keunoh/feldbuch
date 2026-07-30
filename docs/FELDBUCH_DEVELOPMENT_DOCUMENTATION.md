@@ -18,6 +18,12 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 현재 메인 화면은 Vue 3 기반 AI 학습 대화 화면입니다. 왼쪽 사이드바는 대화 목록과 새 학습 시작을 담당하고, 중앙 영역은 사용자 메시지와 AI 응답을 Markdown으로 렌더링하며, 오른쪽 패널은 선택한 대화의 주제, 상태, 메시지 수, 생성일, 수정일을 한눈에 보여줍니다.
 
+### ERD
+
+![Feldbuch Entity Relationship Diagram](./images/diagrams/feldbuch-erd.svg)
+
+현재 데이터 모델은 사용자, 개발 노트, AI Job, 대화 세션, 대화 메시지, Knowledge 폴더, AI 추출 학습 노트를 중심으로 구성합니다. `knowledge`는 사용자별 지식 폴더 트리를 자기 참조로 표현하고, `knowledge_notes`는 원본 대화에서 추출한 학습 노트를 특정 지식 폴더에 저장합니다.
+
 ### 핵심 기능
 
 - JWT 기반 회원가입과 로그인
@@ -36,7 +42,12 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation 삭제
 - Conversation Message 저장 및 조회
 - Conversation 컨텍스트 기반 AI 채팅
+- SSE 기반 AI 응답 스트리밍 API
+- OpenAI WebClient 기반 스트리밍 호출
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
+- Knowledge 폴더 트리 도메인
+- Conversation 기반 AI 추출 학습 노트 도메인
+- KnowledgeNote 키워드 ElementCollection 저장
 - Thymeleaf 기반 로그인/대화 화면
 - Vue 3 + Vite 로그인/대화 화면 전환
 - Axios API client, Request/Response Interceptor
@@ -44,9 +55,10 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
 - 새 대화 생성/제목 수정/삭제 UI와 중복 요청 방지 상태
 - AI 응답 Markdown 렌더링 및 DOMPurify sanitize 처리
+- highlight.js 기반 코드 문법 강조
 - 코드 블록 언어 표시와 클립보드 COPY 버튼
 - 메시지 전송 중 로딩 표시와 자동 스크롤
-- 사용자 메시지 낙관적 표시 후 대화 상세 재조회
+- 사용자 메시지와 스트리밍 AI 메시지 낙관적 표시 후 대화 상세 재조회
 - 다크 터미널 스타일의 Vue 메인 채팅 화면
 - 선택한 대화의 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
 - Request ID 기반 요청 추적과 `X-Request-Id` 응답 헤더
@@ -64,6 +76,7 @@ backend
     ├── config           # Security, Redis, OpenAI, Batch 설정
     ├── conversation     # 대화, 메시지, 대화형 AI
     ├── home             # 서버 렌더링 진입점
+    ├── knowledge        # 지식 폴더, AI 추출 학습 노트
     ├── note             # 개발 노트 CRUD/Search
     ├── redis            # Redis 유틸리티
     └── user             # 회원, 사용자 조회
@@ -109,10 +122,10 @@ frontend
 | ORM | Spring Data JPA |
 | Query | QueryDSL |
 | Build | Gradle |
-| AI | OpenAI REST API |
+| AI | OpenAI REST API, OpenAI SSE Streaming |
 | Infra | Docker, Redis |
 | Batch | Spring Batch |
-| View | Thymeleaf, Static CSS/JS, Vue 3, Vite, Vue Router, Axios, marked, DOMPurify |
+| View | Thymeleaf, Static CSS/JS, Vue 3, Vite, Vue Router, Axios, Fetch SSE, marked, highlight.js, DOMPurify |
 | Test | JUnit5, MockMvc |
 
 ### 기술 로고
@@ -125,9 +138,9 @@ frontend
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 인증/인가 | 토큰 인증 | ORM | 동적 검색 | 캐시/임시 저장소 | 요약 배치 파이프라인 | 테스트 DB | OpenAI API 호출 |
 
-| Vue.js | Vite | Vue Router | Axios | marked | DOMPurify | Thymeleaf |
-| --- | --- | --- | --- | --- | --- | --- |
-| <img src="./images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | HTTP client / interceptor | Markdown 렌더링 | HTML sanitize | 비교용 서버 렌더링 화면 |
+| Vue.js | Vite | Vue Router | Axios | Fetch SSE | marked | highlight.js | DOMPurify | Thymeleaf |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| <img src="./images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | HTTP client / interceptor | AI 응답 스트리밍 | Markdown 렌더링 | 코드 문법 강조 | HTML sanitize | 비교용 서버 렌더링 화면 |
 
 ---
 
@@ -162,6 +175,8 @@ flowchart LR
     --> Q[Axios/Interceptor 인증 통신 구성]
     --> R[대화 제목 수정과 Request ID 추적]
     --> S[Vue 메인 채팅 UI 고도화]
+    --> T[SSE 기반 AI 응답 스트리밍]
+    --> U[Knowledge 저장 도메인 설계]
 ```
 
 ### 구현 완료
@@ -187,7 +202,9 @@ flowchart LR
 - Facade
 - Async
 - RestClient
+- WebClient
 - OpenAI API 연동
+- OpenAI Chat Completion SSE 스트리밍 연동
 - AI Job Entity, Reader, Service, Controller
 - AI Job 상태 조회 API
 - Conversation Entity, Controller, Command/Query Service
@@ -197,7 +214,16 @@ flowchart LR
 - Conversation별 메시지 순서 저장
 - 대화 내역을 OpenAI Chat Completion 메시지 컨텍스트로 변환
 - Conversation Chat API
+- Conversation Chat Stream API
+- `StreamResponse` 기반 `TOKEN`, `COMPLETE`, `ERROR` 스트리밍 이벤트 계약
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
+- Knowledge Entity
+- KnowledgeNote Entity
+- KnowledgeNote Keyword ElementCollection
+- KnowledgeRepository
+- KnowledgeNoteRepository
+- 사용자별 Knowledge 루트/자식 조회, 동일 폴더명 중복 확인 쿼리
+- KnowledgeNote의 Knowledge별/Conversation별/사용자별 조회 쿼리
 - Thymeleaf 기반 로그인/대화 화면
 - `frontend/` Vue 3 + Vite 프로젝트 구성
 - Vue 로그인 화면: `LoginView`
@@ -210,6 +236,7 @@ flowchart LR
 - 메시지 전송 중 AI 응답 작성 로딩 표시
 - 메시지 목록 자동 스크롤
 - AI 응답 Markdown 렌더링
+- highlight.js 기반 코드 문법 강조
 - DOMPurify 기반 렌더링 HTML sanitize
 - Request ID Filter
 - SLF4J MDC 기반 requestId 저장/해제
@@ -264,6 +291,25 @@ flowchart LR
 - `StudyInfoPanel`에서 대화 제목, 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
 - `frontend/src/assets/main.css`에서 다크 터미널 톤의 전역 색상 토큰, 레이아웃 폭, 스크롤바, 포커스 스타일 관리
 - `ConversationDetailResponse`에 대화 메타데이터, 메시지 목록, 메시지 수, 수정일 포함
+- `OpenAiWebClientConfig`와 WebClient 기반 OpenAI 스트리밍 호출 구성
+- `ChatCompletionStreamRequest` 추가: 기존 Chat Completion 요청에 `stream=true`를 적용하는 스트리밍 요청 DTO 구성
+- `ChatCompletionChunkResponse`, `ChunkChoice`, `Delta`로 OpenAI SSE 청크에서 텍스트 토큰 추출
+- `ChatService.stream`, `OpenAiChatService.stream`, `OpenAiClient.stream`으로 스트리밍 처리 계층 확장
+- `POST /api/conversations/{conversationId}/chat/stream` SSE API 추가
+- `ConversationChatService.stream`에서 사용자 메시지 저장, 컨텍스트 생성, 토큰 누적, 스트림 완료 후 Assistant 메시지 저장 처리
+- `StreamResponse`, `StreamType` 추가: `TOKEN`, `COMPLETE`, `ERROR` 이벤트 계약 정의
+- Spring Security에서 SSE 비동기 디스패치 인증 오류를 피하도록 비동기 요청 흐름 보완
+- `conversationApi.streamMessage`에서 Fetch API로 `text/event-stream` 응답을 읽고 `data:` 이벤트를 파싱
+- Vue `ConversationView`에서 사용자 메시지와 Assistant 스트리밍 메시지를 낙관적으로 추가하고 토큰 수신 시 실시간 누적 렌더링
+- `markdownRenderer.js`로 Markdown 렌더링 책임 분리
+- `highlight.js`로 AI 응답 코드 블록 문법 강조 적용
+- 코드 복사 UX 개선: 복사 성공/실패 상태 표시와 타이머 정리
+- `Knowledge` 엔티티 추가: 사용자별 지식 폴더, 상위 폴더 자기 참조, 루트/자식 생성, 이름 변경, 폴더 이동 검증
+- `KnowledgeNote` 엔티티 추가: 대화에서 추출한 학습 노트 제목/요약, 사용자, 원본 대화, 저장 지식 폴더 연결
+- `knowledge_note_keywords` ElementCollection 추가: 학습 노트별 최대 10개 키워드 저장
+- `KnowledgeRepository` 추가: 사용자별 루트/자식 폴더 조회와 같은 parent 내 이름 중복 확인
+- `KnowledgeNoteRepository` 추가: Knowledge별, Conversation별, 사용자별 학습 노트 조회와 대화 기반 생성 여부 확인
+- Knowledge 관련 FK와 조회 인덱스 정의: `idx_knowledge_user_parent`, `idx_knowledge_parent`, `idx_knowledge_note_user`, `idx_knowledge_note_knowledge`, `idx_knowledge_note_conversation`
 - Spring Security CORS 설정으로 Vite 개발 서버 `http://localhost:5173` 허용
 - `RequestIdFilter`에서 요청마다 UUID를 생성하고 MDC와 `X-Request-Id` 응답 헤더에 기록
 - Spring Batch 기반 `summaryJob`/`summaryStep` 구성
@@ -327,6 +373,10 @@ flowchart TD
     ConversationChatService --> ChatContextBuilder
     ChatContextBuilder --> ConversationMessageReader
     ConversationChatService --> ChatService
+    ChatService --> OpenAiWebClient
+
+    KnowledgeRepository --> Knowledge
+    KnowledgeNoteRepository --> KnowledgeNote
 
     BatchJob --> ItemReader
     ItemReader --> ItemProcessor
@@ -396,12 +446,13 @@ flowchart TD
 - `LoginView.vue`: 로그인 폼, 로그인 API 호출, 토큰 저장, 대화 화면 이동
 - `ConversationView.vue`: 대화 화면 컨테이너, 대화 목록/선택 대화/메시지/요청 중 상태 관리
 - `ConversationSidebar.vue`: 대화 목록, 현재 선택 상태, 새 대화 생성 버튼, 인라인 제목 수정 입력, 대화 삭제 버튼 렌더링
-- `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링, AI 응답 Markdown 렌더링, 코드 블록 COPY 버튼, 로딩 메시지 표시
+- `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링, AI 응답 Markdown 렌더링, highlight.js 코드 문법 강조, 코드 블록 COPY 버튼, 로딩 메시지 표시
 - `ChatInput.vue`: 사용자 입력을 `send` 이벤트로 상위 컴포넌트에 전달하고 전송 중 입력을 비활성화
 - `StudyInfoPanel.vue`: 선택한 대화의 학습 주제, 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
 - `assets/main.css`: Vue 앱의 다크 터미널 톤 디자인 토큰, 레이아웃 폭, 공통 포커스/스크롤 스타일 관리
 - `apiClient.js`: Axios instance, baseURL, Request/Response Interceptor 관리
-- `authApi.js`, `conversationApi.js`: 도메인별 API 호출 함수 제공
+- `authApi.js`, `conversationApi.js`: 도메인별 API 호출 함수와 Fetch 기반 SSE 스트리밍 함수 제공
+- `utils/markdownRenderer.js`: marked, highlight.js, DOMPurify를 조합해 AI 응답 Markdown 렌더링 책임 분리
 - `utils/auth.js`: `accessToken`, `userId` 저장/조회/삭제와 로그인 여부 판단
 
 대화 화면 데이터 흐름:
@@ -474,7 +525,7 @@ PATCH /api/conversations/{conversationId}
 목록과 현재 상세 conversation 제목 갱신
 ```
 
-메시지 전송 흐름:
+메시지 스트리밍 전송 흐름:
 
 ```text
 ChatInput send event
@@ -483,11 +534,15 @@ ConversationView.sendMessage(content)
   ↓
 sendingMessage = true
   ↓
-conversationApi.sendMessage(conversationId, message)
+사용자 메시지와 빈 ASSISTANT 메시지 낙관적 추가
   ↓
-POST /api/conversations/{conversationId}/chat
+conversationApi.streamMessage(conversationId, message)
   ↓
-AI 응답 저장 후 반환
+POST /api/conversations/{conversationId}/chat/stream
+  ↓
+SSE TOKEN 이벤트 수신마다 ASSISTANT 메시지 content 누적
+  ↓
+COMPLETE 이벤트 수신
   ↓
 getConversation(conversationId) 재조회
   ↓
@@ -531,7 +586,11 @@ Repository / OpenAI
 - 새 대화는 `POST /api/conversations`로 생성하고, 응답으로 생성된 `conversationId`를 받습니다.
 - 대화 제목 수정은 `PATCH /api/conversations/{conversationId}`로 처리하며, 제목은 필수이고 최대 100자입니다.
 - 대화 삭제는 `DELETE /api/conversations/{conversationId}`로 처리하며, 백엔드는 해당 대화의 메시지를 먼저 삭제한 뒤 대화를 삭제합니다.
-- 메시지 전송은 `POST /api/conversations/{conversationId}/chat`로 처리하고, 전송 후 상세를 재조회해 사용자 메시지, AI 응답, 자동 생성 제목을 한 번에 최신화합니다.
+- 일반 메시지 전송은 `POST /api/conversations/{conversationId}/chat`로 처리하고, 전송 후 상세를 재조회해 사용자 메시지, AI 응답, 자동 생성 제목을 한 번에 최신화합니다.
+- Vue 메인 대화 화면의 메시지 전송은 `POST /api/conversations/{conversationId}/chat/stream` SSE API를 사용합니다.
+- SSE API는 `text/event-stream`을 생산하며 `ApiResponse<T>`로 감싸지 않고 `StreamResponse`를 이벤트 단위로 전송합니다.
+- `StreamResponse.type`은 `TOKEN`, `COMPLETE`, `ERROR` 중 하나이며, `TOKEN` 이벤트의 `content`에는 누적값이 아니라 새로 도착한 토큰 조각만 담습니다.
+- Fetch 기반 스트리밍 함수는 `Authorization: Bearer <accessToken>` 헤더를 직접 추가하고, 401 응답이면 클라이언트 로그아웃 후 `/login`으로 이동합니다.
 - 백엔드는 `JwtAuthenticationEntryPoint`로 미인증 요청에 401을 반환합니다.
 - 백엔드는 `RequestIdFilter`로 모든 요청에 UUID 기반 `requestId`를 부여하고, MDC와 `X-Request-Id` 응답 헤더에 기록합니다.
 - 백엔드는 Vite 개발 서버인 `http://localhost:5173` origin을 CORS로 허용합니다.
@@ -804,6 +863,149 @@ AI 응답 저장
 
 대화 제목이 기본값인 `새 대화`이면 첫 사용자 메시지를 기반으로 `TitlePromptFactory`가 제목 생성 프롬프트를 만들고, AI 응답 제목으로 Conversation 제목을 변경합니다.
 
+### Conversation Chat Streaming 처리 흐름
+
+```text
+ChatController.stream
+  ↓
+ConversationChatService.stream
+  ↓
+사용자 소유 대화 검증
+  ↓
+USER 메시지 저장
+  ↓
+ChatContextBuilder로 방금 저장한 메시지까지 포함한 컨텍스트 생성
+  ↓
+OpenAiChatService.stream
+  ↓
+OpenAiClient.stream(WebClient + text/event-stream)
+  ↓
+OpenAI SSE chunk 수신
+  ↓
+ChatCompletionChunkResponse.content()로 delta.content 추출
+  ↓
+StreamResponse.token(content) 전송
+  ↓
+스트림 완료 후 누적된 AI 응답을 ASSISTANT 메시지로 저장
+  ↓
+StreamResponse.complete() 전송
+```
+
+스트리밍 계약:
+
+| 구분 | 값 |
+| --- | --- |
+| Endpoint | `POST /api/conversations/{conversationId}/chat/stream` |
+| Produces | `text/event-stream` |
+| Request Body | `{ "message": "..." }` |
+| Auth | `Authorization: Bearer <accessToken>` |
+| Response Wrapper | 사용하지 않음 |
+| Event DTO | `StreamResponse(type, content)` |
+| Event Type | `TOKEN`, `COMPLETE`, `ERROR` |
+| 저장 시점 | USER 메시지는 스트림 시작 전 저장, ASSISTANT 메시지는 스트림 완료 후 누적 본문 저장 |
+
+### Database ERD
+
+![Feldbuch Entity Relationship Diagram](./images/diagrams/feldbuch-erd.svg)
+
+ERD는 JPA 엔티티와 `@Table`, `@JoinColumn`, `@CollectionTable`, 리포지토리 조회 메서드를 기준으로 작성했습니다. `BaseEntity`를 상속하는 엔티티는 공통으로 `created_at`, `updated_at` 감사 컬럼을 가집니다.
+
+#### 테이블 요약
+
+| Table | 한글명 | 역할 |
+| --- | --- | --- |
+| `users` | 사용자 | 로그인 주체, 노트/대화/지식 폴더/학습 노트의 소유자 |
+| `notes` | 개발 노트 | 사용자가 직접 작성하는 개발 학습 노트 |
+| `ai_job` | AI 작업 | 비동기 AI 요약 등 백그라운드 작업 상태 추적 |
+| `conversations` | AI 대화 세션 | 사용자별 AI 채팅 세션 |
+| `conversation_messages` | 대화 메시지 | 대화별 USER/ASSISTANT 메시지와 순서 저장 |
+| `knowledge` | 지식 폴더 | 사용자별 지식 분류 트리, 자기 참조 폴더 구조 |
+| `knowledge_notes` | AI 추출 학습 노트 | 대화에서 추출해 Knowledge 폴더에 저장하는 학습 요약 |
+| `knowledge_note_keywords` | 학습 노트 키워드 | `KnowledgeNote.keywords` ElementCollection 저장 테이블 |
+
+#### 컬럼 상세
+
+| Table | Column | Key | Type / 제약 | 설명 |
+| --- | --- | --- | --- | --- |
+| `users` / 사용자 | `id` | PK | BIGINT, identity | 사용자 PK |
+| `users` / 사용자 | `email` | UK | VARCHAR(100), NOT NULL | 로그인 이메일, `uk_user_email` |
+| `users` / 사용자 | `password` |  | VARCHAR(255), NOT NULL | 암호화 비밀번호 |
+| `users` / 사용자 | `nickname` |  | VARCHAR(30), NOT NULL | 표시 이름 |
+| `users` / 사용자 | `role` |  | VARCHAR(20), NOT NULL | `USER`, `ADMIN` |
+| `users` / 사용자 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각 |
+| `notes` / 개발 노트 | `id` | PK | BIGINT, identity | 노트 PK |
+| `notes` / 개발 노트 | `user_id` | FK | BIGINT, NOT NULL | `users.id`, `fk_note_user` |
+| `notes` / 개발 노트 | `title` |  | VARCHAR(200), NOT NULL | 노트 제목 |
+| `notes` / 개발 노트 | `content` |  | LOB, NOT NULL | 노트 본문 |
+| `notes` / 개발 노트 | `summary` |  | VARCHAR(500), NULL | AI 요약 결과 |
+| `notes` / 개발 노트 | `category` |  | VARCHAR(30), NOT NULL | `STUDY`, `ERROR`, `ENVIRONMENT`, `AI`, `MEMO` |
+| `notes` / 개발 노트 | `pinned` |  | BOOLEAN, NOT NULL | 상단 고정 여부 |
+| `notes` / 개발 노트 | `study_status` |  | VARCHAR(30), NOT NULL | `TODO`, `IN_PROGRESS`, `DONE` |
+| `notes` / 개발 노트 | `summary_status` |  | VARCHAR(20), NOT NULL | `NONE`, `PENDING`, `COMPLETED`, `FAILED` |
+| `notes` / 개발 노트 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각 |
+| `ai_job` / AI 작업 | `id` | PK | BIGINT, identity | Job PK |
+| `ai_job` / AI 작업 | `note_id` | Logical FK | BIGINT | 현재 JPA FK 없이 노트 ID 값으로 보관 |
+| `ai_job` / AI 작업 | `job_type` |  | VARCHAR(255) | `SUMMARY`, `TAG`, `QUIZ`, `REVIEW`, `ROADMAP` |
+| `ai_job` / AI 작업 | `status` |  | VARCHAR(255) | `REQUESTED`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| `ai_job` / AI 작업 | `requested_at`, `started_at`, `completed_at` |  | DATETIME | Job 처리 시각 |
+| `ai_job` / AI 작업 | `error_message` |  | VARCHAR(1000), NULL | 실패 사유 |
+| `ai_job` / AI 작업 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각 |
+| `conversations` / AI 대화 세션 | `id` | PK | BIGINT, identity | 대화 PK |
+| `conversations` / AI 대화 세션 | `user_id` | FK | BIGINT, NOT NULL | `users.id` |
+| `conversations` / AI 대화 세션 | `title` |  | VARCHAR(100), NOT NULL | 대화 제목, 기본값 `새 대화` |
+| `conversations` / AI 대화 세션 | `status` |  | VARCHAR(255), NOT NULL | `ACTIVE`, `COMPLETED` |
+| `conversations` / AI 대화 세션 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각, 목록 정렬 기준은 `updated_at DESC` |
+| `conversation_messages` / 대화 메시지 | `id` | PK | BIGINT, identity | 메시지 PK |
+| `conversation_messages` / 대화 메시지 | `conversation_id` | FK | BIGINT, NOT NULL | `conversations.id` |
+| `conversation_messages` / 대화 메시지 | `sequence` |  | INTEGER, NOT NULL | 대화 내 메시지 순서 |
+| `conversation_messages` / 대화 메시지 | `role` |  | VARCHAR(20), NOT NULL | `USER`, `ASSISTANT` |
+| `conversation_messages` / 대화 메시지 | `content` |  | LONGTEXT, NOT NULL | 메시지 본문 |
+| `conversation_messages` / 대화 메시지 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각 |
+| `knowledge` / 지식 폴더 | `id` | PK | BIGINT, identity | Knowledge PK |
+| `knowledge` / 지식 폴더 | `user_id` | FK, IDX | BIGINT, NOT NULL | `users.id`, `fk_knowledge_user` |
+| `knowledge` / 지식 폴더 | `parent_id` | FK, IDX | BIGINT, NULL | `knowledge.id`, `fk_knowledge_parent`, NULL이면 최상위 |
+| `knowledge` / 지식 폴더 | `name` |  | VARCHAR(100), NOT NULL | 폴더 이름 |
+| `knowledge` / 지식 폴더 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각 |
+| `knowledge_notes` / AI 추출 학습 노트 | `id` | PK | BIGINT, identity | KnowledgeNote PK |
+| `knowledge_notes` / AI 추출 학습 노트 | `user_id` | FK, IDX | BIGINT, NOT NULL | `users.id`, `fk_knowledge_note_user` |
+| `knowledge_notes` / AI 추출 학습 노트 | `conversation_id` | FK, IDX | BIGINT, NOT NULL | `conversations.id`, `fk_knowledge_note_conversation` |
+| `knowledge_notes` / AI 추출 학습 노트 | `knowledge_id` | FK, IDX | BIGINT, NOT NULL | `knowledge.id`, `fk_knowledge_note_knowledge` |
+| `knowledge_notes` / AI 추출 학습 노트 | `title` |  | VARCHAR(200), NOT NULL | AI가 생성한 학습 노트 제목 |
+| `knowledge_notes` / AI 추출 학습 노트 | `summary` |  | LOB, NOT NULL | 대화에서 추출한 학습 요약 |
+| `knowledge_notes` / AI 추출 학습 노트 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각 |
+| `knowledge_note_keywords` / 학습 노트 키워드 | `knowledge_note_id` | FK | BIGINT, NOT NULL | `knowledge_notes.id`, `fk_knowledge_note_keyword_note` |
+| `knowledge_note_keywords` / 학습 노트 키워드 | `keyword` |  | VARCHAR(100), NOT NULL | 검색/복습용 키워드, 엔티티에서 공백 제거, 중복 제거, 최대 10개 제한 |
+
+#### 참조 관계
+
+| 관계 | Cardinality | FK / 기준 컬럼 | 설명 |
+| --- | --- | --- | --- |
+| `users` -> `notes` | 1:N | `notes.user_id` | 사용자가 작성한 개발 노트 |
+| `notes` -> `ai_job` | 1:N logical | `ai_job.note_id` | AI Job이 대상 노트 ID를 값으로 보관합니다. 현재 DB FK는 정의하지 않았습니다. |
+| `users` -> `conversations` | 1:N | `conversations.user_id` | 사용자별 대화 세션 |
+| `conversations` -> `conversation_messages` | 1:N | `conversation_messages.conversation_id` | 한 대화의 USER/ASSISTANT 메시지 |
+| `users` -> `knowledge` | 1:N | `knowledge.user_id` | 사용자별 지식 폴더 트리 |
+| `knowledge` -> `knowledge` | 1:N self | `knowledge.parent_id` | 상위/하위 Knowledge 폴더 |
+| `users` -> `knowledge_notes` | 1:N | `knowledge_notes.user_id` | 사용자별 AI 추출 학습 노트 조회 최적화 |
+| `conversations` -> `knowledge_notes` | 1:N | `knowledge_notes.conversation_id` | 한 대화에서 여러 학습 노트가 추출될 수 있습니다. |
+| `knowledge` -> `knowledge_notes` | 1:N | `knowledge_notes.knowledge_id` | 특정 지식 폴더에 저장된 학습 노트 |
+| `knowledge_notes` -> `knowledge_note_keywords` | 1:N | `knowledge_note_keywords.knowledge_note_id` | ElementCollection 키워드 |
+
+#### 인덱스와 조회 패턴
+
+| Table | Index / Constraint | Columns | 근거 / 사용 패턴 |
+| --- | --- | --- | --- |
+| `users` | `uk_user_email` | `email` | 로그인, 회원가입 중복 확인 |
+| `knowledge` | `idx_knowledge_user_parent` | `user_id`, `parent_id` | 루트/자식 폴더 목록 조회, 같은 parent 내 이름 중복 확인 |
+| `knowledge` | `idx_knowledge_parent` | `parent_id` | 하위 폴더 탐색, 자기 참조 트리 이동/조회 |
+| `knowledge_notes` | `idx_knowledge_note_user` | `user_id` | 사용자별 최근 학습 노트 조회 |
+| `knowledge_notes` | `idx_knowledge_note_knowledge` | `knowledge_id` | 특정 Knowledge 폴더 안의 학습 노트 목록 조회 |
+| `knowledge_notes` | `idx_knowledge_note_conversation` | `conversation_id` | 한 대화에서 생성된 학습 노트 조회, 생성 여부 확인 |
+| `notes` | 권장 | `user_id`, `pinned`, `created_at` | `findAllByUserIdOrderByPinnedDescCreatedAtDesc` 조회 패턴 |
+| `conversations` | 권장 | `user_id`, `updated_at` | `findAllByUserIdOrderByUpdatedAtDesc` 조회 패턴 |
+| `conversation_messages` | 권장 | `conversation_id`, `sequence` | 메시지 목록 정렬과 마지막 sequence 조회 패턴 |
+| `ai_job` | 권장 | `note_id`, `status` | 노트별 AI 작업 추적과 상태 조회 확장 시 필요 |
+
 ### Spring Batch 요약 파이프라인
 
 ```text
@@ -838,12 +1040,17 @@ Vue 클라이언트의 라우팅, 컴포넌트, API client, Interceptor 흐름�
 
 ![Feldbuch Client Architecture](./images/diagrams/feldbuch-client-architecture.svg)
 
+엔티티, 컬럼, 참조 관계, 인덱스는 ERD SVG로 관리합니다.
+
+![Feldbuch Entity Relationship Diagram](./images/diagrams/feldbuch-erd.svg)
+
 이미지 파일 경로:
 
 ```text
 docs/images/screenshots/feldbuch-main-chat-screen.png
 docs/images/diagrams/feldbuch-architecture.svg
 docs/images/diagrams/feldbuch-client-architecture.svg
+docs/images/diagrams/feldbuch-erd.svg
 docs/images/diagrams/feldbuch-ai-job-flow.svg
 ```
 
@@ -945,11 +1152,15 @@ Job 상태 업데이트
 - Event Driven Architecture
 - API 문서화
 - 테스트 커버리지 확장
+- Knowledge API 계층 추가
+- KnowledgeNote 생성/조회 API 추가
 
 ### Frontend
 
 - Vue 대화 목록/메시지 화면 상태 관리 정리
 - Vue 삭제 확인 UX 개선
+- 스트리밍 요청 취소 UX 정리
+- Knowledge 폴더/학습 노트 화면 추가
 - Thymeleaf 화면과 Vue 화면 기능 비교
 - Vite 개발 서버와 Spring Boot API 서버 연동 방식 정리
 
@@ -971,6 +1182,7 @@ Job 상태 업데이트
 문서에서 이미지가 잘 보이도록 다음 기준으로 관리합니다.
 
 - 스크린샷, 다이어그램 등 직접 만든 이미지는 `docs/images/diagrams/`에 저장합니다.
+- 화면 스크린샷은 `docs/images/screenshots/`에 저장합니다.
 - 기술 로고는 `docs/images/logos/`에 각각 저장합니다.
 - Markdown에서는 상대 경로를 사용합니다.
 - 문서 안에서는 외부 URL 대신 저장소 내부 이미지 파일을 참조합니다.
@@ -982,7 +1194,9 @@ Job 상태 업데이트
 | --- | --- | --- |
 | Feldbuch Project Architecture | `docs/images/diagrams/feldbuch-architecture.svg` | 현재 프로젝트의 Spring Boot, RequestIdFilter, Security, QueryDSL, JPA, MySQL, H2, Docker, OpenAI 구조 |
 | Feldbuch Client Architecture | `docs/images/diagrams/feldbuch-client-architecture.svg` | Vue Router, View, Component, Axios API client, Interceptor, Spring Boot API 통신 구조 |
+| Feldbuch Entity Relationship Diagram | `docs/images/diagrams/feldbuch-erd.svg` | users, notes, ai_job, conversations, conversation_messages, knowledge, knowledge_notes, knowledge_note_keywords의 컬럼, 참조 관계, 인덱스 |
 | Feldbuch AI Job Flow | `docs/images/diagrams/feldbuch-ai-job-flow.svg` | AI 요약 요청, Job 상태 변경, OpenAI 호출 흐름 |
+| Feldbuch Main Chat Screen | `docs/images/screenshots/feldbuch-main-chat-screen.png` | Vue 기반 메인 대화 화면 |
 | Spring Boot | `docs/images/logos/springboot.svg` | 백엔드 API |
 | Docker | `docs/images/logos/docker.svg` | 컨테이너 실행 환경 |
 | MySQL | `docs/images/logos/mysql.svg` | 운영 DB |
@@ -1002,6 +1216,7 @@ Job 상태 업데이트
 ```markdown
 ![Feldbuch Project Architecture](./images/diagrams/feldbuch-architecture.svg)
 ![Feldbuch Client Architecture](./images/diagrams/feldbuch-client-architecture.svg)
+![Feldbuch Entity Relationship Diagram](./images/diagrams/feldbuch-erd.svg)
 ```
 
 ### HTML 이미지 예시
@@ -1011,6 +1226,7 @@ Job 상태 업데이트
 <img src="./images/logos/vue.svg" width="48" alt="Vue.js">
 <img src="./images/diagrams/feldbuch-architecture.svg" width="720" alt="Feldbuch Project Architecture">
 <img src="./images/diagrams/feldbuch-client-architecture.svg" width="720" alt="Feldbuch Client Architecture">
+<img src="./images/diagrams/feldbuch-erd.svg" width="720" alt="Feldbuch Entity Relationship Diagram">
 ```
 
 ---

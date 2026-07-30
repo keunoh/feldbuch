@@ -18,6 +18,8 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 ![Feldbuch Client Architecture](docs/images/diagrams/feldbuch-client-architecture.svg)
 
+![Feldbuch Entity Relationship Diagram](docs/images/diagrams/feldbuch-erd.svg)
+
 ![Feldbuch AI Job Flow](docs/images/diagrams/feldbuch-ai-job-flow.svg)
 
 ## Tech Stack
@@ -30,9 +32,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 인증/인가 | 토큰 인증 | ORM | 동적 검색 | 캐시/임시 저장소 | 요약 배치 파이프라인 | 테스트 DB | OpenAI API 호출 |
 
-| Vue.js                                                       | Vite | Vue Router | Axios | marked | DOMPurify | Thymeleaf |
-|--------------------------------------------------------------| --- | --- | --- | --- | --- | --- |
-| <img src="docs/images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | HTTP client / interceptor | Markdown 렌더링 | HTML sanitize | 비교용 서버 렌더링 화면 |
+| Vue.js                                                       | Vite | Vue Router | Axios | Fetch SSE | marked | highlight.js | DOMPurify | Thymeleaf |
+|--------------------------------------------------------------| --- | --- | --- | --- | --- | --- | --- | --- |
+| <img src="docs/images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | HTTP client / interceptor | AI 응답 스트리밍 | Markdown 렌더링 | 코드 문법 강조 | HTML sanitize | 비교용 서버 렌더링 화면 |
 
 ## Runtime Configuration
 
@@ -61,7 +63,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Axios Response Interceptor는 `401 Unauthorized` 응답을 받으면 클라이언트 로그아웃을 수행하고 `/login`으로 이동합니다.
 - 로그아웃은 stateless JWT 구조에 맞춰 서버 세션을 폐기하지 않고, 클라이언트의 `accessToken`과 `userId`를 제거합니다.
 - 공통 응답은 `ApiResponse<T>` 형식이며, 실제 데이터는 `data` 필드에 담습니다.
-- 대화형 AI 요청은 `POST /api/conversations/{conversationId}/chat`으로 전송합니다.
+- 대화형 AI 일반 요청은 `POST /api/conversations/{conversationId}/chat`으로 전송합니다.
+- Vue 메인 대화 화면은 `POST /api/conversations/{conversationId}/chat/stream` SSE 스트리밍을 사용해 AI 응답 토큰을 실시간으로 표시합니다.
+- SSE 스트리밍 응답은 `ApiResponse<T>`로 감싸지 않고 `StreamResponse` 이벤트(`TOKEN`, `COMPLETE`, `ERROR`)를 순차 전송합니다.
 - 대화 상세 조회는 `GET /api/conversations/{conversationId}`로 수행하며, 대화 메타데이터와 메시지 목록을 함께 받습니다.
 - 새 대화 생성은 `POST /api/conversations`, 대화 삭제는 `DELETE /api/conversations/{conversationId}`로 처리합니다.
 - 대화 제목 수정은 `PATCH /api/conversations/{conversationId}`로 처리합니다.
@@ -90,7 +94,12 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation 삭제
 - Conversation Message 저장 및 조회
 - Conversation 컨텍스트 기반 AI 채팅
+- SSE 기반 AI 응답 스트리밍 API
+- OpenAI WebClient 기반 스트리밍 호출
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
+- Knowledge 폴더 트리 도메인
+- Conversation 기반 AI 추출 학습 노트 도메인
+- KnowledgeNote 키워드 ElementCollection 저장
 - Thymeleaf 기반 로그인/대화 화면
 - Vue 3 + Vite 로그인/대화 화면 전환
 - Axios API client, Request/Response Interceptor
@@ -98,9 +107,10 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
 - 새 대화 생성/제목 수정/삭제 UI와 중복 요청 방지 상태
 - AI 응답 Markdown 렌더링 및 DOMPurify sanitize 처리
+- highlight.js 기반 코드 문법 강조
 - 코드 블록 언어 표시와 클립보드 COPY 버튼
 - 메시지 전송 중 로딩 표시와 자동 스크롤
-- 사용자 메시지 낙관적 표시 후 대화 상세 재조회
+- 사용자 메시지와 스트리밍 AI 메시지 낙관적 표시 후 대화 상세 재조회
 - 다크 터미널 스타일의 Vue 메인 채팅 화면
 - 선택한 대화의 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
 - Request ID 기반 요청 추적과 `X-Request-Id` 응답 헤더
@@ -139,6 +149,10 @@ flowchart TD
     ConversationChatService --> ChatContextBuilder
     ChatContextBuilder --> ConversationMessageReader
     ConversationChatService --> ChatService
+    ChatService --> OpenAiWebClient
+
+    KnowledgeRepository --> Knowledge
+    KnowledgeNoteRepository --> KnowledgeNote
 
     BatchJob --> ItemReader
     ItemReader --> ItemProcessor
@@ -179,6 +193,12 @@ flowchart TD
 
 Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용합니다. 대화 목록과 생성/제목 수정/삭제는 `ConversationSidebar`, Markdown 메시지와 코드 복사는 `MessageList`, 입력과 전송 중 비활성화는 `ChatInput`, 학습 주제/상태/메시지 수/생성일/수정일 표시는 `StudyInfoPanel`이 담당합니다. 백엔드 통신은 `authApi`와 `conversationApi`가 Axios `apiClient`를 통해 수행합니다.
 
+## Database ERD
+
+![Feldbuch Entity Relationship Diagram](docs/images/diagrams/feldbuch-erd.svg)
+
+현재 영속 모델은 `users`, `notes`, `ai_job`, `conversations`, `conversation_messages`, `knowledge`, `knowledge_notes`, `knowledge_note_keywords`를 중심으로 구성합니다. `knowledge`는 사용자별 폴더 트리를 자기 참조로 표현하고, `knowledge_notes`는 대화에서 AI가 추출한 학습 노트를 특정 지식 폴더에 저장합니다.
+
 ## Project Structure
 
 ```text
@@ -191,6 +211,7 @@ src/main/java
     ├── config
     ├── conversation
     ├── home
+    ├── knowledge
     ├── note
     ├── redis
     └── user
@@ -215,8 +236,12 @@ frontend
 - AI Job State Tracking
 - Spring Batch Job Configuration
 - OpenAI Client Layer
+- OpenAI SSE Streaming
 - Chat Context Builder
 - Conversation Message Persistence
+- Knowledge Tree Modeling
+- AI Extracted Knowledge Note Modeling
+- ElementCollection Keyword Persistence
 - Thymeleaf View Layer 유지 및 Vue SPA 전환
 - Axios 기반 프론트엔드/백엔드 통신
 - Request/Response Interceptor
@@ -224,8 +249,9 @@ frontend
 - Stateless JWT Logout
 - Component-based Client Architecture
 - Markdown Rendering and Sanitizing
+- Syntax Highlighting with highlight.js
 - Code Block Copy UX
-- Optimistic User Message Rendering
+- Optimistic User and Streaming Assistant Message Rendering
 - Dark Terminal Chat UI
 - Three-pane Learning Session Layout
 - Request ID 기반 요청 추적

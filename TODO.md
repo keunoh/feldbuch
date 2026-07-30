@@ -28,9 +28,15 @@ AI와 함께 공부한 과정과 결과를 기록하고 돌아볼 수 있는 개
 - [x] 선택한 대화의 메시지 조회
 - [x] 사용자 메시지 저장
 - [x] AI 응답 요청 및 저장
+- [x] SSE 기반 AI 응답 스트리밍
+- [x] 스트리밍 토큰을 화면에 실시간 반영
 - [x] 대화 제목 자동 생성
 - [x] 대화 삭제
-- [ ] 대화 수정
+- [x] 대화 제목 수정
+- [x] AI 응답 Markdown 렌더링
+- [x] 코드 블록 문법 강조
+- [x] 코드 블록 복사
+- [ ] 대화 종료 상태 처리
 
 ### 2. 학습 기록
 
@@ -102,6 +108,146 @@ AI와 함께 공부한 과정과 결과를 기록하고 돌아볼 수 있는 개
 - [ ] 날짜 범위 검색
 - [ ] 학습 주제 통합 검색
 
+### 9. 대화 자동 학습 노트 증류
+
+Feldbuch의 핵심 방향은 단순 채팅이 아니라, AI와 나눈 대화를 자동으로 학습 노트로 증류하는 구조다.
+
+```text
+AI와 대화
+  ↓
+대화 종료 또는 일정 시간 미사용
+  ↓
+Spring Batch가 요약 대상 대화 조회
+  ↓
+AI가 카테고리 분류 + 짧은 학습 요약 생성
+  ↓
+카테고리 폴더 자동 생성
+  ↓
+학습 노트 저장
+  ↓
+사용자는 카테고리별 요약 노트 열람
+```
+
+현재 코드에서는 `category`/`study_note`라는 이름 대신 `knowledge`/`knowledge_notes` 도메인으로 1단계 저장 모델을 시작했다.
+
+#### 9-1. 도메인 및 DB 모델
+
+- [x] Knowledge 폴더 엔티티 생성
+- [x] Knowledge 폴더 자기 참조 구조 추가
+- [x] 사용자별 Knowledge 소유 관계 추가
+- [x] Knowledge 루트 폴더 생성 메서드 추가
+- [x] Knowledge 자식 폴더 생성 메서드 추가
+- [x] Knowledge 이름 변경 메서드 추가
+- [x] Knowledge 폴더 이동 메서드 추가
+- [x] 다른 사용자의 Knowledge로 이동하지 못하도록 검증
+- [x] KnowledgeRepository 추가
+- [x] 사용자별 루트 Knowledge 조회 쿼리 추가
+- [x] 사용자별 특정 parent 하위 Knowledge 조회 쿼리 추가
+- [x] 같은 parent 안의 Knowledge 이름 중복 확인 쿼리 추가
+- [x] Knowledge 조회 인덱스 추가: `idx_knowledge_user_parent`
+- [x] Knowledge parent 조회 인덱스 추가: `idx_knowledge_parent`
+- [x] KnowledgeNote 엔티티 생성
+- [x] KnowledgeNote와 User 연결
+- [x] KnowledgeNote와 Conversation 연결
+- [x] KnowledgeNote와 Knowledge 연결
+- [x] KnowledgeNote 제목, 요약 컬럼 추가
+- [x] KnowledgeNote 키워드 ElementCollection 추가
+- [x] `knowledge_note_keywords` 테이블 구조 추가
+- [x] 키워드 공백 제거, 중복 제거, 최대 10개 제한
+- [x] KnowledgeNoteRepository 추가
+- [x] Knowledge별 학습 노트 조회 쿼리 추가
+- [x] Conversation별 학습 노트 조회 쿼리 추가
+- [x] 사용자별 최근 학습 노트 조회 쿼리 추가
+- [x] Conversation 기준 학습 노트 생성 여부 확인 쿼리 추가
+- [x] KnowledgeNote 조회 인덱스 추가: `idx_knowledge_note_user`
+- [x] KnowledgeNote 조회 인덱스 추가: `idx_knowledge_note_knowledge`
+- [x] KnowledgeNote 조회 인덱스 추가: `idx_knowledge_note_conversation`
+- [ ] Conversation에 `summaryStatus` 추가
+- [ ] Conversation에 `lastSummarizedAt` 추가
+- [ ] 요약 대상 조회를 위한 Conversation 인덱스 추가
+- [ ] DB 마이그레이션 방식 정리
+
+#### 9-2. 수동 학습 노트 생성
+
+- [ ] 대화 내용을 수동으로 학습 노트로 저장하는 서비스 추가
+- [ ] Conversation 소유자와 Knowledge 소유자 일치 검증
+- [ ] KnowledgeNote 생성 요청 DTO 추가
+- [ ] KnowledgeNote 응답 DTO 추가
+- [ ] KnowledgeNote 생성 API 추가
+- [ ] KnowledgeNote 단건 조회 API 추가
+- [ ] KnowledgeNote 목록 조회 API 추가
+- [ ] 같은 Conversation에서 중복 생성 방지 정책 정리
+
+#### 9-3. AI 구조화 요약
+
+- [ ] AI에게 기존 Knowledge 경로 목록을 함께 전달
+- [ ] 기존 Knowledge 재사용 우선 프롬프트 작성
+- [ ] 새 Knowledge는 적절한 기존 경로가 없을 때만 생성하도록 지시
+- [ ] 한 번의 AI 요청으로 구조화된 JSON 생성
+- [ ] `categoryPath` 또는 `knowledgePath` 파싱
+- [ ] `title`, `summary`, `keywords` 파싱
+- [ ] AI JSON 응답 검증
+- [ ] AI 응답 파싱 실패 처리
+- [ ] Knowledge 경로 자동 조회 및 생성 서비스 추가
+- [ ] AI 요약 결과를 KnowledgeNote로 저장
+
+예상 AI 응답:
+
+```json
+{
+  "categoryPath": [
+    "개발",
+    "Spring"
+  ],
+  "title": "Spring 트랜잭션 적용 범위",
+  "summary": "서비스 클래스와 메서드에 @Transactional을 적용했을 때의 우선순위와 동작 차이를 정리한 학습 노트입니다.",
+  "keywords": [
+    "Spring",
+    "Transactional",
+    "트랜잭션"
+  ]
+}
+```
+
+#### 9-4. Spring Batch 자동 증류
+
+- [ ] 요약 대상 Conversation 조회 Reader 추가
+- [ ] 대상 기준: 메시지 2개 이상
+- [ ] 대상 기준: 마지막 메시지 이후 30분 이상 경과
+- [ ] 대상 기준: `summaryStatus = PENDING`
+- [ ] Processor에서 AI 구조화 요약 호출
+- [ ] Writer에서 Knowledge 경로 생성 및 KnowledgeNote 저장
+- [ ] 실패 시 `summaryStatus = FAILED` 처리
+- [ ] 성공 시 `summaryStatus = COMPLETED` 처리
+- [ ] 처리 시작 시 `summaryStatus = PROCESSING` 처리
+- [ ] 완료 시 `lastSummarizedAt` 기록
+- [ ] 초기 구현은 Tasklet 또는 작은 Chunk 크기로 시작
+- [ ] 1시간마다 실행하는 스케줄 설정
+- [ ] 매일 새벽 실행하는 스케줄 옵션 검토
+- [ ] 외부 AI API 실패 재시도 정책 추가
+
+#### 9-5. 학습 화면
+
+- [ ] `/study` 라우트 추가
+- [ ] 왼쪽 Knowledge 폴더 트리 화면 추가
+- [ ] 오른쪽 학습 노트 목록 화면 추가
+- [ ] 학습 노트 본문 화면 추가
+- [ ] 키워드 표시
+- [ ] 원본 Conversation으로 이동하는 링크 추가
+- [ ] Knowledge별 노트 필터링
+- [ ] 최근 생성된 학습 노트 표시
+
+#### 9-6. 관리 및 개선
+
+- [ ] Knowledge 이름 수정 API
+- [ ] Knowledge 이동 API
+- [ ] KnowledgeNote 이동 API
+- [ ] KnowledgeNote 제목/요약/키워드 수정 API
+- [ ] 대화 재요약 기능
+- [ ] 자동 분류 결과 수동 보정
+- [ ] 유사 Knowledge 병합
+- [ ] Knowledge 이름 정규화 정책
+
 ---
 
 ## 화면 구상
@@ -112,6 +258,28 @@ AI와 함께 공부한 과정과 결과를 기록하고 돌아볼 수 있는 개
 - 오른쪽에는 선택한 대화의 메시지를 표시한다.
 - 대화가 학습 기록으로 연결될 수 있도록 한다.
 - 대화 종료 후 요약 또는 학습 노트를 생성할 수 있도록 한다.
+- AI 응답은 SSE 스트리밍으로 실시간 표시한다.
+- 대화 원문은 학습 노트와 분리해 보존한다.
+
+### 학습 노트 화면
+
+라우트는 `/study`로 둔다.
+
+```text
+┌──────────────┬───────────────────────────────┐
+│ 개발         │ Spring 트랜잭션 적용 범위     │
+│  ├ Spring    │                               │
+│  ├ Vue       │ 핵심 요약                     │
+│  └ Database  │ ...                           │
+│              │                               │
+│ 취업         │ 키워드: Spring, Transactional │
+└──────────────┴───────────────────────────────┘
+```
+
+- 왼쪽에는 Knowledge 폴더 트리를 표시한다.
+- 오른쪽에는 선택한 폴더의 학습 노트 목록과 본문을 표시한다.
+- 학습 노트에는 제목, 요약, 키워드, 생성일, 원본 대화 링크를 표시한다.
+- 자동 분류된 Knowledge를 사용자가 나중에 수정할 수 있게 한다.
 
 ### 학습 대시보드
 
@@ -158,24 +326,38 @@ GitHub Contribution Graph와 유사하게 날짜별 학습 활동을 표시한�
 - [x] 선택한 대화 메시지 조회
 - [x] 메시지 전송
 - [x] AI 응답 표시
+- [x] SSE 스트리밍 AI 응답 표시
 - [x] 대화 생성
 - [x] 대화 삭제
+- [x] 대화 제목 수정
 - [x] 메시지 전송 중 로딩 표시
 - [x] 메시지 목록 자동 스크롤
 - [x] AI 응답 Markdown 표시
+- [x] AI 응답 코드 문법 강조
+- [x] 코드 블록 복사
 
 ### 2단계: 대화를 학습 기록으로 전환
 
-- [ ] 대화에 학습 주제 추가
-- [ ] 대화 종료 시 학습 요약 생성
+- [x] Knowledge 폴더 도메인 생성
+- [x] KnowledgeNote 학습 노트 도메인 생성
+- [x] KnowledgeNote 키워드 저장 구조 생성
+- [x] Knowledge/KnowledgeNote Repository 생성
+- [ ] Conversation 요약 상태 필드 추가
+- [ ] Conversation 마지막 요약 시각 추가
+- [ ] 대화를 수동으로 학습 노트로 변환하는 서비스
+- [ ] AI 구조화 요약으로 학습 주제, 제목, 요약, 키워드 추출
+- [ ] 대화 종료 또는 미사용 기준으로 학습 요약 생성
 - [ ] 핵심 개념과 추가 학습 항목 저장
 - [ ] 학습 날짜 기록
-- [ ] 태그 기능 추가
+- [ ] 태그 또는 키워드 기반 분류 기능 추가
+- [ ] Spring Batch 자동 학습 노트 생성
 
 ### 3단계: 학습 기록 탐색
 
-- [ ] 학습 기록 목록
-- [ ] 학습 기록 상세 화면
+- [ ] `/study` 화면 추가
+- [ ] Knowledge 폴더 트리 표시
+- [ ] Knowledge별 학습 노트 목록
+- [ ] 학습 노트 상세 화면
 - [ ] 날짜별 조회
 - [ ] 주제 및 태그별 조회
 - [ ] 통합 검색
