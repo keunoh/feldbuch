@@ -2,6 +2,7 @@ package io.github.kaltz.feldbuch.config;
 
 import io.github.kaltz.feldbuch.auth.jwt.JwtAuthenticationFilter;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetailsService;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +44,10 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(
+                                DispatcherType.ASYNC,
+                                DispatcherType.ERROR
+                        ).permitAll()
                         .requestMatchers(
                                 "/",
                                 "/login",
