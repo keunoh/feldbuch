@@ -102,10 +102,10 @@ export async function streamMessage(
   handlers,
   signal
 ) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('accessToken');
 
   const response = await fetch(
-    `http://localhost:8000/api/conversations/${conversationId}/chat/stream`,
+    `http://localhost:8080/api/conversations/${conversationId}/chat/stream`,
     {
       method: "POST",
       headers: {
@@ -141,7 +141,7 @@ export async function streamMessage(
   await readSseStream(response.body, handlers);
 }
 
-async function readSseStream(body, handlers) {
+async function readSseStream(stream, handlers) {
   const reader = stream.getReader();
   const decoder = new TextDecoder('utf-8');
 
