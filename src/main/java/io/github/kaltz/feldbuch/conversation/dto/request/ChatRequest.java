@@ -1,4 +1,4 @@
-package io.github.kaltz.feldbuch.ai.dto;
+package io.github.kaltz.feldbuch.conversation.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

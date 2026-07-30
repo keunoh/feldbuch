@@ -1,12 +1,12 @@
 package io.github.kaltz.feldbuch.conversation.service;
 
 import io.github.kaltz.feldbuch.ai.context.ChatContextBuilder;
-import io.github.kaltz.feldbuch.ai.dto.ChatRequest;
 import io.github.kaltz.feldbuch.ai.model.ChatCommand;
 import io.github.kaltz.feldbuch.ai.model.ChatResponse;
 import io.github.kaltz.feldbuch.ai.model.TitleCommand;
 import io.github.kaltz.feldbuch.ai.model.TitleResponse;
 import io.github.kaltz.feldbuch.ai.service.ChatService;
+import io.github.kaltz.feldbuch.conversation.dto.request.ChatRequest;
 import io.github.kaltz.feldbuch.conversation.dto.response.StreamResponse;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
