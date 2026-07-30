@@ -4,11 +4,14 @@ import io.github.kaltz.feldbuch.ai.dto.ChatRequest;
 import io.github.kaltz.feldbuch.ai.model.ChatResponse;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
 import io.github.kaltz.feldbuch.common.response.ApiResponse;
+import io.github.kaltz.feldbuch.conversation.dto.response.StreamResponse;
 import io.github.kaltz.feldbuch.conversation.service.ConversationChatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,4 +35,21 @@ public class ChatController {
                 )
         );
     }
+
+    @PostMapping(
+            value = "/{conversationId}/chat/stream",
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE
+    )
+    public Flux<StreamResponse> stream(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long conversationId,
+            @Valid @RequestBody ChatRequest request
+    ) {
+        return conversationChatService.stream(
+                userDetails.getUserId(),
+                conversationId,
+                request
+        );
+    }
+
 }

@@ -1,5 +1,8 @@
 package io.github.kaltz.feldbuch.ai.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.kaltz.feldbuch.ai.dto.openai.ChatCompletionChunkResponse;
 import io.github.kaltz.feldbuch.ai.dto.openai.ChatCompletionRequest;
 import io.github.kaltz.feldbuch.ai.dto.openai.ChatCompletionResponse;
 import io.github.kaltz.feldbuch.ai.dto.openai.ChatCompletionStreamRequest;
@@ -23,6 +26,7 @@ public class OpenAiClient {
 
     private final RestClient openAiRestClient;
     private final WebClient openAiWebClient;
+    private final ObjectMapper objectMapper;
 
     public ChatCompletionResponse chat(ChatCompletionRequest request) {
 
@@ -93,11 +97,34 @@ public class OpenAiClient {
                 .filter(data -> !data.isBlank())
                 .takeUntil(STREAM_DONE::equals)
                 .filter(data -> !STREAM_DONE.equals(data))
+                .<String>handle((data, sink) -> {
+                    String content = extractContent(data);
+
+                    if (content != null && !content.isEmpty()) {
+                        sink.next(content);
+                    }
+                })
                 .onErrorMap(
                         WebClientRequestException.class,
                         exception -> new CustomException(
                                 ErrorCode.OPENAI_TIMEOUT
                         )
                 );
+    }
+
+    private String extractContent(String data) {
+        try {
+            ChatCompletionChunkResponse response =
+                    objectMapper.readValue(
+                            data,
+                            ChatCompletionChunkResponse.class
+                    );
+
+            return response.content();
+        } catch (JsonProcessingException e) {
+            throw new CustomException(
+                    ErrorCode.OPENAI_SERVER_ERROR
+            );
+        }
     }
 }
