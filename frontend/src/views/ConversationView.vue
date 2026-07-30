@@ -1,5 +1,5 @@
 <script setup>
-import {computed, nextTick, onMounted, ref} from 'vue'
+import {computed, nextTick, onMounted, reactive, ref} from 'vue'
 import {useRouter} from "vue-router";
 
 import {
@@ -7,7 +7,7 @@ import {
   deleteConversation,
   getConversation,
   getConversations,
-  sendMessage as sendChatMessage,
+  streamMessage as streamChatMessage,
   updateConversationTitle
 } from "@/api/conversationApi.js";
 
@@ -216,28 +216,52 @@ async function sendMessage(content) {
   }
 
   const conversationId = selectedConversationId.value;
+  const timestamp = Date.now();
 
-  const optimisticMessage = {
-    id: `temp-${Date.now()}`,
+  const optimisticUserMessage = {
+    id: `temp-user-${Date.now()}`,
     role: 'USER',
     content
   };
 
-  messages.value.push(optimisticMessage);
+  const streamingAssistantMessage = reactive({
+    id: `temp-assistant-${Date.now()}`,
+    role: 'ASSISTANT',
+    content: ''
+  });
+
+  messages.value.push(
+    optimisticUserMessage,
+    streamingAssistantMessage
+  );
+
   sendingMessage.value = true;
 
   await scrollToBottom();
 
   try {
     // 백엔드 API 호출
-    await sendChatMessage(
+    await streamChatMessage(
       conversationId,
-      content
+      content,
+      {
+        onToken(token) {
+          streamingAssistantMessage.content += token;
+
+          scrollToBottom();
+        },
+
+        onComplete() {
+          console.log('[CHAT_STREAM] Complete');
+        },
+
+        onError(message) {
+          throw new Error(message);
+        },
+      }
     );
 
-    await loadConversation(
-      conversationId
-    );
+    await loadConversation(conversationId);
 
     moveConversationToTop(conversationId);
 
@@ -246,7 +270,9 @@ async function sendMessage(content) {
     console.log(error);
 
     messages.value = messages.value.filter(
-      message => message.id !== optimisticMessage.id
+      message =>
+        message.id !== optimisticUserMessage.id
+        && message.id !== streamingAssistantMessage.id
     );
   } finally {
     sendingMessage.value = false;
@@ -315,7 +341,6 @@ onMounted(async () => {
       >
         <MessageList
           :messages="messages"
-          :loading="sendingMessage"
         />
       </div>
 
@@ -331,6 +356,7 @@ onMounted(async () => {
 
   </div>
 </template>
+
 
 <style scoped>
 .conversation-layout {
@@ -408,4 +434,5 @@ onMounted(async () => {
   min-height: 0;
   overflow-y: auto;
 }
+
 </style>

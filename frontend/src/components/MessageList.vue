@@ -10,11 +10,6 @@ defineProps({
     type: Array,
     default: () => [],
   },
-
-  loading: {
-    type: Boolean,
-    default: false
-  },
 });
 
 let copyResetTimer = null;
@@ -84,6 +79,13 @@ function renderMessage(message) {
   return renderMarkdown(message.content);
 }
 
+function isWaitingForFirstToken(message) {
+  return (
+    message.role === 'ASSISTANT'
+    && !message.content
+  );
+}
+
 function formatMessageTime(createdAt) {
   if (!createdAt) {
     return '';
@@ -121,7 +123,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="message-list">
     <p
-      v-if="messages.length === 0 && !loading"
+      v-if="messages.length === 0"
       class="empty-message"
     >
       아직 메시지가 없습니다.
@@ -139,6 +141,9 @@ onBeforeUnmount(() => {
       <div
         v-if="message.role === 'ASSISTANT'"
         class="assistant-avatar"
+        :class="{
+          'loading-avatar': isWaitingForFirstToken(message)
+        }"
         aria-hidden="true"
       >
         <span class="terminal-symbol">
@@ -158,7 +163,14 @@ onBeforeUnmount(() => {
             </span>
 
             <span class="role-name">
-              {{ message.role === 'USER' ? '나' : 'Feldbuch' }}
+              {{ message.role === 'USER' ? '' : 'Feldbuch' }}
+            </span>
+
+            <span
+              v-if="isWaitingForFirstToken(message)"
+              class="processing-label"
+            >
+              PROCESSING
             </span>
           </div>
 
@@ -173,6 +185,21 @@ onBeforeUnmount(() => {
 
         <div class="bubble">
           <div
+            v-if="isWaitingForFirstToken(message)"
+            class="loading-content"
+          >
+            <span>답변을 준비하고 있습니다</span>
+            <span
+              class="dots"
+              aria-hidden="true"
+            >
+              <span>.</span>
+              <span>.</span>
+              <span>.</span>
+            </span>
+          </div>
+          <div
+            v-else
             class="content"
             v-html="renderMessage(message)"
           >
@@ -203,18 +230,6 @@ onBeforeUnmount(() => {
 
             <span class="processing-label">
               PROCESSING
-            </span>
-          </div>
-        </div>
-
-        <div class="bubble loading-bubble">
-          <div class="loading-content">
-            <span>답변을 작성하고 있습니다</span>
-
-            <span class="dots">
-              <span>.</span>
-              <span>.</span>
-              <span>.</span>
             </span>
           </div>
         </div>
@@ -563,7 +578,7 @@ onBeforeUnmount(() => {
   text-shadow: 0 0 10px rgba(66, 245, 123, 0.18);
 }
 
-/* COPY 버튼 자리 */
+/* COPY 버튼 */
 .content :deep(.code-copy-button) {
   min-width: 58px;
   padding: 5px 8px;
@@ -629,16 +644,12 @@ onBeforeUnmount(() => {
   padding: 0;
   border: 0;
   border-radius: 0;
-
   color: inherit;
-
   background: transparent;
-
   font-family: "JetBrains Mono",
   "SFMono-Regular",
   Consolas,
   monospace;
-
   font-size: 13px;
   line-height: 1.65;
   white-space: pre;
@@ -679,6 +690,18 @@ onBeforeUnmount(() => {
   border-top: 1px solid var(--color-border);
 }
 
+.content :deep(.hljs) {
+  padding: 0;
+  background: transparent !important;
+}
+
+.content :deep(.code-copy-button.copy-failed) {
+  color: var(--color-danger);
+  border-color: rgba(248, 113, 113, 0.48);
+  background: rgba(248, 113, 113, 0.1);
+  box-shadow: 0 0 14px rgba(248, 113, 113, 0.08);
+}
+
 /* 빈 대화 */
 .empty-message {
   margin: auto;
@@ -698,24 +721,22 @@ onBeforeUnmount(() => {
   content: "> waiting_for_input";
 }
 
-/* 로딩 메시지 */
+/* 첫 토큰 대기 화면 */
 .loading-avatar {
   animation: avatarPulse 1.8s ease-in-out infinite;
-}
-
-.loading-bubble {
-  color: var(--color-text-muted);
 }
 
 .loading-content {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-height: 28px;
   color: var(--color-text-muted);
   font-family: "JetBrains Mono",
   "SFMono-Regular",
   Consolas,
   monospace;
+  font-size: 13px;
   line-height: 1.6;
 }
 
@@ -823,17 +844,5 @@ onBeforeUnmount(() => {
   .user .message-column {
     width: 76%;
   }
-}
-
-.content :deep(.hljs) {
-  background: transparent !important;
-  padding: 0;
-}
-
-.content :deep(.code-copy-button.copy-failed) {
-  color: var(--color-danger);
-  border-color: rgba(248, 113, 113, 0.48);
-  background: rgba(248, 113, 113, 0.1);
-  box-shadow: 0 0 14px rgba(248, 113, 113, 0.08);
 }
 </style>
