@@ -10,6 +10,7 @@ import io.github.kaltz.feldbuch.ai.prompt.TitlePromptFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,44 @@ public class OpenAiChatService implements ChatService {
                 request(CHAT_OPERATION, command.messages());
 
         return responseMapper.toChatResponse(response);
+    }
+
+    @Override
+    public Flux<String> stream(ChatCommand command) {
+        /** Reactive 생명주기
+         * Flux
+         *     .doOnNext(...)
+         *     .doOnComplete(...)
+         *     .doOnError(...)
+         * */
+
+        ChatCompletionRequest request =
+                requestMapper.toRequest(command);
+
+        long startTime = System.nanoTime();
+
+        log.info(
+                "{} Stream started. messageCount={}",
+                OPENAI_LOG,
+                command.messages().size()
+        );
+
+        return openAiClient.stream(request)
+                .doOnComplete(() ->
+                        log.info(
+                                "{} Stream completed. elapsed={}ms",
+                                OPENAI_LOG,
+                                elapseMillis(startTime)
+                        )
+                )
+                .doOnError(exception ->
+                        log.warn(
+                                "{} Stream failed. elapsed={}ms exception={}",
+                                OPENAI_LOG,
+                                elapseMillis(startTime),
+                                exception.getClass().getSimpleName()
+                        )
+                );
     }
 
     @Override
