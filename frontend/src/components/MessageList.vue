@@ -1,8 +1,9 @@
 <script setup>
-import {marked} from "marked";
-import DOMPurify from "dompurify";
-
 import {onBeforeUnmount, onMounted} from "vue";
+
+import "highlight.js/styles/github-dark.css"
+
+import {renderMarkdown, renderPlainText} from "@/utils/markdownRenderer.js";
 
 defineProps({
   messages: {
@@ -16,7 +17,15 @@ defineProps({
   },
 });
 
+let copyResetTimer = null;
+
 function handleCodeCopy(event) {
+
+  const target = event.target;
+
+  if (!(target instanceof Element)) {
+    return;
+  }
 
   const button = event.target.closest(".code-copy-button");
 
@@ -32,101 +41,47 @@ function handleCodeCopy(event) {
 
   const code = decodeURIComponent(encoded);
 
-  navigator.clipboard.writeText(code);
+  try {
+    navigator.clipboard.writeText(code);
 
-  button.textContent = "✓ COPIED";
+    button.textContent = "✓ COPIED";
+    button.classList.add("copied");
 
-  button.classList.add("copied");
+    if (copyResetTimer) {
+      window.clearTimeout(copyResetTimer);
+    }
 
-  setTimeout(() => {
+    copyResetTimer = window.setTimeout(() => {
+      button.textContent = "COPY";
+      button.classList.remove("copied");
 
-    button.textContent = "COPY";
+      copyResetTimer = null;
+    }, 2000);
+  } catch (error) {
+    console.error("코드 복사에 실패했습니다.", error);
 
-    button.classList.remove("copied");
+    button.textContent = "FAILED";
+    button.classList.remove("copy-failed");
 
-  }, 2000);
+    if (copyResetTimer) {
+      window.clearTimeout(copyResetTimer);
+    }
 
-}
+    copyResetTimer = window.setTimeout(() => {
+      button.textContent = "COPY";
+      button.classList.remove("copy-failed");
 
-function escapeHtml(value) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-
-function createMarkdownRenderer() {
-  const renderer = new marked.Renderer();
-
-  renderer.code = function (tokenOrCode, infostring) {
-    /*
-     * 최신 Marked:
-     * renderer.code({ text, lang })
-     *
-     * 이전 Marked:
-     * renderer.code(code, infostring)
-     *
-     * 프로젝트의 Marked 버전에 관계없이 동작하도록 양쪽 형식을 처리한다.
-     */
-    const isTokenObject =
-      typeof tokenOrCode === 'object'
-      && tokenOrCode !== null;
-
-    const code = isTokenObject
-      ? tokenOrCode.text
-      : tokenOrCode;
-
-    const languageValue = isTokenObject
-      ? tokenOrCode.lang
-      : infostring;
-
-    const language = languageValue
-        ?.trim()
-        .split(/\s+/)[0]
-      || 'text';
-
-    const escapedCode = escapeHtml(code);
-    const escapedLanguage = escapeHtml(language);
-
-    return `
-      <div class="code-block">
-        <div class="code-block-header">
-          <span class="code-language">
-            ${escapedLanguage.toUpperCase()}
-          </span>
-
-          <button
-            type="button"
-            class="code-copy-button"
-            data-code="${encodeURIComponent(code)}"
-            aria-label="코드 복사"
-          >
-            COPY
-          </button>
-        </div>
-
-        <pre><code class="language-${escapedLanguage}">${escapedCode}</code></pre>
-      </div>
-    `;
-  };
-
-  return renderer;
+      copyResetTimer = null;
+    }, 2000);
+  }
 }
 
 function renderMessage(message) {
-  if (message.role === 'USER') {
-    return DOMPurify.sanitize(message.content);
+  if (message.role === "USER") {
+    return renderPlainText(message.content);
   }
 
-  const renderer = createMarkdownRenderer();
-
-  const html = marked.parse(message.content, {
-    renderer
-  });
-
-  return DOMPurify.sanitize(html);
+  return renderMarkdown(message.content);
 }
 
 function formatMessageTime(createdAt) {
@@ -144,21 +99,21 @@ function formatMessageTime(createdAt) {
 }
 
 onMounted(() => {
-
   document.addEventListener(
     "click",
     handleCodeCopy
   );
-
 });
 
 onBeforeUnmount(() => {
-
   document.removeEventListener(
     "click",
     handleCodeCopy
   );
 
+  if (copyResetTimer) {
+    window.clearTimeout(copyResetTimer);
+  }
 });
 
 </script>
@@ -639,10 +594,6 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 14px rgba(66, 245, 123, 0.08);
 }
 
-.content :deep(.code-copy-button:active) {
-  transform: translateY(0);
-}
-
 .content :deep(.code-copy-button.copied) {
   color: var(--color-primary);
   border-color: rgba(66, 245, 123, 0.48);
@@ -678,12 +629,16 @@ onBeforeUnmount(() => {
   padding: 0;
   border: 0;
   border-radius: 0;
-  color: var(--color-text-soft);
+
+  color: inherit;
+
   background: transparent;
+
   font-family: "JetBrains Mono",
   "SFMono-Regular",
   Consolas,
   monospace;
+
   font-size: 13px;
   line-height: 1.65;
   white-space: pre;
@@ -868,5 +823,17 @@ onBeforeUnmount(() => {
   .user .message-column {
     width: 76%;
   }
+}
+
+.content :deep(.hljs) {
+  background: transparent !important;
+  padding: 0;
+}
+
+.content :deep(.code-copy-button.copy-failed) {
+  color: var(--color-danger);
+  border-color: rgba(248, 113, 113, 0.48);
+  background: rgba(248, 113, 113, 0.1);
+  box-shadow: 0 0 14px rgba(248, 113, 113, 0.08);
 }
 </style>
