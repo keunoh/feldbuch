@@ -40,6 +40,12 @@ function submit() {
       &gt;_
     </span>
 
+    <div
+      v-if="!input"
+      class="terminal-caret"
+      aria-hidden="true"
+    />
+
     <input
       v-model="input"
       type="text"
@@ -52,13 +58,12 @@ function submit() {
       @keyup.enter="submit"
     />
 
-    <button
-      type="button"
-      :disabled="loading || !input.trim()"
-      @click="submit"
+    <div
+      class="send-hint"
+      :class="{ loading }"
     >
-      {{ loading ? "●" : "➜" }}
-    </button>
+      {{ loading ? "THINKING..." : "↵ ENTER" }}
+    </div>
   </div>
 </template>
 
@@ -89,8 +94,6 @@ function submit() {
   pointer-events: none;
 
   text-shadow: 0 0 10px var(--color-primary-glow);
-
-  animation: promptBlink 1.2s steps(1) infinite;
 }
 
 input {
@@ -117,6 +120,18 @@ input {
   transition: border-color var(--transition-fast),
   box-shadow var(--transition-fast),
   background var(--transition-fast);
+
+  caret-color: transparent;
+}
+
+input:not(:placeholder-shown) {
+
+  caret-color: var(--color-primary);
+}
+
+.chat-input:not(:focus-within) .terminal-caret {
+
+  opacity: .35;
 }
 
 input::placeholder {
@@ -141,62 +156,67 @@ input:disabled {
   opacity: .7;
 }
 
-button {
+.terminal-caret {
 
   position: absolute;
 
-  right: 10px;
+  left: 43px;
 
-  width: 42px;
-  height: 42px;
+  top: 50%;
 
-  border: none;
+  width: 10px;
 
-  border-radius: 50%;
+  height: 22px;
 
-  background: linear-gradient(
-    135deg,
-    rgba(66, 245, 123, .18),
-    rgba(66, 245, 123, .06)
-  );
+  transform: translateY(-50%);
 
+  background: var(--color-primary);
+
+  border-radius: 2px;
+
+  box-shadow: 0 0 12px rgba(66, 245, 123, .25);
+
+  pointer-events: none;
+
+  animation: terminalCaret 1s steps(1) infinite;
+}
+
+.send-hint {
+  position: absolute;
+
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  color: var(--color-text-muted);
+  opacity: 0.7;
+
+  font-size: 12px;
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.08em;
+
+  user-select: none;
+}
+
+.send-hint.loading {
   color: var(--color-primary);
+  opacity: 1;
 
-  font-size: 18px;
-
-  cursor: pointer;
-
-  transition: transform var(--transition-fast),
-  background var(--transition-fast),
-  box-shadow var(--transition-fast);
+  text-shadow: 0 0 10px var(--color-primary-glow);
 }
 
-button:hover:not(:disabled) {
+@keyframes terminalCaret {
 
-  transform: translateY(-1px);
-
-  box-shadow: 0 0 18px rgba(66, 245, 123, .15);
-}
-
-button:disabled {
-
-  color: var(--color-text-disabled);
-
-  cursor: not-allowed;
-
-  opacity: .7;
-}
-
-@keyframes promptBlink {
-
-  0%, 45% {
+  0%, 50% {
 
     opacity: 1;
   }
 
-  46%, 100% {
+  51%, 100% {
 
-    opacity: .25;
+    opacity: 0;
   }
 }
+
+
 </style>
