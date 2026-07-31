@@ -45,6 +45,12 @@ public class KnowledgeNote extends BaseEntity {
     private String title;
 
     /**
+     * AI가 생성한 한 줄 설명
+     */
+    @Column(nullable = false, length = 300)
+    private String description;
+
+    /**
      * 대화에서 추출한 짧은 학습 요약
      */
     @Lob
@@ -118,6 +124,7 @@ public class KnowledgeNote extends BaseEntity {
             Conversation conversation,
             Knowledge knowledge,
             String title,
+            String description,
             String summary,
             List<String> keywords
     ) {
@@ -125,6 +132,7 @@ public class KnowledgeNote extends BaseEntity {
         validateConversation(conversation);
         validateKnowledge(knowledge);
         validateTitle(title);
+        validateDescription(description);
         validateSummary(summary);
 
         if (!knowledge.belongsTo(user)) {
@@ -137,21 +145,25 @@ public class KnowledgeNote extends BaseEntity {
                 .user(user)
                 .conversation(conversation)
                 .knowledge(knowledge)
-                .title(title)
-                .summary(summary)
+                .title(title.trim())
+                .description(description.trim())
+                .summary(summary.trim())
                 .keywords(normalizeKeywords(keywords))
                 .build();
     }
 
     public void updateContent(
             String title,
+            String description,
             String summary,
             List<String> keywords
     ) {
         validateTitle(title);
+        validateDescription(description);
         validateSummary(summary);
 
         this.title = title;
+        this.description = description.trim();
         this.summary = summary;
         this.keywords.clear();
         this.keywords.addAll(normalizeKeywords(keywords));
@@ -228,6 +240,20 @@ public class KnowledgeNote extends BaseEntity {
         if (title.trim().length() > 200) {
             throw new IllegalArgumentException(
                     "KnowledgeNote 제목은 200자를 초과할 수 없습니다."
+            );
+        }
+    }
+
+    private static void validateDescription(String description) {
+        if (description == null || description.isBlank()) {
+            throw new IllegalArgumentException(
+                    "KnowledgeNote 설명은 필수입니다."
+            );
+        }
+
+        if (description.trim().length() > 300) {
+            throw new IllegalArgumentException(
+                    "KnowledgeNote 설명은 300자를 초과할 수 없습니다."
             );
         }
     }
