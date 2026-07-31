@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @RequiredArgsConstructor
-public class OpenAiClient {
+public class OpenAiClient implements AiClient {
 
     private static final String STREAM_DONE = "[DONE]";
 
