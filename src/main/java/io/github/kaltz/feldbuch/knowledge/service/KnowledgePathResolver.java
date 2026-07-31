@@ -11,6 +11,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+// AI가 준 경로를 실제 Knowledge 트리로 변환해 주는 클래스이다.
 public class KnowledgePathResolver {
 
     private final KnowledgeRepository knowledgeRepository;
