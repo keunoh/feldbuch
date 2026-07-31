@@ -1,0 +1,12 @@
+package io.github.kaltz.feldbuch.ai.dto;
+
+import java.util.List;
+
+public record AiKnowledgeSummaryResponse(
+        List<String> knowledgePath,
+        String title,
+        String description,
+        String summary,
+        List<String> keywords
+) {
+}
