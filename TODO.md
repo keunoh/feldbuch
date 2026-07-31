@@ -150,7 +150,7 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
 - [x] KnowledgeNote와 User 연결
 - [x] KnowledgeNote와 Conversation 연결
 - [x] KnowledgeNote와 Knowledge 연결
-- [x] KnowledgeNote 제목, 요약 컬럼 추가
+- [x] KnowledgeNote 제목, 설명, 요약 컬럼 추가
 - [x] KnowledgeNote 키워드 ElementCollection 추가
 - [x] `knowledge_note_keywords` 테이블 구조 추가
 - [x] 키워드 공백 제거, 중복 제거, 최대 10개 제한
@@ -169,8 +169,12 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
 
 #### 9-2. 수동 학습 노트 생성
 
-- [ ] 대화 내용을 수동으로 학습 노트로 저장하는 서비스 추가
-- [ ] Conversation 소유자와 Knowledge 소유자 일치 검증
+- [x] AI 요약 응답을 KnowledgeNote로 저장하는 Command 서비스 추가
+- [x] Conversation, User, Knowledge를 연결해 KnowledgeNote 생성
+- [x] Knowledge와 User 소유자 일치 검증
+- [x] KnowledgeNote 제목/설명/요약 필수값 검증
+- [x] KnowledgeNote 저장 Command 서비스 단위 테스트
+- [ ] 대화 내용을 사용자가 직접 입력해 수동 학습 노트로 저장하는 서비스 추가
 - [ ] KnowledgeNote 생성 요청 DTO 추가
 - [ ] KnowledgeNote 응답 DTO 추가
 - [ ] KnowledgeNote 생성 API 추가
@@ -183,13 +187,17 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
 - [ ] AI에게 기존 Knowledge 경로 목록을 함께 전달
 - [ ] 기존 Knowledge 재사용 우선 프롬프트 작성
 - [ ] 새 Knowledge는 적절한 기존 경로가 없을 때만 생성하도록 지시
-- [ ] 한 번의 AI 요청으로 구조화된 JSON 생성
-- [ ] `categoryPath` 또는 `knowledgePath` 파싱
-- [ ] `title`, `summary`, `keywords` 파싱
-- [ ] AI JSON 응답 검증
-- [ ] AI 응답 파싱 실패 처리
-- [ ] Knowledge 경로 자동 조회 및 생성 서비스 추가
-- [ ] AI 요약 결과를 KnowledgeNote로 저장
+- [x] 한 번의 AI 요청으로 구조화된 JSON 생성
+- [x] `knowledgePath` 파싱
+- [x] `title`, `description`, `summary`, `keywords` 파싱
+- [x] AI JSON 응답 파싱 실패 처리
+- [x] Knowledge 경로 자동 조회 및 생성 서비스 추가
+- [x] 존재하는 Knowledge 경로 재사용
+- [x] 없는 Knowledge 경로 자동 생성
+- [x] Knowledge 경로 공백/빈 항목 정규화
+- [x] 저장되지 않은 사용자 검증
+- [x] Knowledge 경로 Resolver 단위 테스트
+- [x] AI 요약 결과를 KnowledgeNote로 저장
 
 예상 AI 응답:
 
@@ -200,6 +208,7 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
     "Spring"
   ],
   "title": "Spring 트랜잭션 적용 범위",
+  "description": "Spring 트랜잭션 적용 위치와 우선순위를 정리한 학습 노트",
   "summary": "서비스 클래스와 메서드에 @Transactional을 적용했을 때의 우선순위와 동작 차이를 정리한 학습 노트입니다.",
   "keywords": [
     "Spring",
@@ -342,10 +351,13 @@ GitHub Contribution Graph와 유사하게 날짜별 학습 활동을 표시한�
 - [x] KnowledgeNote 학습 노트 도메인 생성
 - [x] KnowledgeNote 키워드 저장 구조 생성
 - [x] Knowledge/KnowledgeNote Repository 생성
+- [x] Knowledge 경로 자동 조회/생성 서비스
+- [x] AI 구조화 요약 서비스
+- [x] AI 요약 결과 KnowledgeNote 저장 서비스
 - [ ] Conversation 요약 상태 필드 추가
 - [ ] Conversation 마지막 요약 시각 추가
 - [ ] 대화를 수동으로 학습 노트로 변환하는 서비스
-- [ ] AI 구조화 요약으로 학습 주제, 제목, 요약, 키워드 추출
+- [x] AI 구조화 요약으로 학습 주제, 제목, 설명, 요약, 키워드 추출
 - [ ] 대화 종료 또는 미사용 기준으로 학습 요약 생성
 - [ ] 핵심 개념과 추가 학습 항목 저장
 - [ ] 학습 날짜 기록

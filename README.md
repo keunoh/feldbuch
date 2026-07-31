@@ -99,6 +99,11 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - Knowledge 폴더 트리 도메인
 - Conversation 기반 AI 추출 학습 노트 도메인
+- AI 지식 요약 구조화 응답 DTO
+- AI 지식 요약 프롬프트와 OpenAI 요약 서비스
+- Knowledge 경로 자동 조회/생성
+- AI 요약 결과의 KnowledgeNote 저장 Command 서비스
+- KnowledgeNote 제목, 설명, 요약, 키워드 저장
 - KnowledgeNote 키워드 ElementCollection 저장
 - Thymeleaf 기반 로그인/대화 화면
 - Vue 3 + Vite 로그인/대화 화면 전환
@@ -151,6 +156,12 @@ flowchart TD
     ConversationChatService --> ChatService
     ChatService --> OpenAiWebClient
 
+    OpenAiKnowledgeSummaryService --> AiClient
+    OpenAiKnowledgeSummaryService --> KnowledgeSummaryPrompt
+    KnowledgeNoteCommandService --> KnowledgePathResolver
+    KnowledgeNoteCommandService --> KnowledgeNoteRepository
+    KnowledgePathResolver --> KnowledgeRepository
+
     KnowledgeRepository --> Knowledge
     KnowledgeNoteRepository --> KnowledgeNote
 
@@ -197,7 +208,7 @@ Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용�
 
 ![Feldbuch Entity Relationship Diagram](docs/images/diagrams/feldbuch-erd.svg)
 
-현재 영속 모델은 `users`, `notes`, `ai_job`, `conversations`, `conversation_messages`, `knowledge`, `knowledge_notes`, `knowledge_note_keywords`를 중심으로 구성합니다. `knowledge`는 사용자별 폴더 트리를 자기 참조로 표현하고, `knowledge_notes`는 대화에서 AI가 추출한 학습 노트를 특정 지식 폴더에 저장합니다.
+현재 영속 모델은 `users`, `notes`, `ai_job`, `conversations`, `conversation_messages`, `knowledge`, `knowledge_notes`, `knowledge_note_keywords`를 중심으로 구성합니다. ERD는 `users`를 중앙 소유자로 두고 관계선을 좌우/하단 영역으로 분리했습니다. `knowledge`는 사용자별 폴더 트리를 자기 참조로 표현하고, `knowledge_notes`는 대화에서 AI가 추출한 학습 노트의 제목, 설명, 요약, 키워드를 특정 지식 폴더에 저장합니다.
 
 ## Project Structure
 
@@ -240,7 +251,9 @@ frontend
 - Chat Context Builder
 - Conversation Message Persistence
 - Knowledge Tree Modeling
+- Knowledge Path Resolver
 - AI Extracted Knowledge Note Modeling
+- Structured AI Knowledge Summary
 - ElementCollection Keyword Persistence
 - Thymeleaf View Layer 유지 및 Vue SPA 전환
 - Axios 기반 프론트엔드/백엔드 통신

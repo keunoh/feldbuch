@@ -22,7 +22,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 ![Feldbuch Entity Relationship Diagram](./images/diagrams/feldbuch-erd.svg)
 
-현재 데이터 모델은 사용자, 개발 노트, AI Job, 대화 세션, 대화 메시지, Knowledge 폴더, AI 추출 학습 노트를 중심으로 구성합니다. `knowledge`는 사용자별 지식 폴더 트리를 자기 참조로 표현하고, `knowledge_notes`는 원본 대화에서 추출한 학습 노트를 특정 지식 폴더에 저장합니다.
+현재 데이터 모델은 사용자, 개발 노트, AI Job, 대화 세션, 대화 메시지, Knowledge 폴더, AI 추출 학습 노트를 중심으로 구성합니다. `knowledge`는 사용자별 지식 폴더 트리를 자기 참조로 표현하고, `knowledge_notes`는 원본 대화에서 추출한 학습 노트의 제목, 설명, 요약, 키워드를 특정 지식 폴더에 저장합니다.
 
 ### 핵심 기능
 
@@ -47,6 +47,11 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - Knowledge 폴더 트리 도메인
 - Conversation 기반 AI 추출 학습 노트 도메인
+- AI 지식 요약 구조화 응답 DTO
+- AI 지식 요약 프롬프트와 OpenAI 요약 서비스
+- Knowledge 경로 자동 조회/생성
+- AI 요약 결과의 KnowledgeNote 저장 Command 서비스
+- KnowledgeNote 제목, 설명, 요약, 키워드 저장
 - KnowledgeNote 키워드 ElementCollection 저장
 - Thymeleaf 기반 로그인/대화 화면
 - Vue 3 + Vite 로그인/대화 화면 전환
@@ -177,6 +182,7 @@ flowchart LR
     --> S[Vue 메인 채팅 UI 고도화]
     --> T[SSE 기반 AI 응답 스트리밍]
     --> U[Knowledge 저장 도메인 설계]
+    --> V[AI 지식 요약과 KnowledgeNote 저장 서비스]
 ```
 
 ### 구현 완료
@@ -222,6 +228,12 @@ flowchart LR
 - KnowledgeNote Keyword ElementCollection
 - KnowledgeRepository
 - KnowledgeNoteRepository
+- KnowledgePathResolver
+- KnowledgeNoteCommandService
+- AiKnowledgeSummaryResponse
+- KnowledgeSummaryPrompt
+- AiKnowledgeSummaryService
+- OpenAiKnowledgeSummaryService
 - 사용자별 Knowledge 루트/자식 조회, 동일 폴더명 중복 확인 쿼리
 - KnowledgeNote의 Knowledge별/Conversation별/사용자별 조회 쿼리
 - Thymeleaf 기반 로그인/대화 화면
@@ -305,11 +317,18 @@ flowchart LR
 - `highlight.js`로 AI 응답 코드 블록 문법 강조 적용
 - 코드 복사 UX 개선: 복사 성공/실패 상태 표시와 타이머 정리
 - `Knowledge` 엔티티 추가: 사용자별 지식 폴더, 상위 폴더 자기 참조, 루트/자식 생성, 이름 변경, 폴더 이동 검증
-- `KnowledgeNote` 엔티티 추가: 대화에서 추출한 학습 노트 제목/요약, 사용자, 원본 대화, 저장 지식 폴더 연결
+- `KnowledgeNote` 엔티티 추가: 대화에서 추출한 학습 노트 제목/설명/요약, 사용자, 원본 대화, 저장 지식 폴더 연결
 - `knowledge_note_keywords` ElementCollection 추가: 학습 노트별 최대 10개 키워드 저장
 - `KnowledgeRepository` 추가: 사용자별 루트/자식 폴더 조회와 같은 parent 내 이름 중복 확인
 - `KnowledgeNoteRepository` 추가: Knowledge별, Conversation별, 사용자별 학습 노트 조회와 대화 기반 생성 여부 확인
 - Knowledge 관련 FK와 조회 인덱스 정의: `idx_knowledge_user_parent`, `idx_knowledge_parent`, `idx_knowledge_note_user`, `idx_knowledge_note_knowledge`, `idx_knowledge_note_conversation`
+- `KnowledgePathResolver` 추가: AI가 반환한 `knowledgePath`를 순서대로 조회하고 없는 폴더는 자동 생성
+- `KnowledgePathResolver`에서 빈 경로, 빈 항목, 앞뒤 공백, 저장되지 않은 사용자 검증
+- `AiKnowledgeSummaryResponse` 추가: `knowledgePath`, `title`, `description`, `summary`, `keywords` 구조화 응답 모델
+- `KnowledgeSummaryPrompt` 추가: 대화를 학습 노트용 JSON으로 변환하기 위한 시스템/사용자 프롬프트
+- `AiKnowledgeSummaryService`, `OpenAiKnowledgeSummaryService` 추가: OpenAI 응답 JSON을 `AiKnowledgeSummaryResponse`로 파싱
+- `KnowledgeNoteCommandService` 추가: AI 요약 응답을 Knowledge 경로에 저장하고 `KnowledgeNote`를 생성
+- 테스트 추가: `KnowledgePathResolverTest`, `KnowledgeNoteCommandServiceTest`, `OpenAiKnowledgeSummaryServiceTest`
 - Spring Security CORS 설정으로 Vite 개발 서버 `http://localhost:5173` 허용
 - `RequestIdFilter`에서 요청마다 UUID를 생성하고 MDC와 `X-Request-Id` 응답 헤더에 기록
 - Spring Batch 기반 `summaryJob`/`summaryStep` 구성
@@ -374,6 +393,12 @@ flowchart TD
     ChatContextBuilder --> ConversationMessageReader
     ConversationChatService --> ChatService
     ChatService --> OpenAiWebClient
+
+    OpenAiKnowledgeSummaryService --> AiClient
+    OpenAiKnowledgeSummaryService --> KnowledgeSummaryPrompt
+    KnowledgeNoteCommandService --> KnowledgePathResolver
+    KnowledgeNoteCommandService --> KnowledgeNoteRepository
+    KnowledgePathResolver --> KnowledgeRepository
 
     KnowledgeRepository --> Knowledge
     KnowledgeNoteRepository --> KnowledgeNote
@@ -904,11 +929,65 @@ StreamResponse.complete() 전송
 | Event Type | `TOKEN`, `COMPLETE`, `ERROR` |
 | 저장 시점 | USER 메시지는 스트림 시작 전 저장, ASSISTANT 메시지는 스트림 완료 후 누적 본문 저장 |
 
+### AI 지식 요약 저장 흐름
+
+오늘 기준으로 대화를 학습 노트로 증류하기 위한 1차 서비스 계층이 구성되어 있습니다. 아직 Batch 자동 실행과 `/study` 화면은 연결 전이며, 현재 구현은 AI 구조화 요약 결과를 Knowledge 경로에 맞춰 저장하는 도메인/서비스 기반입니다.
+
+```text
+대화 원문 문자열
+  ↓
+OpenAiKnowledgeSummaryService.summarize(conversation)
+  ↓
+KnowledgeSummaryPrompt.systemPrompt / userPrompt
+  ↓
+AiClient.chat(ChatCompletionRequest)
+  ↓
+OpenAI JSON 응답
+  ↓
+AiKnowledgeSummaryResponse 파싱
+  ↓
+KnowledgeNoteCommandService.saveAiSummary(user, conversation, response)
+  ↓
+KnowledgePathResolver.resolve(user, response.knowledgePath())
+  ↓
+기존 Knowledge 경로 재사용 또는 누락 경로 자동 생성
+  ↓
+KnowledgeNote.create(...)
+  ↓
+KnowledgeNoteRepository.save(note)
+```
+
+구조화 요약 응답 계약:
+
+| Field | Type | 설명 |
+| --- | --- | --- |
+| `knowledgePath` | `List<String>` | 가장 넓은 분류부터 구체적인 분류까지 이어지는 Knowledge 폴더 경로 |
+| `title` | `String` | 학습 노트 제목 |
+| `description` | `String` | 학습 내용을 한 문장으로 설명하는 부제 |
+| `summary` | `String` | 대화에서 추출한 학습용 요약 |
+| `keywords` | `List<String>` | 검색과 복습에 사용할 핵심 키워드 |
+
+Knowledge 경로 처리 규칙:
+
+- 경로가 비어 있으면 `IllegalArgumentException`을 발생시킵니다.
+- 각 경로 항목의 앞뒤 공백을 제거합니다.
+- 빈 문자열 항목은 제거합니다.
+- 저장되지 않은 사용자는 Knowledge 경로를 생성할 수 없습니다.
+- 루트 경로는 `findByUserIdAndParentIsNullAndName`으로 조회하고, 없으면 `Knowledge.createRoot`로 생성합니다.
+- 자식 경로는 `findByUserIdAndParentIdAndName`으로 조회하고, 없으면 `Knowledge.createChild`로 생성합니다.
+- 최종 경로의 `Knowledge`를 반환해 `KnowledgeNote` 저장 위치로 사용합니다.
+
+현재 테스트 범위:
+
+- `KnowledgePathResolverTest`: 누락 경로 생성, 기존 경로 재사용, 공백/빈 항목 정규화, 빈 경로 예외, 저장되지 않은 사용자 예외
+- `KnowledgeNoteCommandServiceTest`: AI 요약 응답을 Knowledge 경로에 연결하고 `KnowledgeNote`로 저장
+- `OpenAiKnowledgeSummaryServiceTest`: OpenAI JSON 응답 파싱과 빈 응답 예외
+
 ### Database ERD
 
 ![Feldbuch Entity Relationship Diagram](./images/diagrams/feldbuch-erd.svg)
 
-ERD는 JPA 엔티티와 `@Table`, `@JoinColumn`, `@CollectionTable`, 리포지토리 조회 메서드를 기준으로 작성했습니다. `BaseEntity`를 상속하는 엔티티는 공통으로 `created_at`, `updated_at` 감사 컬럼을 가집니다.
+ERD는 JPA 엔티티와 `@Table`, `@JoinColumn`, `@CollectionTable`, 리포지토리 조회 메서드를 기준으로 작성했습니다. `users`를 중앙 소유자로 두고 좌측은 노트/AI Job, 우측은 대화/메시지, 하단은 Knowledge 학습 노트 저장 구조로 분리해 관계선 겹침을 줄였습니다. `BaseEntity`를 상속하는 엔티티는 공통으로 `created_at`, `updated_at` 감사 컬럼을 가집니다.
 
 #### 테이블 요약
 
@@ -920,7 +999,7 @@ ERD는 JPA 엔티티와 `@Table`, `@JoinColumn`, `@CollectionTable`, 리포지�
 | `conversations` | AI 대화 세션 | 사용자별 AI 채팅 세션 |
 | `conversation_messages` | 대화 메시지 | 대화별 USER/ASSISTANT 메시지와 순서 저장 |
 | `knowledge` | 지식 폴더 | 사용자별 지식 분류 트리, 자기 참조 폴더 구조 |
-| `knowledge_notes` | AI 추출 학습 노트 | 대화에서 추출해 Knowledge 폴더에 저장하는 학습 요약 |
+| `knowledge_notes` | AI 추출 학습 노트 | 대화에서 추출해 Knowledge 폴더에 저장하는 제목, 설명, 요약 |
 | `knowledge_note_keywords` | 학습 노트 키워드 | `KnowledgeNote.keywords` ElementCollection 저장 테이블 |
 
 #### 컬럼 상세
@@ -971,6 +1050,7 @@ ERD는 JPA 엔티티와 `@Table`, `@JoinColumn`, `@CollectionTable`, 리포지�
 | `knowledge_notes` / AI 추출 학습 노트 | `conversation_id` | FK, IDX | BIGINT, NOT NULL | `conversations.id`, `fk_knowledge_note_conversation` |
 | `knowledge_notes` / AI 추출 학습 노트 | `knowledge_id` | FK, IDX | BIGINT, NOT NULL | `knowledge.id`, `fk_knowledge_note_knowledge` |
 | `knowledge_notes` / AI 추출 학습 노트 | `title` |  | VARCHAR(200), NOT NULL | AI가 생성한 학습 노트 제목 |
+| `knowledge_notes` / AI 추출 학습 노트 | `description` |  | VARCHAR(300), NOT NULL | AI가 생성한 한 줄 설명 |
 | `knowledge_notes` / AI 추출 학습 노트 | `summary` |  | LOB, NOT NULL | 대화에서 추출한 학습 요약 |
 | `knowledge_notes` / AI 추출 학습 노트 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각 |
 | `knowledge_note_keywords` / 학습 노트 키워드 | `knowledge_note_id` | FK | BIGINT, NOT NULL | `knowledge_notes.id`, `fk_knowledge_note_keyword_note` |
@@ -1194,7 +1274,7 @@ Job 상태 업데이트
 | --- | --- | --- |
 | Feldbuch Project Architecture | `docs/images/diagrams/feldbuch-architecture.svg` | 현재 프로젝트의 Spring Boot, RequestIdFilter, Security, QueryDSL, JPA, MySQL, H2, Docker, OpenAI 구조 |
 | Feldbuch Client Architecture | `docs/images/diagrams/feldbuch-client-architecture.svg` | Vue Router, View, Component, Axios API client, Interceptor, Spring Boot API 통신 구조 |
-| Feldbuch Entity Relationship Diagram | `docs/images/diagrams/feldbuch-erd.svg` | users, notes, ai_job, conversations, conversation_messages, knowledge, knowledge_notes, knowledge_note_keywords의 컬럼, 참조 관계, 인덱스 |
+| Feldbuch Entity Relationship Diagram | `docs/images/diagrams/feldbuch-erd.svg` | users를 중앙에 둔 ERD. notes, ai_job, conversations, conversation_messages, knowledge, knowledge_notes, knowledge_note_keywords의 컬럼, 참조 관계, 인덱스 |
 | Feldbuch AI Job Flow | `docs/images/diagrams/feldbuch-ai-job-flow.svg` | AI 요약 요청, Job 상태 변경, OpenAI 호출 흐름 |
 | Feldbuch Main Chat Screen | `docs/images/screenshots/feldbuch-main-chat-screen.png` | Vue 기반 메인 대화 화면 |
 | Spring Boot | `docs/images/logos/springboot.svg` | 백엔드 API |

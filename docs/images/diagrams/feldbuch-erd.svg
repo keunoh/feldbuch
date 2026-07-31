@@ -1,0 +1,159 @@
+<svg width="1800" height="1500" viewBox="0 0 1800 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .bg { fill: #071018; }
+      .panel { fill: #0d1622; stroke: #2f4f5f; stroke-width: 1.4; rx: 12; }
+      .header { fill: #102635; }
+      .title { fill: #e7f2f0; font-family: Arial, sans-serif; font-size: 22px; font-weight: 700; }
+      .subtitle { fill: #5eead4; font-family: Arial, sans-serif; font-size: 15px; font-weight: 700; }
+      .col { fill: #c8d5df; font-family: Arial, sans-serif; font-size: 14px; }
+      .muted { fill: #8aa0ad; font-family: Arial, sans-serif; font-size: 13px; }
+      .key { fill: #42f57b; font-family: Arial, sans-serif; font-size: 13px; font-weight: 700; }
+      .idx { fill: #facc15; font-family: Arial, sans-serif; font-size: 13px; font-weight: 700; }
+      .fk { stroke: #42f57b; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .logical { stroke: #facc15; stroke-width: 2; fill: none; stroke-dasharray: 8 6; marker-end: url(#arrowYellow); }
+      .self { stroke: #5eead4; stroke-width: 2; fill: none; marker-end: url(#arrowCyan); }
+      .label { fill: #e7f2f0; font-family: Arial, sans-serif; font-size: 13px; font-weight: 700; }
+      .note { fill: #9fb0bc; font-family: Arial, sans-serif; font-size: 13px; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#42f57b"/>
+    </marker>
+    <marker id="arrowYellow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#facc15"/>
+    </marker>
+    <marker id="arrowCyan" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#5eead4"/>
+    </marker>
+  </defs>
+
+  <rect width="1800" height="1500" class="bg"/>
+  <text x="60" y="58" class="title" font-size="30">Feldbuch ERD</text>
+  <text x="60" y="86" class="muted">users를 중심으로 좌측은 노트/AI Job, 우측은 대화/메시지, 하단은 Knowledge 학습 노트 저장 구조로 분리</text>
+
+  <rect x="700" y="120" width="400" height="270" class="panel"/>
+  <rect x="700" y="120" width="400" height="62" class="header" rx="12"/>
+  <text x="722" y="149" class="title">users</text>
+  <text x="722" y="172" class="subtitle">사용자 / 중심 소유자</text>
+  <text x="722" y="208" class="key">PK id BIGINT</text>
+  <text x="722" y="234" class="idx">UK email VARCHAR(100) uk_user_email</text>
+  <text x="722" y="260" class="col">password VARCHAR(255) NOT NULL</text>
+  <text x="722" y="286" class="col">nickname VARCHAR(30) NOT NULL</text>
+  <text x="722" y="312" class="col">role VARCHAR(20) NOT NULL</text>
+  <text x="722" y="338" class="muted">created_at, updated_at</text>
+
+  <rect x="80" y="120" width="430" height="330" class="panel"/>
+  <rect x="80" y="120" width="430" height="62" class="header" rx="12"/>
+  <text x="102" y="149" class="title">notes</text>
+  <text x="102" y="172" class="subtitle">개발 노트</text>
+  <text x="102" y="208" class="key">PK id BIGINT</text>
+  <text x="102" y="234" class="key">FK user_id BIGINT - fk_note_user</text>
+  <text x="102" y="260" class="col">title VARCHAR(200) NOT NULL</text>
+  <text x="102" y="286" class="col">content LOB NOT NULL</text>
+  <text x="102" y="312" class="col">summary VARCHAR(500)</text>
+  <text x="102" y="338" class="col">category VARCHAR(30) NOT NULL</text>
+  <text x="102" y="364" class="col">pinned BOOLEAN NOT NULL</text>
+  <text x="102" y="390" class="col">study_status VARCHAR(30) NOT NULL</text>
+  <text x="102" y="416" class="col">summary_status VARCHAR(20) NOT NULL</text>
+  <text x="102" y="442" class="muted">created_at, updated_at</text>
+
+  <rect x="80" y="560" width="430" height="300" class="panel"/>
+  <rect x="80" y="560" width="430" height="62" class="header" rx="12"/>
+  <text x="102" y="589" class="title">ai_job</text>
+  <text x="102" y="612" class="subtitle">AI 작업</text>
+  <text x="102" y="648" class="key">PK id BIGINT</text>
+  <text x="102" y="674" class="idx">LOGICAL note_id BIGINT</text>
+  <text x="102" y="700" class="col">job_type VARCHAR(255)</text>
+  <text x="102" y="726" class="col">status VARCHAR(255)</text>
+  <text x="102" y="752" class="col">requested_at DATETIME</text>
+  <text x="102" y="778" class="col">started_at DATETIME</text>
+  <text x="102" y="804" class="col">completed_at DATETIME</text>
+  <text x="102" y="830" class="col">error_message VARCHAR(1000)</text>
+  <text x="102" y="856" class="muted">created_at, updated_at</text>
+
+  <rect x="1290" y="120" width="430" height="250" class="panel"/>
+  <rect x="1290" y="120" width="430" height="62" class="header" rx="12"/>
+  <text x="1312" y="149" class="title">conversations</text>
+  <text x="1312" y="172" class="subtitle">AI 대화 세션</text>
+  <text x="1312" y="208" class="key">PK id BIGINT</text>
+  <text x="1312" y="234" class="key">FK user_id BIGINT</text>
+  <text x="1312" y="260" class="col">title VARCHAR(100) NOT NULL</text>
+  <text x="1312" y="286" class="col">status VARCHAR(255) NOT NULL</text>
+  <text x="1312" y="312" class="muted">created_at, updated_at</text>
+  <text x="1312" y="338" class="idx">Query: user_id + updated_at DESC</text>
+
+  <rect x="1290" y="500" width="430" height="280" class="panel"/>
+  <rect x="1290" y="500" width="430" height="62" class="header" rx="12"/>
+  <text x="1312" y="529" class="title">conversation_messages</text>
+  <text x="1312" y="552" class="subtitle">대화 메시지</text>
+  <text x="1312" y="588" class="key">PK id BIGINT</text>
+  <text x="1312" y="614" class="key">FK conversation_id BIGINT</text>
+  <text x="1312" y="640" class="col">sequence INTEGER NOT NULL</text>
+  <text x="1312" y="666" class="col">role VARCHAR(20) NOT NULL</text>
+  <text x="1312" y="692" class="col">content LONGTEXT NOT NULL</text>
+  <text x="1312" y="718" class="muted">created_at, updated_at</text>
+  <text x="1312" y="744" class="idx">Query: conversation_id + sequence ASC/DESC</text>
+
+  <rect x="130" y="1030" width="460" height="300" class="panel"/>
+  <rect x="130" y="1030" width="460" height="62" class="header" rx="12"/>
+  <text x="152" y="1059" class="title">knowledge</text>
+  <text x="152" y="1082" class="subtitle">지식 폴더</text>
+  <text x="152" y="1118" class="key">PK id BIGINT</text>
+  <text x="152" y="1144" class="key">FK user_id BIGINT - fk_knowledge_user</text>
+  <text x="152" y="1170" class="key">FK parent_id BIGINT - fk_knowledge_parent</text>
+  <text x="152" y="1196" class="col">name VARCHAR(100) NOT NULL</text>
+  <text x="152" y="1222" class="muted">created_at, updated_at</text>
+  <text x="152" y="1258" class="idx">IDX idx_knowledge_user_parent(user_id, parent_id)</text>
+  <text x="152" y="1284" class="idx">IDX idx_knowledge_parent(parent_id)</text>
+  <text x="152" y="1310" class="muted">parent_id NULL = 최상위 폴더</text>
+
+  <rect x="700" y="1030" width="520" height="376" class="panel"/>
+  <rect x="700" y="1030" width="520" height="62" class="header" rx="12"/>
+  <text x="722" y="1059" class="title">knowledge_notes</text>
+  <text x="722" y="1082" class="subtitle">AI 추출 학습 노트</text>
+  <text x="722" y="1118" class="key">PK id BIGINT</text>
+  <text x="722" y="1144" class="key">FK user_id BIGINT - fk_knowledge_note_user</text>
+  <text x="722" y="1170" class="key">FK conversation_id BIGINT - fk_knowledge_note_conversation</text>
+  <text x="722" y="1196" class="key">FK knowledge_id BIGINT - fk_knowledge_note_knowledge</text>
+  <text x="722" y="1222" class="col">title VARCHAR(200) NOT NULL</text>
+  <text x="722" y="1248" class="col">description VARCHAR(300) NOT NULL</text>
+  <text x="722" y="1274" class="col">summary LOB NOT NULL</text>
+  <text x="722" y="1300" class="muted">created_at, updated_at</text>
+  <text x="722" y="1336" class="idx">IDX idx_knowledge_note_user(user_id)</text>
+  <text x="722" y="1362" class="idx">IDX idx_knowledge_note_knowledge(knowledge_id)</text>
+  <text x="722" y="1388" class="idx">IDX idx_knowledge_note_conversation(conversation_id)</text>
+
+  <rect x="1340" y="1070" width="360" height="220" class="panel"/>
+  <rect x="1340" y="1070" width="360" height="62" class="header" rx="12"/>
+  <text x="1362" y="1099" class="title">knowledge_note_keywords</text>
+  <text x="1362" y="1122" class="subtitle">학습 노트 키워드</text>
+  <text x="1362" y="1158" class="key">FK knowledge_note_id BIGINT</text>
+  <text x="1362" y="1184" class="col">keyword VARCHAR(100) NOT NULL</text>
+  <text x="1362" y="1220" class="idx">FK fk_knowledge_note_keyword_note</text>
+  <text x="1362" y="1256" class="muted">ElementCollection 테이블</text>
+
+  <path d="M700 245 H510" class="fk"/>
+  <text x="558" y="230" class="label">1:N 작성</text>
+  <path d="M295 450 V560" class="logical"/>
+  <text x="310" y="514" class="label">논리 참조 note_id</text>
+  <path d="M1100 245 H1290" class="fk"/>
+  <text x="1162" y="230" class="label">1:N 대화</text>
+  <path d="M1505 370 V500" class="fk"/>
+  <text x="1520" y="438" class="label">1:N 메시지</text>
+  <path d="M780 390 V945 H360 V1030" class="fk"/>
+  <text x="382" y="930" class="label">1:N 지식 폴더</text>
+  <path d="M900 390 V1030" class="fk"/>
+  <text x="914" y="716" class="label">1:N 학습 노트 소유</text>
+  <path d="M1505 780 V930 H1060 V1030" class="fk"/>
+  <text x="1260" y="916" class="label">1:N 원본 대화</text>
+  <path d="M590 1180 H700" class="fk"/>
+  <text x="618" y="1165" class="label">1:N 저장</text>
+  <path d="M1220 1180 H1340" class="fk"/>
+  <text x="1250" y="1165" class="label">1:N 키워드</text>
+  <path d="M260 1030 C190 960 190 895 300 895 C430 895 548 958 565 1038" class="self"/>
+  <text x="208" y="884" class="label">self parent_id</text>
+
+  <rect x="60" y="1430" width="1680" height="52" fill="#0b1721" stroke="#26313c" rx="10"/>
+  <text x="82" y="1452" class="note">표기: 초록 실선 = 실제 FK, 노란 점선 = 현재 JPA FK 없이 ID 값으로 보관하는 논리 참조, 청록 실선 = 자기 참조</text>
+  <text x="82" y="1474" class="note">공통 컬럼: BaseEntity를 상속한 엔티티는 created_at, updated_at을 AuditingEntityListener로 관리합니다.</text>
+</svg>
