@@ -367,6 +367,8 @@ flowchart TD
 
 현재 서버 내부에는 Thymeleaf 기반 화면이 있으며, 이 화면은 Vue.js 전환 과정에서 비교용 기준 구현으로 유지합니다. 앞으로의 사용자 화면은 `frontend/`의 Vue.js SPA를 중심으로 구성하고, Spring Boot는 REST API 서버 역할에 집중합니다.
 
+#### 요청 진입과 공통 백엔드 계층
+
 ```mermaid
 flowchart TD
     Browser --> ThymeleafView
@@ -387,9 +389,16 @@ flowchart TD
     QueryService --> QueryDSL
 
     Reader --> Repository
+    QueryDSL --> Repository
+
     Repository --> MySQL
     Repository --> Redis
+```
 
+#### AI 요약과 대화 처리 계층
+
+```mermaid
+flowchart TD
     AiController --> AiFacade
     AiFacade --> AiJob
     AiFacade --> AiSummaryAsyncService
@@ -397,28 +406,39 @@ flowchart TD
     SummaryService --> OpenAiClient
     OpenAiClient --> OpenAI
 
-    ConversationController --> ConversationCommandService
-    ConversationController --> ConversationQueryService
-    ConversationMessageController --> ConversationMessageCommandService
-    ConversationMessageController --> ConversationMessageQueryService
     ChatController --> ConversationChatService
     ConversationChatService --> ChatContextBuilder
     ChatContextBuilder --> ConversationMessageReader
     ConversationChatService --> ChatService
     ChatService --> OpenAiWebClient
+    OpenAiWebClient --> OpenAI
 
+    ConversationController --> ConversationCommandService
+    ConversationController --> ConversationQueryService
+    ConversationMessageController --> ConversationMessageCommandService
+    ConversationMessageController --> ConversationMessageQueryService
+```
+
+#### Knowledge 저장과 Batch 확장 계층
+
+```mermaid
+flowchart TD
     OpenAiKnowledgeSummaryService --> AiClient
     OpenAiKnowledgeSummaryService --> KnowledgeSummaryPrompt
+    AiClient --> OpenAI
+
     KnowledgeNoteCommandService --> KnowledgePathResolver
     KnowledgeNoteCommandService --> KnowledgeNoteRepository
     KnowledgePathResolver --> KnowledgeRepository
 
     KnowledgeRepository --> Knowledge
     KnowledgeNoteRepository --> KnowledgeNote
+    KnowledgeNoteRepository --> KnowledgeNoteKeywords
 
     BatchJob --> ItemReader
     ItemReader --> ItemProcessor
     ItemProcessor --> ItemWriter
+    ItemWriter --> KnowledgeNoteCommandService
 ```
 
 ### 프론트엔드 전환 방향
