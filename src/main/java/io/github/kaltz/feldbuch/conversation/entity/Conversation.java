@@ -31,11 +31,20 @@ public class Conversation extends BaseEntity {
     @Column(nullable = false)
     private ConversationStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "knowledge_extract_status",
+            nullable = false,
+            length = 20
+    )
+    private KnowledgeExtractStatus knowledgeExtractStatus = KnowledgeExtractStatus.NONE;
+
     @Builder
-    private Conversation(User user, String title, ConversationStatus status) {
+    private Conversation(User user, String title, ConversationStatus status, KnowledgeExtractStatus knowledgeExtractStatus) {
         this.user = user;
         this.title = title;
         this.status = status;
+        this.knowledgeExtractStatus = knowledgeExtractStatus;
     }
 
     public static Conversation create(User user) {
@@ -47,6 +56,7 @@ public class Conversation extends BaseEntity {
                 .user(user)
                 .title(title)
                 .status(ConversationStatus.ACTIVE)
+                .knowledgeExtractStatus(KnowledgeExtractStatus.NONE)
                 .build();
     }
 
@@ -64,5 +74,21 @@ public class Conversation extends BaseEntity {
 
     public void touch() {
         super.touch();
+    }
+
+    private void changeKnowledgeExtractStatus(KnowledgeExtractStatus status) {
+        this.knowledgeExtractStatus = status;
+    }
+
+    public void startKnowledgeExtraction() {
+        changeKnowledgeExtractStatus(KnowledgeExtractStatus.PROCESSING);
+    }
+
+    public void completeKnowledgeExtraction() {
+        changeKnowledgeExtractStatus(KnowledgeExtractStatus.COMPLETED);
+    }
+
+    public void failKnowledgeExtraction() {
+        changeKnowledgeExtractStatus(KnowledgeExtractStatus.FAILED);
     }
 }
