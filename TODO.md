@@ -162,8 +162,10 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
 - [x] KnowledgeNote 조회 인덱스 추가: `idx_knowledge_note_user`
 - [x] KnowledgeNote 조회 인덱스 추가: `idx_knowledge_note_knowledge`
 - [x] KnowledgeNote 조회 인덱스 추가: `idx_knowledge_note_conversation`
-- [ ] Conversation에 `summaryStatus` 추가
-- [ ] Conversation에 `lastSummarizedAt` 추가
+- [x] Conversation에 Knowledge 추출 상태 필드 추가
+- [x] Conversation에 Knowledge 추출 재시도 횟수 필드 추가
+- [x] Conversation에 Knowledge 추출 실패 메시지 필드 추가
+- [x] Conversation에 Knowledge 추출 실패 시각 필드 추가
 - [ ] 요약 대상 조회를 위한 Conversation 인덱스 추가
 - [ ] DB 마이그레이션 방식 정리
 
@@ -220,17 +222,30 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
 
 #### 9-4. Spring Batch 자동 증류
 
-- [ ] 요약 대상 Conversation 조회 Reader 추가
+- [x] Knowledge 추출 Batch Job 추가: `knowledgeExtractionJob`
+- [x] Knowledge 추출 Batch Step 추가: `knowledgeExtractionStep`
+- [x] Tasklet 기반 Knowledge 추출 배치 구현
+- [x] Knowledge 추출 대상 Conversation 조회 Reader 추가
+- [x] QueryDSL 기반 Knowledge 추출 대상 조회 구현
+- [x] 대상 기준: `ConversationStatus.COMPLETED`
+- [x] 대상 기준: `knowledgeExtractStatus = NONE`
+- [x] 재시도 기준: `knowledgeExtractStatus = FAILED`
+- [x] 재시도 기준: `knowledgeExtractRetryCount < 3`
+- [x] 재시도 기준: `knowledgeExtractFailedAt <= now - 1 minute`
+- [x] 처리 시작 시 `knowledgeExtractStatus = PROCESSING` 처리
+- [x] 성공 시 `knowledgeExtractStatus = COMPLETED` 처리
+- [x] 실패 시 `knowledgeExtractStatus = FAILED` 처리
+- [x] 실패 시 재시도 횟수 증가
+- [x] 실패 시 실패 메시지와 실패 시각 저장
+- [x] 한 대화 처리 실패 시 다음 대화를 계속 처리
+- [x] 로컬 프로필 수동 실행 Runner 추가
+- [x] `feldbuch.batch.knowledge-extraction.run=true` 설정 시 애플리케이션 시작 후 1회 실행
+- [x] Job 실행 시 `executionTime` Job Parameter 추가
+- [x] Knowledge 추출 배치 Job 설정 테스트
+- [x] Knowledge 추출 Tasklet 테스트
+- [x] Knowledge 추출 대상 조회 Repository 테스트
 - [ ] 대상 기준: 메시지 2개 이상
 - [ ] 대상 기준: 마지막 메시지 이후 30분 이상 경과
-- [ ] 대상 기준: `summaryStatus = PENDING`
-- [ ] Processor에서 AI 구조화 요약 호출
-- [ ] Writer에서 Knowledge 경로 생성 및 KnowledgeNote 저장
-- [ ] 실패 시 `summaryStatus = FAILED` 처리
-- [ ] 성공 시 `summaryStatus = COMPLETED` 처리
-- [ ] 처리 시작 시 `summaryStatus = PROCESSING` 처리
-- [ ] 완료 시 `lastSummarizedAt` 기록
-- [ ] 초기 구현은 Tasklet 또는 작은 Chunk 크기로 시작
 - [ ] 1시간마다 실행하는 스케줄 설정
 - [ ] 매일 새벽 실행하는 스케줄 옵션 검토
 - [ ] 외부 AI API 실패 재시도 정책 추가
@@ -354,15 +369,18 @@ GitHub Contribution Graph와 유사하게 날짜별 학습 활동을 표시한�
 - [x] Knowledge 경로 자동 조회/생성 서비스
 - [x] AI 구조화 요약 서비스
 - [x] AI 요약 결과 KnowledgeNote 저장 서비스
-- [ ] Conversation 요약 상태 필드 추가
-- [ ] Conversation 마지막 요약 시각 추가
+- [x] Conversation Knowledge 추출 상태 필드 추가
+- [x] Conversation Knowledge 추출 재시도/실패 정보 필드 추가
+- [x] Knowledge 추출 Batch Job/Step/Tasklet 추가
 - [ ] 대화를 수동으로 학습 노트로 변환하는 서비스
 - [x] AI 구조화 요약으로 학습 주제, 제목, 설명, 요약, 키워드 추출
-- [ ] 대화 종료 또는 미사용 기준으로 학습 요약 생성
+- [x] 완료된 대화 기준으로 학습 요약 생성 대상 조회
+- [ ] 대화 미사용 시간 기준으로 학습 요약 생성
 - [ ] 핵심 개념과 추가 학습 항목 저장
 - [ ] 학습 날짜 기록
 - [ ] 태그 또는 키워드 기반 분류 기능 추가
-- [ ] Spring Batch 자동 학습 노트 생성
+- [x] Spring Batch 기반 학습 노트 생성 실행 흐름
+- [ ] Spring Scheduler 기반 정기 실행
 
 ### 3단계: 학습 기록 탐색
 

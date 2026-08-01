@@ -71,7 +71,7 @@
   <text x="102" y="830" class="col">error_message VARCHAR(1000)</text>
   <text x="102" y="856" class="muted">created_at, updated_at</text>
 
-  <rect x="1290" y="120" width="430" height="250" class="panel"/>
+  <rect x="1290" y="120" width="430" height="354" class="panel"/>
   <rect x="1290" y="120" width="430" height="62" class="header" rx="12"/>
   <text x="1312" y="149" class="title">conversations</text>
   <text x="1312" y="172" class="subtitle">AI 대화 세션</text>
@@ -79,8 +79,12 @@
   <text x="1312" y="234" class="key">FK user_id BIGINT</text>
   <text x="1312" y="260" class="col">title VARCHAR(100) NOT NULL</text>
   <text x="1312" y="286" class="col">status VARCHAR(255) NOT NULL</text>
-  <text x="1312" y="312" class="muted">created_at, updated_at</text>
-  <text x="1312" y="338" class="idx">Query: user_id + updated_at DESC</text>
+  <text x="1312" y="312" class="col">knowledge_extract_status VARCHAR(20)</text>
+  <text x="1312" y="338" class="col">knowledge_extract_retry_count INTEGER</text>
+  <text x="1312" y="364" class="col">knowledge_extract_error_message VARCHAR(1000)</text>
+  <text x="1312" y="390" class="col">knowledge_extract_failed_at DATETIME</text>
+  <text x="1312" y="416" class="muted">created_at, updated_at</text>
+  <text x="1312" y="448" class="idx">Query: status + extract_status + failed_at</text>
 
   <rect x="1290" y="500" width="430" height="280" class="panel"/>
   <rect x="1290" y="500" width="430" height="62" class="header" rx="12"/>
@@ -138,8 +142,8 @@
   <text x="310" y="514" class="label">논리 참조 note_id</text>
   <path d="M1100 245 H1290" class="fk"/>
   <text x="1162" y="230" class="label">1:N 대화</text>
-  <path d="M1505 370 V500" class="fk"/>
-  <text x="1520" y="438" class="label">1:N 메시지</text>
+  <path d="M1505 474 V500" class="fk"/>
+  <text x="1520" y="492" class="label">1:N 메시지</text>
   <path d="M780 390 V945 H360 V1030" class="fk"/>
   <text x="382" y="930" class="label">1:N 지식 폴더</text>
   <path d="M900 390 V1030" class="fk"/>

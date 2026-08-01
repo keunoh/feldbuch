@@ -43,6 +43,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 로컬/운영 환경별 DB, JWT, OpenAI Key는 `application-local.yml`, `application-prod.yml`에서 분리합니다.
 - OpenAI 기본 모델은 `openai.model` 값으로 선택하며 현재 기본값은 `gpt-4.1-nano`입니다.
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
+- Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막고, Knowledge 추출 배치는 로컬 프로필에서 `feldbuch.batch.knowledge-extraction.run=true`일 때 `ApplicationRunner`가 명시적으로 1회 실행합니다.
 
 ## Frontend Direction
 
@@ -93,6 +94,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation 제목 수정
 - Conversation 삭제
 - Conversation Message 저장 및 조회
+- Conversation 완료 상태 기반 Knowledge 추출 대상 관리
+- Knowledge 추출 상태 관리: `NONE`, `PROCESSING`, `COMPLETED`, `FAILED`
+- Knowledge 추출 실패 재시도 횟수, 실패 메시지, 실패 시각 저장
 - Conversation 컨텍스트 기반 AI 채팅
 - SSE 기반 AI 응답 스트리밍 API
 - OpenAI WebClient 기반 스트리밍 호출
@@ -103,6 +107,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - AI 지식 요약 프롬프트와 OpenAI 요약 서비스
 - Knowledge 경로 자동 조회/생성
 - AI 요약 결과의 KnowledgeNote 저장 Command 서비스
+- Knowledge 추출 배치 Job/Step/Tasklet
+- QueryDSL 기반 Knowledge 추출 대상 Conversation 조회
+- 실패한 Knowledge 추출의 지연 재시도
 - KnowledgeNote 제목, 설명, 요약, 키워드 저장
 - KnowledgeNote 키워드 ElementCollection 저장
 - Thymeleaf 기반 로그인/대화 화면
@@ -165,9 +172,11 @@ flowchart TD
     KnowledgeRepository --> Knowledge
     KnowledgeNoteRepository --> KnowledgeNote
 
-    BatchJob --> ItemReader
-    ItemReader --> ItemProcessor
-    ItemProcessor --> ItemWriter
+    KnowledgeExtractionJob --> KnowledgeExtractionStep
+    KnowledgeExtractionStep --> KnowledgeExtractionTasklet
+    KnowledgeExtractionTasklet --> KnowledgeConversationReader
+    KnowledgeExtractionTasklet --> KnowledgeExtractionService
+    KnowledgeExtractionTasklet --> KnowledgeExtractionStatusService
 ```
 
 ## Client Architecture
@@ -210,6 +219,22 @@ Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용�
 
 현재 영속 모델은 `users`, `notes`, `ai_job`, `conversations`, `conversation_messages`, `knowledge`, `knowledge_notes`, `knowledge_note_keywords`를 중심으로 구성합니다. ERD는 `users`를 중앙 소유자로 두고 관계선을 좌우/하단 영역으로 분리했습니다. `knowledge`는 사용자별 폴더 트리를 자기 참조로 표현하고, `knowledge_notes`는 대화에서 AI가 추출한 학습 노트의 제목, 설명, 요약, 키워드를 특정 지식 폴더에 저장합니다.
 
+## Knowledge Extraction Batch
+
+Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 위한 Spring Batch 작업입니다.
+
+- Job 이름: `knowledgeExtractionJob`
+- Step 이름: `knowledgeExtractionStep`
+- 실행 방식: Tasklet 기반 단일 Step
+- 실행 시점: `local` 프로필에서 `feldbuch.batch.knowledge-extraction.run=true` 설정 시 애플리케이션 시작 직후 1회 실행
+- Job Parameter: `executionTime=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
+- 반복 방식: 한 번 실행할 때 조회된 대상 Conversation 목록을 순회 처리
+- 현재 정기 주기: 별도 Scheduler/Cron은 아직 없음
+- 대상 조건: `status = COMPLETED`이고 `knowledgeExtractStatus = NONE`
+- 재시도 조건: `knowledgeExtractStatus = FAILED`, `knowledgeExtractRetryCount < 3`, `knowledgeExtractFailedAt <= now - 1 minute`
+- 성공 처리: `PROCESSING -> COMPLETED`, 오류 메시지와 실패 시각 초기화
+- 실패 처리: `FAILED`로 변경, 재시도 횟수 증가, 실패 메시지와 실패 시각 저장
+
 ## Project Structure
 
 ```text
@@ -246,6 +271,8 @@ frontend
 - Async Processing
 - AI Job State Tracking
 - Spring Batch Job Configuration
+- Tasklet-based Knowledge Extraction Batch
+- Batch Retry State Tracking
 - OpenAI Client Layer
 - OpenAI SSE Streaming
 - Chat Context Builder
@@ -255,6 +282,7 @@ frontend
 - AI Extracted Knowledge Note Modeling
 - Structured AI Knowledge Summary
 - ElementCollection Keyword Persistence
+- QueryDSL Batch Target Selection
 - Thymeleaf View Layer 유지 및 Vue SPA 전환
 - Axios 기반 프론트엔드/백엔드 통신
 - Request/Response Interceptor
@@ -278,6 +306,8 @@ frontend
 - 코드 리뷰
 - 학습 퀴즈 생성
 - 학습 로드맵 추천
+- Knowledge 추출 Batch 정기 스케줄러 연결
+- Knowledge 추출 대상 조회 인덱스 추가
 - Docker Compose 정리
 - 테스트 커버리지 확장
 - Monitoring

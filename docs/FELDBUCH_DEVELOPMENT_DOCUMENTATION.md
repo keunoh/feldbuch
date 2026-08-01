@@ -41,6 +41,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation 제목 수정
 - Conversation 삭제
 - Conversation Message 저장 및 조회
+- Conversation 완료 상태 기반 Knowledge 추출 대상 관리
+- Knowledge 추출 상태 관리: `NONE`, `PROCESSING`, `COMPLETED`, `FAILED`
+- Knowledge 추출 실패 재시도 횟수, 실패 메시지, 실패 시각 저장
 - Conversation 컨텍스트 기반 AI 채팅
 - SSE 기반 AI 응답 스트리밍 API
 - OpenAI WebClient 기반 스트리밍 호출
@@ -51,6 +54,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - AI 지식 요약 프롬프트와 OpenAI 요약 서비스
 - Knowledge 경로 자동 조회/생성
 - AI 요약 결과의 KnowledgeNote 저장 Command 서비스
+- Knowledge 추출 배치 Job/Step/Tasklet
+- QueryDSL 기반 Knowledge 추출 대상 Conversation 조회
+- 실패한 Knowledge 추출의 지연 재시도
 - KnowledgeNote 제목, 설명, 요약, 키워드 저장
 - KnowledgeNote 키워드 ElementCollection 저장
 - Thymeleaf 기반 로그인/대화 화면
@@ -235,6 +241,8 @@ flowchart TD
 - Conversation Chat API
 - Conversation Chat Stream API
 - `StreamResponse` 기반 `TOKEN`, `COMPLETE`, `ERROR` 스트리밍 이벤트 계약
+- Conversation Knowledge 추출 상태 필드
+- Conversation Knowledge 추출 재시도 횟수, 실패 메시지, 실패 시각 필드
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - Knowledge Entity
 - KnowledgeNote Entity
@@ -247,7 +255,14 @@ flowchart TD
 - KnowledgeSummaryPrompt
 - AiKnowledgeSummaryService
 - OpenAiKnowledgeSummaryService
+- KnowledgeExtractionService
+- KnowledgeExtractionStatusService
+- KnowledgeConversationReader
+- KnowledgeExtractionBatchConfig
+- KnowledgeExtractionTasklet
+- LocalKnowledgeExtractionJobRunner
 - 사용자별 Knowledge 루트/자식 조회, 동일 폴더명 중복 확인 쿼리
+- QueryDSL 기반 Knowledge 추출 대상 Conversation 조회 쿼리
 - KnowledgeNote의 Knowledge별/Conversation별/사용자별 조회 쿼리
 - Thymeleaf 기반 로그인/대화 화면
 - `frontend/` Vue 3 + Vite 프로젝트 구성
@@ -342,6 +357,19 @@ flowchart TD
 - `AiKnowledgeSummaryService`, `OpenAiKnowledgeSummaryService` 추가: OpenAI 응답 JSON을 `AiKnowledgeSummaryResponse`로 파싱
 - `KnowledgeNoteCommandService` 추가: AI 요약 응답을 Knowledge 경로에 저장하고 `KnowledgeNote`를 생성
 - 테스트 추가: `KnowledgePathResolverTest`, `KnowledgeNoteCommandServiceTest`, `OpenAiKnowledgeSummaryServiceTest`
+- `Conversation`에 Knowledge 추출 상태 추가: `knowledgeExtractStatus`, `knowledgeExtractRetryCount`, `knowledgeExtractErrorMessage`, `knowledgeExtractFailedAt`
+- `KnowledgeExtractStatus` 추가: `NONE`, `PROCESSING`, `COMPLETED`, `FAILED`
+- `ConversationRepositoryCustom`, `ConversationRepositoryImpl` 추가: QueryDSL로 Knowledge 추출 대상 대화 조회
+- Knowledge 추출 대상 조건 추가: `ConversationStatus.COMPLETED`이고 `knowledgeExtractStatus = NONE`
+- Knowledge 추출 재시도 조건 추가: `FAILED` 상태, 재시도 3회 미만, 실패 후 1분 경과
+- `KnowledgeConversationReader` 추가: 배치에서 사용할 추출 대상 대화 조회 책임 분리
+- `ConversationKnowledgeContextBuilder` 추가: 대화 메시지를 `USER:`/`AI:` 텍스트 컨텍스트로 변환
+- `KnowledgeExtractionService` 추가: 사용자/대화 조회, 컨텍스트 생성, AI 지식 요약, KnowledgeNote 저장 흐름 연결
+- `KnowledgeExtractionStatusService` 추가: `REQUIRES_NEW` 트랜잭션으로 시작/완료/실패 상태를 독립 반영
+- `KnowledgeExtractionBatchConfig` 추가: `knowledgeExtractionJob`, `knowledgeExtractionStep` 구성
+- `KnowledgeExtractionTasklet` 추가: 대상 대화 목록을 순회하며 지식 추출 실행
+- `LocalKnowledgeExtractionJobRunner` 추가: `local` 프로필과 `feldbuch.batch.knowledge-extraction.run=true` 설정에서 애플리케이션 시작 시 1회 실행
+- 테스트 추가: `KnowledgeExtractionBatchConfigTest`, `KnowledgeExtractionTaskletTest`, `KnowledgeExtractionServiceTest`, `ConversationKnowledgeContextBuilderTest`, `ConversationRepositoryTest`
 - Spring Security CORS 설정으로 Vite 개발 서버 `http://localhost:5173` 허용
 - `RequestIdFilter`에서 요청마다 UUID를 생성하고 MDC와 `X-Request-Id` 응답 헤더에 기록
 - Spring Batch 기반 `summaryJob`/`summaryStep` 구성
@@ -358,6 +386,10 @@ flowchart TD
 - OpenAI 모델 설정 키: `openai.model`
 - 현재 기본 모델: `gpt-4.1-nano`
 - 로컬 Docker 인프라: MySQL, Redis
+- Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
+- Knowledge 추출 배치 로컬 실행 플래그: `feldbuch.batch.knowledge-extraction.run=true`
+- Knowledge 추출 배치 Job 이름: `knowledgeExtractionJob`
+- Knowledge 추출 배치 Step 이름: `knowledgeExtractionStep`
 
 ---
 
@@ -435,10 +467,13 @@ flowchart TD
     KnowledgeNoteRepository --> KnowledgeNote
     KnowledgeNoteRepository --> KnowledgeNoteKeywords
 
-    BatchJob --> ItemReader
-    ItemReader --> ItemProcessor
-    ItemProcessor --> ItemWriter
-    ItemWriter --> KnowledgeNoteCommandService
+    LocalKnowledgeExtractionJobRunner --> KnowledgeExtractionJob
+    KnowledgeExtractionJob --> KnowledgeExtractionStep
+    KnowledgeExtractionStep --> KnowledgeExtractionTasklet
+    KnowledgeExtractionTasklet --> KnowledgeConversationReader
+    KnowledgeExtractionTasklet --> KnowledgeExtractionService
+    KnowledgeExtractionTasklet --> KnowledgeExtractionStatusService
+    KnowledgeExtractionService --> KnowledgeNoteCommandService
 ```
 
 ### 프론트엔드 전환 방향
@@ -1015,6 +1050,98 @@ Knowledge 경로 처리 규칙:
 - `KnowledgePathResolverTest`: 누락 경로 생성, 기존 경로 재사용, 공백/빈 항목 정규화, 빈 경로 예외, 저장되지 않은 사용자 예외
 - `KnowledgeNoteCommandServiceTest`: AI 요약 응답을 Knowledge 경로에 연결하고 `KnowledgeNote`로 저장
 - `OpenAiKnowledgeSummaryServiceTest`: OpenAI JSON 응답 파싱과 빈 응답 예외
+- `KnowledgeExtractionServiceTest`: 대화 컨텍스트를 AI 지식 요약으로 변환하고 KnowledgeNote 저장까지 연결
+- `ConversationKnowledgeContextBuilderTest`: 대화 메시지를 `USER:`/`AI:` 형식의 요약 컨텍스트로 변환
+
+### Knowledge 추출 Batch
+
+Knowledge 추출 배치는 완료된 대화를 AI가 구조화된 학습 노트로 요약하고, `Knowledge` 경로를 자동 생성한 뒤 `KnowledgeNote`로 저장하는 작업입니다.
+
+```text
+LocalKnowledgeExtractionJobRunner
+  ↓
+knowledgeExtractionJob
+  ↓
+knowledgeExtractionStep
+  ↓
+KnowledgeExtractionTasklet
+  ↓
+KnowledgeConversationReader.findExtractionTargets()
+  ↓
+KnowledgeExtractionStatusService.start(conversationId)
+  ↓
+KnowledgeExtractionService.extract(userId, conversationId)
+  ↓
+KnowledgeExtractionStatusService.complete(conversationId)
+```
+
+배치 구성:
+
+| 구분 | 값 |
+| --- | --- |
+| Job | `knowledgeExtractionJob` |
+| Step | `knowledgeExtractionStep` |
+| 구현 방식 | Tasklet 기반 단일 Step |
+| 대상 조회 | `KnowledgeConversationReader` -> `ConversationRepository.findKnowledgeExtractionTargets()` |
+| 핵심 처리 | `KnowledgeExtractionService.extract(userId, conversationId)` |
+| 상태 처리 | `KnowledgeExtractionStatusService.start/complete/fail` |
+| 테스트 | `KnowledgeExtractionBatchConfigTest`, `KnowledgeExtractionTaskletTest`, `ConversationRepositoryTest` |
+
+실행 시간과 주기:
+
+- 현재 정기 Scheduler나 Cron은 연결되어 있지 않습니다.
+- `spring.batch.job.enabled=false`로 Spring Boot의 기본 Batch 자동 실행은 비활성화되어 있습니다.
+- 로컬 프로필에서 `feldbuch.batch.knowledge-extraction.run=true`를 설정하면 `LocalKnowledgeExtractionJobRunner`가 애플리케이션 시작 직후 `knowledgeExtractionJob`을 1회 실행합니다.
+- Job Parameter는 `executionTime=System.currentTimeMillis()`를 사용합니다. 같은 Job도 실행 시각이 달라지므로 매번 별도 JobInstance로 기록됩니다.
+- 반복 실행이 필요하면 현재 단계에서는 애플리케이션을 다시 실행하거나 같은 설정으로 Job을 다시 실행해야 합니다.
+- 1시간 주기 또는 매일 새벽 실행은 다음 단계에서 Spring Scheduler나 운영 스케줄러로 연결할 예정입니다.
+
+대상 조회 조건:
+
+- `Conversation.status = COMPLETED`
+- `knowledgeExtractStatus = NONE`
+- 또는 `knowledgeExtractStatus = FAILED`
+- 실패 재시도는 `knowledgeExtractRetryCount < 3`
+- 실패 재시도는 `knowledgeExtractFailedAt <= 현재 시각 - 1분`
+- 조회 순서는 `updatedAt ASC`로 오래된 대화부터 처리합니다.
+
+상태 전이:
+
+```text
+NONE
+  ↓
+PROCESSING
+  ↓
+COMPLETED
+```
+
+실패 시:
+
+```text
+PROCESSING
+  ↓
+FAILED
+  ↓ 1분 이후, retryCount < 3
+PROCESSING
+```
+
+상태 필드:
+
+| Field | 설명 |
+| --- | --- |
+| `knowledgeExtractStatus` | `NONE`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| `knowledgeExtractRetryCount` | 실패 재시도 횟수. 실패할 때마다 증가 |
+| `knowledgeExtractErrorMessage` | 실패 메시지. 최대 1000자 |
+| `knowledgeExtractFailedAt` | 마지막 실패 시각. 재시도 지연 기준 |
+
+Tasklet 처리 규칙:
+
+- 조회된 대상 Conversation을 한 번씩 순회합니다.
+- 각 대화 처리 전 `PROCESSING` 상태로 변경합니다.
+- 추출 성공 시 `COMPLETED` 상태로 변경하고 실패 메시지/실패 시각을 초기화합니다.
+- 추출 실패 시 `FAILED` 상태로 변경하고 재시도 횟수, 실패 메시지, 실패 시각을 기록합니다.
+- 한 대화의 추출이 실패해도 배치 전체를 중단하지 않고 다음 대화를 계속 처리합니다.
+- 상태 변경은 `REQUIRES_NEW` 트랜잭션으로 분리해 배치 외부 트랜잭션과 독립적으로 반영합니다.
 
 ### Database ERD
 
@@ -1066,6 +1193,10 @@ ERD는 JPA 엔티티와 `@Table`, `@JoinColumn`, `@CollectionTable`, 리포지�
 | `conversations` / AI 대화 세션 | `user_id` | FK | BIGINT, NOT NULL | `users.id` |
 | `conversations` / AI 대화 세션 | `title` |  | VARCHAR(100), NOT NULL | 대화 제목, 기본값 `새 대화` |
 | `conversations` / AI 대화 세션 | `status` |  | VARCHAR(255), NOT NULL | `ACTIVE`, `COMPLETED` |
+| `conversations` / AI 대화 세션 | `knowledge_extract_status` |  | VARCHAR(20), NOT NULL | Knowledge 추출 상태: `NONE`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| `conversations` / AI 대화 세션 | `knowledge_extract_retry_count` |  | INTEGER, NOT NULL | Knowledge 추출 실패 재시도 횟수 |
+| `conversations` / AI 대화 세션 | `knowledge_extract_error_message` |  | VARCHAR(1000), NULL | Knowledge 추출 실패 메시지 |
+| `conversations` / AI 대화 세션 | `knowledge_extract_failed_at` |  | DATETIME, NULL | Knowledge 추출 마지막 실패 시각 |
 | `conversations` / AI 대화 세션 | `created_at`, `updated_at` |  | DATETIME | 생성/수정 시각, 목록 정렬 기준은 `updated_at DESC` |
 | `conversation_messages` / 대화 메시지 | `id` | PK | BIGINT, identity | 메시지 PK |
 | `conversation_messages` / 대화 메시지 | `conversation_id` | FK | BIGINT, NOT NULL | `conversations.id` |
@@ -1116,10 +1247,11 @@ ERD는 JPA 엔티티와 `@Table`, `@JoinColumn`, `@CollectionTable`, 리포지�
 | `knowledge_notes` | `idx_knowledge_note_conversation` | `conversation_id` | 한 대화에서 생성된 학습 노트 조회, 생성 여부 확인 |
 | `notes` | 권장 | `user_id`, `pinned`, `created_at` | `findAllByUserIdOrderByPinnedDescCreatedAtDesc` 조회 패턴 |
 | `conversations` | 권장 | `user_id`, `updated_at` | `findAllByUserIdOrderByUpdatedAtDesc` 조회 패턴 |
+| `conversations` | 권장 | `status`, `knowledge_extract_status`, `knowledge_extract_failed_at`, `knowledge_extract_retry_count`, `updated_at` | Knowledge 추출 배치 대상 조회와 실패 재시도 조회 패턴 |
 | `conversation_messages` | 권장 | `conversation_id`, `sequence` | 메시지 목록 정렬과 마지막 sequence 조회 패턴 |
 | `ai_job` | 권장 | `note_id`, `status` | 노트별 AI 작업 추적과 상태 조회 확장 시 필요 |
 
-### Spring Batch 요약 파이프라인
+### Spring Batch 파이프라인
 
 ```text
 summaryJob
@@ -1133,7 +1265,9 @@ SummaryItemProcessor
 SummaryItemWriter
 ```
 
-요청 기반 비동기 요약과 별도로, 배치 기반 요약 처리 확장을 위한 파이프라인이 구성되어 있습니다.
+요청 기반 비동기 요약과 별도로, 기존 `summaryJob`/`summaryStep`은 배치 기반 요약 처리 확장을 위한 파이프라인입니다.
+
+오늘 추가된 Knowledge 추출 배치는 `knowledgeExtractionJob`/`knowledgeExtractionStep`으로 분리되어 있습니다. 이 배치는 Chunk 기반 Reader/Processor/Writer가 아니라 Tasklet 기반으로 구현되어, 한 번 실행할 때 대상 Conversation 목록을 조회한 뒤 각 대화를 순회하며 KnowledgeNote를 생성합니다.
 
 ### 프로젝트 아키텍처 이미지
 
@@ -1267,6 +1401,9 @@ Job 상태 업데이트
 - 테스트 커버리지 확장
 - Knowledge API 계층 추가
 - KnowledgeNote 생성/조회 API 추가
+- Knowledge 추출 Batch 정기 스케줄러 연결
+- Knowledge 추출 대상 조회 인덱스 추가
+- Knowledge 추출 재시도 정책 운영 설정화
 
 ### Frontend
 
