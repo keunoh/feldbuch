@@ -160,29 +160,42 @@ Feldbuch의 목표는 개발자의 학습 기록을 저장하는 데서 끝나�
 ### 지금까지의 개발 흐름
 
 ```mermaid
-flowchart LR
-    A[프로젝트 생성]
-    --> B[JWT 인증]
-    --> C[회원가입]
-    --> D[로그인]
-    --> E[노트 CRUD]
-    --> F[QueryDSL 검색]
-    --> G[CQRS]
-    --> H[Reader Pattern]
-    --> I[Facade]
-    --> J[Async]
-    --> K[OpenAI 연동]
-    --> L[AI Job 상태 관리]
-    --> M[Conversation 도메인 추가]
-    --> N[Spring Batch 구성]
-    --> O[Thymeleaf 비교 화면 구성]
-    --> P[Vue.js 로그인/대화 화면 전환]
-    --> Q[Axios/Interceptor 인증 통신 구성]
-    --> R[대화 제목 수정과 Request ID 추적]
-    --> S[Vue 메인 채팅 UI 고도화]
-    --> T[SSE 기반 AI 응답 스트리밍]
-    --> U[Knowledge 저장 도메인 설계]
-    --> V[AI 지식 요약과 KnowledgeNote 저장 서비스]
+flowchart TD
+    subgraph Phase1["초기 기반"]
+        direction LR
+        A[프로젝트 생성] --> B[JWT 인증] --> C[회원가입] --> D[로그인]
+    end
+
+    subgraph Phase2["노트와 백엔드 구조"]
+        direction LR
+        E[노트 CRUD] --> F[QueryDSL 검색] --> G[CQRS] --> H[Reader Pattern]
+    end
+
+    subgraph Phase3["AI 처리 기반"]
+        direction LR
+        I[Facade] --> J[Async] --> K[OpenAI 연동] --> L[AI Job 상태 관리]
+    end
+
+    subgraph Phase4["대화 도메인과 화면 전환"]
+        direction LR
+        M[Conversation 도메인 추가] --> N[Spring Batch 구성] --> O[Thymeleaf 비교 화면 구성] --> P[Vue.js 로그인/대화 화면 전환]
+    end
+
+    subgraph Phase5["Vue 대화 UX 고도화"]
+        direction LR
+        Q[Axios/Interceptor 인증 통신 구성] --> R[대화 제목 수정과 Request ID 추적] --> S[Vue 메인 채팅 UI 고도화] --> T[SSE 기반 AI 응답 스트리밍]
+    end
+
+    subgraph Phase6["Knowledge 학습 노트 구조"]
+        direction LR
+        U[Knowledge 저장 도메인 설계] --> V[AI 지식 요약과 KnowledgeNote 저장 서비스]
+    end
+
+    D --> E
+    H --> I
+    L --> M
+    P --> Q
+    T --> U
 ```
 
 ### 구현 완료
