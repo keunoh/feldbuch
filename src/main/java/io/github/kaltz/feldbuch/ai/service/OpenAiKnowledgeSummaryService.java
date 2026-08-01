@@ -12,10 +12,12 @@ import io.github.kaltz.feldbuch.common.exception.CustomException;
 import io.github.kaltz.feldbuch.common.exception.ErrorCode;
 import io.github.kaltz.feldbuch.config.OpenAiProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService {
@@ -64,7 +66,11 @@ public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService 
             throw new CustomException(
                     ErrorCode.OPENAI_SERVER_ERROR
             );
+        } catch (Exception e) {
+            log.error("OpenAI 호출 실패", e);
 
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

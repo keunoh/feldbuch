@@ -45,7 +45,7 @@ public class KnowledgeExtractionStatusService {
 
         Conversation conversation = getConversation(conversationId);
 
-        conversation.failKnowledgeExtraction();
+        conversation.failKnowledgeExtraction("지식 추출 작업 실패");
     }
 
     private Conversation getConversation(Long conversationId) {

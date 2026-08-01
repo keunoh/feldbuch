@@ -47,14 +47,14 @@ public class KnowledgeNote extends BaseEntity {
     /**
      * AI가 생성한 한 줄 설명
      */
-    @Column(nullable = false, length = 300)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String description;
 
     /**
      * 대화에서 추출한 짧은 학습 요약
      */
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String summary;
 
     /**
