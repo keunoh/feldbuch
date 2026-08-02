@@ -15,8 +15,8 @@ import {logout} from "@/utils/auth.js";
 
 import ChatInput from "@/components/ChatInput.vue";
 import MessageList from "@/components/MessageList.vue";
-import ConversationSidebar from "@/components/ConversationSidebar.vue";
 import StudyInfoPanel from "@/components/StudyInfoPanel.vue";
+import WorkspaceSidebar from "@/components/WorkspaceSidebar.vue";
 
 const router = useRouter();
 
@@ -30,6 +30,22 @@ const creatingConversation = ref(false);
 const deletingConversationId = ref(null);
 const updatingConversationId = ref(null);
 const sendingMessage = ref(false);
+
+const sidebarMode = ref('conversation');
+const selectedKnowledgeId = ref(null);
+
+function changeSidebarMode(mode) {
+  sidebarMode.value = mode
+}
+
+function selectKnowledge(knowledgeId) {
+  selectedKnowledgeId.value = knowledgeId;
+
+  console.log(
+    '선택한 Knowledge:',
+    knowledgeId
+  );
+}
 
 async function scrollToBottom() {
   await nextTick();
@@ -61,6 +77,7 @@ async function loadConversation(conversationId) {
 
   conversation.value = response.data;
   messages.value = response.data.messages;
+
 
   updateConversationTitleInState(
     response.data.id,
@@ -304,17 +321,18 @@ onMounted(async () => {
 
 <template>
   <div class="conversation-layout">
-
-    <ConversationSidebar
+    <WorkspaceSidebar
       :conversations="conversations"
       :selected-conversation-id="selectedConversationId"
       :creating="creatingConversation"
       :deleting-conversation-id="deletingConversationId"
       :updating-conversation-id="updatingConversationId"
-      @select="selectConversation"
-      @create="createNewConversation"
-      @delete="removeConversation"
-      @update-title="renameConversation"
+      @select-conversation="selectConversation"
+      @create-conversation="createNewConversation"
+      @delete-conversation="removeConversation"
+      @update-conversation-title="renameConversation"
+      @select-knowledge="selectKnowledge"
+      @change-mode="changeSidebarMode"
     />
 
     <main class="chat-area">
@@ -434,5 +452,4 @@ onMounted(async () => {
   min-height: 0;
   overflow-y: auto;
 }
-
 </style>

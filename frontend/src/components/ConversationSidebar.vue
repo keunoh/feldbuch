@@ -258,25 +258,10 @@ function formatConversationTime(conversation) {
 
 <style scoped>
 .conversation-sidebar {
-  position: relative;
-  width: var(--sidebar-width);
-  min-width: var(--sidebar-width);
-  height: 100vh;
-  padding: 24px 18px;
-  border-right: 1px solid var(--color-border);
-  color: var(--color-text);
-  background: radial-gradient(
-    circle at 20% 0%,
-    rgba(66, 245, 123, 0.055),
-    transparent 30%
-  ),
-  linear-gradient(
-    180deg,
-    rgba(13, 19, 26, 0.98),
-    rgba(5, 8, 12, 0.98)
-  );
-  box-shadow: inset -1px 0 rgba(255, 255, 255, 0.015);
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .conversation-sidebar::after {
