@@ -35,7 +35,10 @@ public enum ErrorCode {
 
     // Conversation
     CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "CONV-001", "대화를 찾을 수 없습니다."),
-    ; //aef
+
+    // KnowledgeNote
+    KNOWLEDGE_NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "KNOTE-001", "KnowledgeNote를 찾을 수 없습니다."),
+    ;
 
 
     private final HttpStatus status;

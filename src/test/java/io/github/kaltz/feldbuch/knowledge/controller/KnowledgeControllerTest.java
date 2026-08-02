@@ -1,15 +1,20 @@
 package io.github.kaltz.feldbuch.knowledge.controller;
 
+import io.github.kaltz.feldbuch.conversation.entity.Conversation;
+import io.github.kaltz.feldbuch.conversation.repository.ConversationRepository;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeRepository;
 import io.github.kaltz.feldbuch.support.IntegrationTestSupport;
 import io.github.kaltz.feldbuch.support.TestAuthentication;
 import io.github.kaltz.feldbuch.user.entity.User;
-import io.github.kaltz.feldbuch.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -18,10 +23,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class KnowledgeControllerTest extends IntegrationTestSupport {
 
     @Autowired
-    private UserRepository userRepository;
+    private KnowledgeRepository knowledgeRepository;
 
     @Autowired
-    private KnowledgeRepository knowledgeRepository;
+    private KnowledgeNoteRepository knowledgeNoteRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
 
     @Test
     @DisplayName("Knowledge 트리 조회 성공")
@@ -128,5 +136,80 @@ class KnowledgeControllerTest extends IntegrationTestSupport {
                                 .value(true))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    @DisplayName("KnowledgeNote 상세 조회")
+    void findKnowledgeNote() throws Exception {
+
+        // given
+        TestAuthentication authentication =
+                authHelper.createAuthentication();
+
+        String token =
+                authentication.accessToken();
+
+        User user =
+                authentication.user();
+
+        Conversation conversation =
+                conversationRepository.save(
+                        Conversation.create(user)
+                );
+
+        Knowledge knowledge =
+                knowledgeRepository.save(
+                        Knowledge.createRoot(
+                                user,
+                                "개발"
+                        )
+                );
+
+        KnowledgeNote note =
+                knowledgeNoteRepository.save(
+                        KnowledgeNote.create(
+                                user,
+                                conversation,
+                                knowledge,
+                                "Spring Batch 기본 구조",
+                                "Job과 Step을 중심으로 실행 구조를 설명",
+                                "Spring Batch는 Job과 Step으로 작업을 구성합니다.",
+                                List.of(
+                                        "Spring Batch",
+                                        "Job",
+                                        "Step"
+                                )
+                        )
+                );
+
+        // when & then
+        mockMvc.perform(
+                        get("/api/knowledge/notes/{noteId}",
+                                note.getId()
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success")
+                        .value(true))
+                .andExpect(jsonPath("$.data.id")
+                        .value(note.getId()))
+                .andExpect(jsonPath("$.data.title")
+                        .value("Spring Batch 기본 구조"))
+                .andExpect(jsonPath("$.data.description")
+                        .value("Job과 Step을 중심으로 실행 구조를 설명"))
+                .andExpect(jsonPath("$.data.summary")
+                        .value("Spring Batch는 Job과 Step으로 작업을 구성합니다."))
+                .andExpect(jsonPath("$.data.keywords.length()")
+                        .value(3))
+                .andExpect(jsonPath("$.data.keywords[0]")
+                        .value("Spring Batch"))
+                .andExpect(jsonPath("$.data.keywords[1]")
+                        .value("Job"))
+                .andExpect(jsonPath("$.data.keywords[2]")
+                        .value("Step"));
     }
 }

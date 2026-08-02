@@ -1,7 +1,13 @@
 package io.github.kaltz.feldbuch.knowledge.service;
 
+import io.github.kaltz.feldbuch.common.exception.CustomException;
+import io.github.kaltz.feldbuch.common.exception.ErrorCode;
+import io.github.kaltz.feldbuch.knowledge.dto.response.KnowledgeNoteDetailResponse;
+import io.github.kaltz.feldbuch.knowledge.dto.response.KnowledgeNoteSummaryResponse;
 import io.github.kaltz.feldbuch.knowledge.dto.response.KnowledgeTreeResponse;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +24,7 @@ import java.util.Map;
 public class KnowledgeQueryService {
 
     private final KnowledgeRepository knowledgeRepository;
+    private final KnowledgeNoteRepository knowledgeNoteRepository;
 
     public List<KnowledgeTreeResponse> findTree(Long userId) {
 
@@ -28,6 +35,36 @@ public class KnowledgeQueryService {
                         );
 
         return buildTree(knowledgeList);
+    }
+
+    public KnowledgeNoteDetailResponse findNote(Long userId, Long noteId) {
+
+        KnowledgeNote note =
+                knowledgeNoteRepository
+                        .findByIdAndUserId(
+                                noteId,
+                                userId
+                        )
+                        .orElseThrow(() ->
+                                new CustomException(
+                                        ErrorCode.KNOWLEDGE_NOTE_NOT_FOUND
+                                ));
+
+        return KnowledgeNoteDetailResponse.from(note);
+    }
+
+    public List<KnowledgeNoteSummaryResponse> findNotes(Long userId, Long knowledgeId) {
+
+        return knowledgeNoteRepository
+                .findAllByUserIdAndKnowledgeIdOrderByCreatedAtAsc(
+                        userId,
+                        knowledgeId
+                )
+                .stream()
+                .map(
+                        KnowledgeNoteSummaryResponse::from
+                )
+                .toList();
     }
 
     public List<KnowledgeTreeResponse> buildTree(List<Knowledge> knowledgeList) {
@@ -99,4 +136,6 @@ public class KnowledgeQueryService {
             );
         }
     }
+
+
 }
