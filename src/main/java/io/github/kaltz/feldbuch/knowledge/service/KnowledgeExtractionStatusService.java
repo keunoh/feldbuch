@@ -7,11 +7,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class KnowledgeExtractionStatusService {
 
     private final ConversationRepository conversationRepository;
+    private final Clock clock;
 
     /**
      * 지식 추출 작업 시작 상태로 변경한다.
@@ -45,12 +49,17 @@ public class KnowledgeExtractionStatusService {
 
         Conversation conversation = getConversation(conversationId);
 
-        conversation.failKnowledgeExtraction(errorMessage);
+        conversation.failKnowledgeExtraction(
+                errorMessage,
+                LocalDateTime.now(clock)
+        );
+
     }
 
     private Conversation getConversation(Long conversationId) {
 
-        return conversationRepository.findById(conversationId)
+        return conversationRepository
+                .findById(conversationId)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "대화를 찾을 수 없습니다. conversationId=" + conversationId

@@ -7,6 +7,7 @@ import io.github.kaltz.feldbuch.conversation.entity.ConversationStatus;
 import io.github.kaltz.feldbuch.conversation.entity.KnowledgeExtractStatus;
 import lombok.RequiredArgsConstructor;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,12 +20,13 @@ public class ConversationRepositoryImpl implements ConversationRepositoryCustom 
     private static final long RETRY_DELAY_MINUTES = 1L;
 
     private final JPAQueryFactory queryFactory;
+    private final Clock clock;
 
     @Override
     public List<Conversation> findKnowledgeExtractionTargets() {
 
         LocalDateTime retryAvailableBefore =
-                LocalDateTime.now()
+                LocalDateTime.now(clock)
                         .minusMinutes(
                                 RETRY_DELAY_MINUTES
                         );

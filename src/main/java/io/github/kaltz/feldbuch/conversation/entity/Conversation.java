@@ -127,7 +127,13 @@ public class Conversation extends BaseEntity {
         this.knowledgeExtractFailedAt = null;
     }
 
-    public void failKnowledgeExtraction(String errorMessage) {
+    public void failKnowledgeExtraction(String errorMessage, LocalDateTime failedAt) {
+        if (failedAt == null) {
+            throw new IllegalArgumentException(
+                    "지식 추출 실패 시각은 필수입니다."
+            );
+        }
+
         changeKnowledgeExtractStatus(KnowledgeExtractStatus.FAILED);
 
         this.knowledgeExtractRetryCount++;
@@ -136,7 +142,7 @@ public class Conversation extends BaseEntity {
                 normalizeErrorMessage(errorMessage);
 
         this.knowledgeExtractFailedAt =
-                LocalDateTime.now();
+                failedAt;
     }
 
     private String normalizeErrorMessage(

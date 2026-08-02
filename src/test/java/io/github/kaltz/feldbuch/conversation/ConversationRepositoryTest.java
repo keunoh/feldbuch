@@ -1,5 +1,6 @@
 package io.github.kaltz.feldbuch.conversation;
 
+import io.github.kaltz.feldbuch.config.QueryDslConfig;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.conversation.entity.ConversationStatus;
 import io.github.kaltz.feldbuch.conversation.entity.KnowledgeExtractStatus;
@@ -12,15 +13,23 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(io.github.kaltz.feldbuch.config.QueryDslConfig.class)
+@Import({
+        QueryDslConfig.class,
+        ConversationRepositoryTest.FixedClockConfig.class
+})
 class ConversationRepositoryTest {
 
     @Autowired
@@ -41,6 +50,19 @@ class ConversationRepositoryTest {
                 .build();
 
         em.persist(user);
+    }
+
+    @TestConfiguration
+    static class FixedClockConfig {
+        @Bean
+        public Clock clock() {
+            return Clock.fixed(
+                    Instant.parse(
+                            "2026-08-02T03:00:00Z"
+                    ),
+                    ZoneId.of("Asia/Seoul")
+            );
+        }
     }
 
     @Test
@@ -70,7 +92,14 @@ class ConversationRepositoryTest {
                 createCompletedConversation("재시도 가능");
 
         conversation.failKnowledgeExtraction(
-                "OpenAI 서버 오류"
+                "OpenAI 서버 오류",
+                LocalDateTime.of(
+                        2026,
+                        8,
+                        2,
+                        11,
+                        58
+                )
         );
 
         em.flush();
@@ -79,24 +108,24 @@ class ConversationRepositoryTest {
          * 엔티티 메서드는 현재 시각을 저장하므로,
          * 재시도 대기시간이 지난 상황을 만들기 위해 DB 값을 직접 조정한다.
          */
-        em.createNativeQuery("""
-                        UPDATE conversations
-                        SET knowledge_extract_failed_at = :failedAt
-                        WHERE id = :conversationId
-                        """)
-                .setParameter(
-                        "failedAt",
-                        LocalDateTime.now()
-                                .minusMinutes(2)
-                )
-                .setParameter(
-                        "conversationId",
-                        conversation.getId()
-                )
-                .executeUpdate();
-
-        em.flush();
-        em.clear();
+//        em.createNativeQuery("""
+//                        UPDATE conversations
+//                        SET knowledge_extract_failed_at = :failedAt
+//                        WHERE id = :conversationId
+//                        """)
+//                .setParameter(
+//                        "failedAt",
+//                        LocalDateTime.now()
+//                                .minusMinutes(2)
+//                )
+//                .setParameter(
+//                        "conversationId",
+//                        conversation.getId()
+//                )
+//                .executeUpdate();
+//
+//        em.flush();
+//        em.clear();
 
         // when
         List<Conversation> result =
@@ -115,30 +144,39 @@ class ConversationRepositoryTest {
         Conversation conversation =
                 createCompletedConversation("재시도 초과");
 
-        conversation.failKnowledgeExtraction("첫 번째 실패");
-        conversation.failKnowledgeExtraction("두 번째 실패");
-        conversation.failKnowledgeExtraction("세 번째 실패");
+        LocalDateTime failedAt =
+                LocalDateTime.of(
+                        2026,
+                        8,
+                        2,
+                        12,
+                        0
+                );
+
+        conversation.failKnowledgeExtraction("첫 번째 실패", failedAt);
+        conversation.failKnowledgeExtraction("두 번째 실패", failedAt);
+        conversation.failKnowledgeExtraction("세 번째 실패", failedAt);
 
         em.flush();
 
-        em.createNativeQuery("""
-                        UPDATE conversations
-                        SET knowledge_extract_failed_at = :failedAt
-                        WHERE id = :conversationId
-                        """)
-                .setParameter(
-                        "failedAt",
-                        LocalDateTime.now()
-                                .minusMinutes(2)
-                )
-                .setParameter(
-                        "conversationId",
-                        conversation.getId()
-                )
-                .executeUpdate();
-
-        em.flush();
-        em.clear();
+//        em.createNativeQuery("""
+//                        UPDATE conversations
+//                        SET knowledge_extract_failed_at = :failedAt
+//                        WHERE id = :conversationId
+//                        """)
+//                .setParameter(
+//                        "failedAt",
+//                        LocalDateTime.now()
+//                                .minusMinutes(2)
+//                )
+//                .setParameter(
+//                        "conversationId",
+//                        conversation.getId()
+//                )
+//                .executeUpdate();
+//
+//        em.flush();
+//        em.clear();
 
         // when
         List<Conversation> result =
@@ -158,7 +196,14 @@ class ConversationRepositoryTest {
                 createCompletedConversation("대기 중");
 
         conversation.failKnowledgeExtraction(
-                "일시적인 서버 오류"
+                "일시적인 서버 오류",
+                LocalDateTime.of(
+                        2026,
+                        8,
+                        2,
+                        12,
+                        0
+                )
         );
 
         em.flush();
