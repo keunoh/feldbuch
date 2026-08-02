@@ -1,8 +1,9 @@
 <script setup>
 import {ref} from 'vue'
 
-import ConversationSidebar from '@/components/ConversationSidebar.vue'
-import KnowledgeSidebar from '@/components/KnowledgeSidebar.vue'
+import ConversationSidebar from '@/components/conversation/ConversationSidebar.vue'
+
+import KnowledgeSidebar from '@/components/knowledge/KnowledgeSidebar.vue'
 
 const props = defineProps({
   conversations: {

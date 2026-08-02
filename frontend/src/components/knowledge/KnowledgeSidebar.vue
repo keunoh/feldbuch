@@ -2,7 +2,7 @@
 import {onMounted, ref} from 'vue'
 
 import {getKnowledgeTree} from '@/api/knowledgeApi.js'
-import KnowledgeTreeNode from '@/components/KnowledgeTreeNode.vue'
+import KnowledgeTreeNode from '@/components/knowledge/KnowledgeTreeNode.vue'
 
 const emit = defineEmits([
   'select-knowledge',
