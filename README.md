@@ -2,39 +2,42 @@
 
 > AI 기반 개발 지식 관리 플랫폼
 
-Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, 환경 설정을 기록하고 검색할 수 있는 개발 노트 서비스입니다.
-
-단순 CRUD를 넘어, AI가 개발 노트를 이해해 요약, 태깅, 추천, 코드 리뷰까지 수행하는 개발 지식 관리 플랫폼을 목표로 합니다.
+Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, 환경 설정을 대화와 노트로 기록하고, AI가 이를 요약해 재사용 가능한 지식으로 정리하는 개발 학습 서비스입니다.
 
 ## Main Screen
 
 ![Feldbuch Main Chat Screen](docs/images/screenshots/feldbuch-main-chat-screen.png)
 
-현재 메인 화면은 Vue 3 기반 AI 학습 대화 화면입니다. 왼쪽은 대화 목록과 새 학습 시작, 가운데는 Markdown으로 렌더링되는 AI 채팅, 오른쪽은 선택한 대화의 학습 정보를 보여주는 3분할 구조로 구성했습니다.
+현재 메인 화면은 `frontend/`의 Vue 3 + Vite SPA입니다. 왼쪽 `WorkspaceSidebar`에서 대화와 지식 폴더 탭을 전환하고, 대화 모드에서는 AI 채팅과 학습 정보 패널을, 지식 모드에서는 선택한 Knowledge 폴더의 추출 노트 목록을 보여줍니다.
 
-## Overview
+## Current Scope
 
-![Feldbuch Project Architecture](docs/images/diagrams/feldbuch-architecture.svg)
-
-![Feldbuch Client Architecture](docs/images/diagrams/feldbuch-client-architecture.svg)
-
-![Feldbuch Entity Relationship Diagram](docs/images/diagrams/feldbuch-erd.svg)
-
-![Feldbuch AI Job Flow](docs/images/diagrams/feldbuch-ai-job-flow.svg)
+- JWT 기반 회원가입, 로그인, 클라이언트 로그아웃
+- Spring Security 인증/인가와 Vite 개발 서버 CORS 허용
+- 개발 노트 CRUD, QueryDSL 검색, 페이지네이션, Pin, 학습 상태 관리
+- AI 요약 Job 생성, 비동기 처리, 상태 조회
+- Conversation 생성, 목록/상세 조회, 제목 수정, 삭제
+- Conversation Message 저장과 대화 컨텍스트 기반 AI 채팅
+- OpenAI WebClient 기반 SSE 스트리밍 응답
+- 첫 사용자 메시지 기반 Conversation 제목 자동 생성
+- 완료된 Conversation 기반 Knowledge 추출 대상 관리
+- Knowledge 폴더 트리와 AI 추출 KnowledgeNote 저장
+- Knowledge 추출 Batch Job/Step/Tasklet과 실패 재시도 상태 관리
+- Vue Router Guard, Axios Interceptor, Fetch 기반 SSE 클라이언트
+- Markdown 렌더링, DOMPurify sanitize, highlight.js 코드 강조, 코드 복사 UX
+- 대화/지식 탭을 가진 Workspace Sidebar와 Knowledge 노트 목록 조회 화면
+- 요청별 UUID `requestId`와 `X-Request-Id` 응답 헤더
 
 ## Tech Stack
 
-| Java                                                         | Spring Boot                                                               | Docker                                                           | MySQL                                                          | Gradle                                                           | OpenAI                                                           |
-|--------------------------------------------------------------|---------------------------------------------------------------------------|------------------------------------------------------------------|----------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|
-| <img src="docs/images/logos/java.svg" width="48" alt="Java"> | <img src="docs/images/logos/springboot.svg" width="48" alt="Spring Boot"> | <img src="docs/images/logos/docker.svg" width="48" alt="Docker"> | <img src="docs/images/logos/mysql.svg" width="48" alt="MySQL"> | <img src="docs/images/logos/gradle.svg" width="48" alt="Gradle"> | <img src="docs/images/logos/openai.svg" width="64" alt="OpenAI"> |
-
-| Spring Security | JWT | Spring Data JPA | QueryDSL | Redis | Spring Batch | H2 Test DB | RestClient |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 인증/인가 | 토큰 인증 | ORM | 동적 검색 | 캐시/임시 저장소 | 요약 배치 파이프라인 | 테스트 DB | OpenAI API 호출 |
-
-| Vue.js                                                       | Vite | Vue Router | Axios | Fetch SSE | marked | highlight.js | DOMPurify | Thymeleaf |
-|--------------------------------------------------------------| --- | --- | --- | --- | --- | --- | --- | --- |
-| <img src="docs/images/logos/vue.svg" width="48" alt="Vue.js"> | 프론트엔드 개발/빌드 | 클라이언트 라우팅 | HTTP client / interceptor | AI 응답 스트리밍 | Markdown 렌더링 | 코드 문법 강조 | HTML sanitize | 비교용 서버 렌더링 화면 |
+| Area | Stack |
+| --- | --- |
+| Backend | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, QueryDSL, Spring Batch, WebFlux WebClient |
+| Database / Infra | MySQL, H2 Test DB, Redis, Docker Compose |
+| AI | OpenAI Chat Completion, SSE Streaming, structured summary parsing |
+| Frontend | Vue 3, Vite, Vue Router, Axios, Fetch SSE, marked, highlight.js, DOMPurify |
+| View Legacy | Thymeleaf, static CSS/JS comparison screens |
+| Test | JUnit 5, MockMvc, Spring Security Test, Spring Batch Test |
 
 ## Runtime Configuration
 
@@ -43,284 +46,101 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 로컬/운영 환경별 DB, JWT, OpenAI Key는 `application-local.yml`, `application-prod.yml`에서 분리합니다.
 - OpenAI 기본 모델은 `openai.model` 값으로 선택하며 현재 기본값은 `gpt-4.1-nano`입니다.
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
-- Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막고, Knowledge 추출 배치는 로컬 프로필에서 `feldbuch.batch.knowledge-extraction.run=true`일 때 `ApplicationRunner`가 명시적으로 1회 실행합니다.
+- Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
+- Knowledge 추출 배치는 로컬 프로필에서 `feldbuch.batch.knowledge-extraction.run=true`일 때 `ApplicationRunner`가 애플리케이션 시작 직후 1회 실행합니다.
 
 ## Frontend Direction
 
-- 현재 Spring Boot 내부에는 Thymeleaf 기반 로그인/대화 화면이 남아 있습니다.
-- Thymeleaf 화면은 Vue.js 화면과 비교하기 위한 기준 구현으로 유지합니다.
-- 앞으로의 프론트엔드 작업은 `frontend/`의 Vue 3 + Vite 프로젝트를 중심으로 진행합니다.
-- Vue 화면은 Spring Boot API 서버와 분리된 SPA로 구성하고, 백엔드와는 REST API로 통신합니다.
-- Vue Router로 `/login`, `/conversations` 라우트를 구성하고, 인증이 필요한 화면은 Router Guard로 보호합니다.
-- 메인 대화 화면은 `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`을 조합한 3분할 학습 채팅 UI입니다.
-- 전역 스타일은 `frontend/src/assets/main.css`에서 관리하며, 다크 터미널 톤의 색상 토큰, 레이아웃 폭, 기본 인터랙션 스타일을 정의합니다.
+- 앞으로의 사용자 화면은 `frontend/`의 Vue 3 + Vite SPA를 중심으로 진행합니다.
+- Spring Boot 내부 Thymeleaf 로그인/대화 화면은 비교용 기준 구현으로 유지합니다.
+- Vue Router는 `/login`, `/conversations` 라우트를 관리하고, 인증이 필요한 화면은 Router Guard로 보호합니다.
+- `ConversationView`는 화면 조립 지점입니다.
+- `WorkspaceSidebar`는 대화/지식 탭 전환을 담당합니다.
+- 대화 모드에서는 `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`을 조합합니다.
+- 지식 모드에서는 `KnowledgeSidebar`, `KnowledgeTreeNode`, `KnowledgeNoteList`를 조합해 Knowledge 폴더 선택과 노트 목록 조회를 처리합니다.
+- 전역 스타일은 `frontend/src/assets/main.css`에서 다크 터미널 톤 색상 토큰, 레이아웃 폭, 기본 인터랙션 스타일을 정의합니다.
 
 ## Communication
 
 - 클라이언트와 백엔드는 JSON 기반 REST API로 통신합니다.
-- 로그인은 `POST /api/auth/login`으로 수행하고, 응답의 `accessToken`을 클라이언트 저장소에 보관합니다.
-- Vue 프론트엔드는 Axios 기반 `apiClient`를 사용합니다.
-- Axios Request Interceptor가 `localStorage`의 `accessToken`을 읽어 `Authorization: Bearer <accessToken>` 헤더를 자동으로 추가합니다.
-- Axios Response Interceptor는 `401 Unauthorized` 응답을 받으면 클라이언트 로그아웃을 수행하고 `/login`으로 이동합니다.
-- 로그아웃은 stateless JWT 구조에 맞춰 서버 세션을 폐기하지 않고, 클라이언트의 `accessToken`과 `userId`를 제거합니다.
 - 공통 응답은 `ApiResponse<T>` 형식이며, 실제 데이터는 `data` 필드에 담습니다.
-- 대화형 AI 일반 요청은 `POST /api/conversations/{conversationId}/chat`으로 전송합니다.
+- 로그인은 `POST /api/auth/login`으로 수행하고, 응답의 `accessToken`을 `localStorage`에 보관합니다.
+- Axios Request Interceptor가 `Authorization: Bearer <accessToken>` 헤더를 자동으로 추가합니다.
+- Axios Response Interceptor는 `401 Unauthorized` 응답을 받으면 클라이언트 로그아웃을 수행하고 `/login`으로 이동합니다.
 - Vue 메인 대화 화면은 `POST /api/conversations/{conversationId}/chat/stream` SSE 스트리밍을 사용해 AI 응답 토큰을 실시간으로 표시합니다.
-- SSE 스트리밍 응답은 `ApiResponse<T>`로 감싸지 않고 `StreamResponse` 이벤트(`TOKEN`, `COMPLETE`, `ERROR`)를 순차 전송합니다.
-- 대화 상세 조회는 `GET /api/conversations/{conversationId}`로 수행하며, 대화 메타데이터와 메시지 목록을 함께 받습니다.
-- 새 대화 생성은 `POST /api/conversations`, 대화 삭제는 `DELETE /api/conversations/{conversationId}`로 처리합니다.
-- 대화 제목 수정은 `PATCH /api/conversations/{conversationId}`로 처리합니다.
-- 대화 상세 응답은 `ConversationDetailResponse`로 `id`, `title`, `status`, `createdAt`, `updatedAt`, `messages`, `messageCount`를 함께 제공합니다.
-- 메시지 전송 후에는 선택한 대화를 다시 조회해 사용자 메시지, AI 응답, 자동 생성 제목을 최신화합니다.
-- AI 요약은 요청 즉시 `jobId`를 반환하고, 클라이언트는 `GET /api/ai/jobs/{jobId}`로 처리 상태를 조회합니다.
+- SSE 응답은 `ApiResponse<T>`로 감싸지 않고 `StreamResponse` 이벤트(`TOKEN`, `COMPLETE`, `ERROR`)를 순차 전송합니다.
+- Knowledge 화면은 `GET /api/knowledge/tree`, `GET /api/knowledge/{knowledgeId}/notes`, `GET /api/knowledge/notes/{noteId}`를 사용합니다.
 - 서버는 모든 요청에 UUID 기반 `requestId`를 생성하고 `X-Request-Id` 응답 헤더로 내려줍니다.
-- 백엔드는 Vite 개발 서버(`http://localhost:5173`)에서 오는 요청을 CORS로 허용합니다.
-- 기존 Thymeleaf 정적 JS는 `fetch`와 `localStorage` 기반 비교용 구현으로 남겨둡니다.
 
-## Features
-
-- JWT 기반 회원가입과 로그인
-- 클라이언트 로그아웃
-- Spring Security 기반 인증/인가
-- 개발 노트 생성, 조회, 수정, 삭제
-- QueryDSL 기반 검색
-- 페이지네이션
-- Pin 기능
-- 학습 상태 관리
-- OpenAI 기반 AI 요약
-- 비동기 AI 처리
-- AI Job 생성 및 상태 조회
-- Conversation 생성, 목록 조회, 단건 조회
-- Conversation 제목 수정
-- Conversation 삭제
-- Conversation Message 저장 및 조회
-- Conversation 완료 상태 기반 Knowledge 추출 대상 관리
-- Knowledge 추출 상태 관리: `NONE`, `PROCESSING`, `COMPLETED`, `FAILED`
-- Knowledge 추출 실패 재시도 횟수, 실패 메시지, 실패 시각 저장
-- Conversation 컨텍스트 기반 AI 채팅
-- SSE 기반 AI 응답 스트리밍 API
-- OpenAI WebClient 기반 스트리밍 호출
-- 첫 사용자 메시지 기반 Conversation 제목 자동 생성
-- Knowledge 폴더 트리 도메인
-- Conversation 기반 AI 추출 학습 노트 도메인
-- AI 지식 요약 구조화 응답 DTO
-- AI 지식 요약 프롬프트와 OpenAI 요약 서비스
-- Knowledge 경로 자동 조회/생성
-- AI 요약 결과의 KnowledgeNote 저장 Command 서비스
-- Knowledge 추출 배치 Job/Step/Tasklet
-- QueryDSL 기반 Knowledge 추출 대상 Conversation 조회
-- 실패한 Knowledge 추출의 지연 재시도
-- KnowledgeNote 제목, 설명, 요약, 키워드 저장
-- KnowledgeNote 키워드 ElementCollection 저장
-- Thymeleaf 기반 로그인/대화 화면
-- Vue 3 + Vite 로그인/대화 화면 전환
-- Axios API client, Request/Response Interceptor
-- Vue Router Guard 기반 인증 라우팅
-- Conversation Sidebar, Message List, Study Info Panel 기반 대화 화면
-- 새 대화 생성/제목 수정/삭제 UI와 중복 요청 방지 상태
-- AI 응답 Markdown 렌더링 및 DOMPurify sanitize 처리
-- highlight.js 기반 코드 문법 강조
-- 코드 블록 언어 표시와 클립보드 COPY 버튼
-- 메시지 전송 중 로딩 표시와 자동 스크롤
-- 사용자 메시지와 스트리밍 AI 메시지 낙관적 표시 후 대화 상세 재조회
-- 다크 터미널 스타일의 Vue 메인 채팅 화면
-- 선택한 대화의 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
-- Request ID 기반 요청 추적과 `X-Request-Id` 응답 헤더
-- Redis, Spring Batch 기반 확장 구성
-
-## Architecture
+## Architecture Summary
 
 ```mermaid
 flowchart TD
-    Client --> RequestIdFilter
+    VueSPA --> ApiClient
+    ApiClient --> RequestIdFilter
     RequestIdFilter --> Security
     Security --> Controller
-
     Controller --> CommandService
     Controller --> QueryService
-
-    CommandService --> Reader
+    CommandService --> Repository
     QueryService --> QueryDSL
-
-    Reader --> Repository
     Repository --> MySQL
     Repository --> Redis
 
-    AiController --> AiFacade
-    AiFacade --> AiJob
-    AiFacade --> AiSummaryAsyncService
-    AiSummaryAsyncService --> SummaryService
-    SummaryService --> OpenAiClient
-    OpenAiClient --> OpenAI
-
-    ConversationController --> ConversationCommandService
-    ConversationController --> ConversationQueryService
-    ConversationMessageController --> ConversationMessageCommandService
-    ConversationMessageController --> ConversationMessageQueryService
-    ChatController --> ConversationChatService
-    ConversationChatService --> ChatContextBuilder
-    ChatContextBuilder --> ConversationMessageReader
-    ConversationChatService --> ChatService
-    ChatService --> OpenAiWebClient
-
-    OpenAiKnowledgeSummaryService --> AiClient
-    OpenAiKnowledgeSummaryService --> KnowledgeSummaryPrompt
-    KnowledgeNoteCommandService --> KnowledgePathResolver
-    KnowledgeNoteCommandService --> KnowledgeNoteRepository
-    KnowledgePathResolver --> KnowledgeRepository
-
-    KnowledgeRepository --> Knowledge
-    KnowledgeNoteRepository --> KnowledgeNote
-
-    KnowledgeExtractionJob --> KnowledgeExtractionStep
-    KnowledgeExtractionStep --> KnowledgeExtractionTasklet
-    KnowledgeExtractionTasklet --> KnowledgeConversationReader
-    KnowledgeExtractionTasklet --> KnowledgeExtractionService
-    KnowledgeExtractionTasklet --> KnowledgeExtractionStatusService
-```
-
-## Client Architecture
-
-![Feldbuch Client Architecture](docs/images/diagrams/feldbuch-client-architecture.svg)
-
-```mermaid
-flowchart TD
-    Browser --> VueApp
-    VueApp --> Router
-    Router --> LoginView
-    Router --> ConversationView
-
-    Router --> RouterGuard
-    RouterGuard --> AuthUtil
-
-    LoginView --> AuthApi
-    ConversationView --> ConversationApi
-    ConversationView --> ConversationSidebar
+    ConversationView --> WorkspaceSidebar
+    WorkspaceSidebar --> ConversationSidebar
+    WorkspaceSidebar --> KnowledgeSidebar
     ConversationView --> MessageList
     ConversationView --> ChatInput
     ConversationView --> StudyInfoPanel
+    ConversationView --> KnowledgeNoteList
 
-    AuthApi --> ApiClient
-    ConversationApi --> ApiClient
-    ApiClient --> RequestInterceptor
-    ApiClient --> ResponseInterceptor
-    RequestInterceptor --> LocalStorage
-    ResponseInterceptor --> AuthUtil
-    ResponseInterceptor --> Router
+    ConversationChatService --> ChatContextBuilder
+    ConversationChatService --> OpenAiWebClient
+    OpenAiWebClient --> OpenAI
 
-    ApiClient --> SpringBootApi
+    KnowledgeExtractionTasklet --> KnowledgeExtractionService
+    KnowledgeExtractionService --> OpenAiKnowledgeSummaryService
+    KnowledgeExtractionService --> KnowledgeNoteCommandService
 ```
-
-Vue 클라이언트는 `ConversationView`를 화면 조립 지점으로 사용합니다. 대화 목록과 생성/제목 수정/삭제는 `ConversationSidebar`, Markdown 메시지와 코드 복사는 `MessageList`, 입력과 전송 중 비활성화는 `ChatInput`, 학습 주제/상태/메시지 수/생성일/수정일 표시는 `StudyInfoPanel`이 담당합니다. 백엔드 통신은 `authApi`와 `conversationApi`가 Axios `apiClient`를 통해 수행합니다.
-
-## Database ERD
-
-![Feldbuch Entity Relationship Diagram](docs/images/diagrams/feldbuch-erd.svg)
-
-현재 영속 모델은 `users`, `notes`, `ai_job`, `conversations`, `conversation_messages`, `knowledge`, `knowledge_notes`, `knowledge_note_keywords`를 중심으로 구성합니다. ERD는 `users`를 중앙 소유자로 두고 관계선을 좌우/하단 영역으로 분리했습니다. `knowledge`는 사용자별 폴더 트리를 자기 참조로 표현하고, `knowledge_notes`는 대화에서 AI가 추출한 학습 노트의 제목, 설명, 요약, 키워드를 특정 지식 폴더에 저장합니다.
-
-## Knowledge Extraction Batch
-
-Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 위한 Spring Batch 작업입니다.
-
-- Job 이름: `knowledgeExtractionJob`
-- Step 이름: `knowledgeExtractionStep`
-- 실행 방식: Tasklet 기반 단일 Step
-- 실행 시점: `local` 프로필에서 `feldbuch.batch.knowledge-extraction.run=true` 설정 시 애플리케이션 시작 직후 1회 실행
-- Job Parameter: `executionTime=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
-- 반복 방식: 한 번 실행할 때 조회된 대상 Conversation 목록을 순회 처리
-- 현재 정기 주기: 별도 Scheduler/Cron은 아직 없음
-- 대상 조건: `status = COMPLETED`이고 `knowledgeExtractStatus = NONE`
-- 재시도 조건: `knowledgeExtractStatus = FAILED`, `knowledgeExtractRetryCount < 3`, `knowledgeExtractFailedAt <= now - 1 minute`
-- 성공 처리: `PROCESSING -> COMPLETED`, 오류 메시지와 실패 시각 초기화
-- 실패 처리: `FAILED`로 변경, 재시도 횟수 증가, 실패 메시지와 실패 시각 저장
 
 ## Project Structure
 
 ```text
-src/main/java
-└── io.github.kaltz.feldbuch
-    ├── ai
-    ├── auth
-    ├── batch
-    ├── common
-    ├── config
-    ├── conversation
-    ├── home
-    ├── knowledge
-    ├── note
-    ├── redis
-    └── user
+src/main/java/io.github.kaltz.feldbuch
+├── ai               # OpenAI 연동, 요약, 채팅, AI Job
+├── auth             # 로그인, JWT 인증
+├── batch            # Spring Batch 요약/Knowledge 추출 파이프라인
+├── common           # 공통 응답, 예외, requestId 로깅
+├── config           # Security, Redis, OpenAI, Batch 설정
+├── conversation     # 대화, 메시지, 대화형 AI
+├── knowledge        # 지식 폴더, AI 추출 학습 노트
+├── note             # 개발 노트 CRUD/Search
+├── redis            # Redis 유틸리티
+└── user             # 회원, 사용자 조회
 
-frontend
-└── src
-    ├── api
-    ├── assets
-    ├── components
-    ├── router
-    ├── utils
-    └── views
+frontend/src
+├── api              # Axios API client와 도메인별 API 함수
+├── assets           # Vue 전역 스타일과 디자인 토큰
+├── components       # Conversation, Chat, Knowledge, Layout 컴포넌트
+├── router           # Vue Router와 인증 Guard
+├── utils            # 인증/Markdown 렌더링 유틸리티
+└── views            # LoginView, ConversationView
 ```
-
-## Design Points
-
-- Reader Pattern
-- CQRS, Command / Query Separation
-- Facade Pattern
-- Mapper Pattern
-- Async Processing
-- AI Job State Tracking
-- Spring Batch Job Configuration
-- Tasklet-based Knowledge Extraction Batch
-- Batch Retry State Tracking
-- OpenAI Client Layer
-- OpenAI SSE Streaming
-- Chat Context Builder
-- Conversation Message Persistence
-- Knowledge Tree Modeling
-- Knowledge Path Resolver
-- AI Extracted Knowledge Note Modeling
-- Structured AI Knowledge Summary
-- ElementCollection Keyword Persistence
-- QueryDSL Batch Target Selection
-- Thymeleaf View Layer 유지 및 Vue SPA 전환
-- Axios 기반 프론트엔드/백엔드 통신
-- Request/Response Interceptor
-- Router Guard 기반 인증 화면 보호
-- Stateless JWT Logout
-- Component-based Client Architecture
-- Markdown Rendering and Sanitizing
-- Syntax Highlighting with highlight.js
-- Code Block Copy UX
-- Optimistic User and Streaming Assistant Message Rendering
-- Dark Terminal Chat UI
-- Three-pane Learning Session Layout
-- Request ID 기반 요청 추적
-- Profile 기반 외부 설정 관리
-
-## Roadmap
-
-- Vue 화면 상태 관리 구조 정리
-- Vue 삭제 확인 UX 개선
-- AI 태그 생성
-- 코드 리뷰
-- 학습 퀴즈 생성
-- 학습 로드맵 추천
-- Knowledge 추출 Batch 정기 스케줄러 연결
-- Knowledge 추출 대상 조회 인덱스 추가
-- Docker Compose 정리
-- 테스트 커버리지 확장
-- Monitoring
 
 ## Documentation
 
-프로젝트의 상세 설계, 개발 기록, 이미지 자료는 `docs/`에서 관리합니다.
+상세 설계, 개발 흐름, 다이어그램은 `docs/`에서 관리합니다.
 
 - [FELDBUCH_DEVELOPMENT_DOCUMENTATION.md](docs/FELDBUCH_DEVELOPMENT_DOCUMENTATION.md)
 - [API.md](docs/API.md)
 
-## Philosophy
+## Roadmap
 
-> 개발자의 학습 기록을 저장하고, AI가 그 기록을 이해하여 더 나은 학습을 돕는 지식 관리 플랫폼.
-
-Feldbuch는 기능 구현뿐 아니라 리팩토링, 테스트, 아키텍처, 유지보수성을 함께 고민하며 발전시키는 장기 프로젝트입니다.
+- Knowledge 노트 상세 화면 연결
+- Vue 화면 상태 관리 구조 정리
+- Vue 삭제 확인 UX 개선
+- Knowledge 추출 Batch 정기 스케줄러 연결
+- AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
+- Docker Compose 운영 구성 정리
+- 테스트 커버리지와 모니터링 확장
