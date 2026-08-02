@@ -28,6 +28,8 @@ public interface KnowledgeRepository extends JpaRepository<Knowledge, Long> {
      */
     Optional<Knowledge> findByUserIdAndParentIdAndName(Long userId, Long parentId, String name);
 
+    List<Knowledge> findAllByUserIdOrderByCreatedAtAsc(Long userId);
+
     boolean existsByUserIdAndParentIsNullAndName(Long userId, String name);
 
     boolean existsByUserIdAndParentIdAndName(Long userId, Long parentId, String name);
