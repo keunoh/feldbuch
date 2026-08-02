@@ -122,6 +122,7 @@ public class Conversation extends BaseEntity {
     public void completeKnowledgeExtraction() {
         changeKnowledgeExtractStatus(KnowledgeExtractStatus.COMPLETED);
 
+        this.knowledgeExtractRetryCount = 0;
         this.knowledgeExtractErrorMessage = null;
         this.knowledgeExtractFailedAt = null;
     }

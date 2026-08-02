@@ -109,7 +109,10 @@ class KnowledgeExtractionTaskletTest {
                 .complete(1L);
 
         verify(statusService, never())
-                .fail(anyLong());
+                .fail(
+                        anyLong(),
+                        eq("AI 호출 실패")
+                );
     }
 
     @Test
@@ -187,7 +190,10 @@ class KnowledgeExtractionTaskletTest {
                 );
 
         inOrder.verify(statusService)
-                .fail(failedConversationId);
+                .fail(
+                        failedConversationId,
+                        "AI 호출 실패"
+                );
 
         // 두 번째 대화
         inOrder.verify(statusService)
@@ -206,7 +212,10 @@ class KnowledgeExtractionTaskletTest {
                 .complete(failedConversationId);
 
         verify(statusService, never())
-                .fail(successConversationId);
+                .fail(
+                        successConversationId,
+                        "AI 호출 실패"
+                );
     }
 
 }

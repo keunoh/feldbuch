@@ -69,7 +69,10 @@ public class KnowledgeExtractionTasklet implements Tasklet {
             } catch (Exception e) {
                 failureCount++;
 
-                markAsFailed(conversationId);
+                markAsFailed(
+                        conversationId,
+                        e
+                );
 
                 log.error(
                         "{} Extraction failed. conversationId={} userId={}",
@@ -92,10 +95,13 @@ public class KnowledgeExtractionTasklet implements Tasklet {
         return RepeatStatus.FINISHED;
     }
 
-    private void markAsFailed(Long conversationId) {
+    private void markAsFailed(Long conversationId, Exception exception) {
 
         try {
-            statusService.fail(conversationId);
+            statusService.fail(
+                    conversationId,
+                    resolveErrorMessage(exception)
+            );
         } catch (Exception statusException) {
             log.error(
                     "{} Failed to update extraction status. conversationId={}",
@@ -104,5 +110,18 @@ public class KnowledgeExtractionTasklet implements Tasklet {
                     statusException
             );
         }
+    }
+
+    private String resolveErrorMessage(Exception exception) {
+
+        String message = exception.getMessage();
+
+        if (message == null || message.isEmpty()) {
+            return exception
+                    .getClass()
+                    .getSimpleName();
+        }
+
+        return message;
     }
 }

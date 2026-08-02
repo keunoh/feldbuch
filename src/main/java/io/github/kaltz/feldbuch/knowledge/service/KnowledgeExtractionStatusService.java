@@ -41,11 +41,11 @@ public class KnowledgeExtractionStatusService {
      * 지식 추출 작업 실패 상태로 변경한다.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void fail(Long conversationId) {
+    public void fail(Long conversationId, String errorMessage) {
 
         Conversation conversation = getConversation(conversationId);
 
-        conversation.failKnowledgeExtraction("지식 추출 작업 실패");
+        conversation.failKnowledgeExtraction(errorMessage);
     }
 
     private Conversation getConversation(Long conversationId) {
