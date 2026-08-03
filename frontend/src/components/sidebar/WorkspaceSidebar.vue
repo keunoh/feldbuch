@@ -1,9 +1,15 @@
 <script setup>
-import ConversationSidebar from '@/components/conversation/ConversationSidebar.vue'
+import ConversationSidebar from '@/components/sidebar/ConversationSidebar.vue'
 
-import KnowledgeSidebar from '@/components/knowledge/KnowledgeSidebar.vue'
+import KnowledgeSidebar from '@/components/sidebar/KnowledgeSidebar.vue'
+import SidebarHeader from "@/components/sidebar/SidebarHeader.vue";
+import SidebarTabs from "@/components/sidebar/SidebarTabs.vue";
 
 const props = defineProps({
+  mode: {
+    type: String,
+    default: 'conversation',
+  },
   conversations: {
     type: Array,
     default: () => [],
@@ -28,10 +34,7 @@ const props = defineProps({
     type: Number,
     default: null,
   },
-  mode: {
-    type: String,
-    default: 'conversation',
-  }
+
 })
 
 const emit = defineEmits([
@@ -43,30 +46,23 @@ const emit = defineEmits([
   'change-mode',
 ])
 
-function changeMode(nextMode) {
-  emit('change-mode', nextMode)
-}
 </script>
 
 <template>
   <aside class="workspace-sidebar">
-    <div class="sidebar-tabs">
-      <button
-        type="button"
-        :class="{ active: props.mode === 'conversation' }"
-        @click="changeMode('conversation')"
-      >
-        대화
-      </button>
+    <SidebarHeader
+      :creating="props.creating"
+      @create-conversation="
+        emit('create-conversation')
+      "
+    />
 
-      <button
-        type="button"
-        :class="{ active: mode === 'knowledge' }"
-        @click="changeMode('knowledge')"
-      >
-        지식
-      </button>
-    </div>
+    <SidebarTabs
+      :mode="props.mode"
+      @change-mode="
+        emit('change-mode', $event)
+      "
+    />
 
     <div class="sidebar-body">
       <ConversationSidebar
@@ -97,6 +93,9 @@ function changeMode(nextMode) {
 
 <style scoped>
 .workspace-sidebar {
+  --sidebar-padding-x: 18px;
+  --sidebar-padding-y: 18px;
+
   display: flex;
   flex-direction: column;
   width: 290px;
@@ -105,37 +104,6 @@ function changeMode(nextMode) {
   border-right: 1px solid var(--color-border);
   background: var(--color-surface);
   box-sizing: border-box;
-}
-
-.sidebar-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 10px;
-  border-bottom: 1px solid var(--color-border-soft);
-}
-
-.sidebar-tabs button {
-  padding: 8px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  color: var(--color-text-muted);
-  background: transparent;
-  cursor: pointer;
-  transition: color var(--transition-fast),
-  border-color var(--transition-fast),
-  background var(--transition-fast);
-}
-
-.sidebar-tabs button:hover {
-  color: var(--color-text);
-  background: var(--color-surface-raised);
-}
-
-.sidebar-tabs button.active {
-  color: var(--color-primary);
-  border-color: var(--color-border-primary);
-  background: var(--color-primary-soft);
 }
 
 .sidebar-body {

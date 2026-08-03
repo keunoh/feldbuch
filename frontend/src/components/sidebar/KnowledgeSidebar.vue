@@ -3,6 +3,7 @@ import {computed, onMounted, ref} from 'vue'
 
 import {getKnowledgeTree} from '@/api/knowledgeApi.js'
 import KnowledgeTreeNode from '@/components/knowledge/KnowledgeTreeNode.vue'
+import SidebarSectionLabel from "@/components/sidebar/SidebarSectionLabel.vue";
 
 defineProps({
   selectedKnowledgeId: {
@@ -158,7 +159,11 @@ onMounted(loadKnowledgeTree)
 
 <template>
   <aside class="knowledge-sidebar">
-    <header class="sidebar-header">
+    <SidebarSectionLabel>
+      KNOWLEDGE
+    </SidebarSectionLabel>
+
+    <div class="knowledge-toolbar">
       <div class="search-box">
         <input
           v-model="searchKeyword"
@@ -166,14 +171,6 @@ onMounted(loadKnowledgeTree)
           placeholder="지식 폴더 검색"
           aria-label="지식 폴더 검색"
         />
-
-        <p
-          v-if="searchKeyword"
-          class="search-result"
-        >
-          {{ filteredKnowledgeCount }}개의
-          Knowledge
-        </p>
 
         <button
           v-if="searchKeyword"
@@ -185,26 +182,17 @@ onMounted(loadKnowledgeTree)
           ×
         </button>
       </div>
-      <div>
-        <p class="eyebrow">
-          KNOWLEDGE
-        </p>
-
-        <h2>
-          지식 폴더
-        </h2>
-      </div>
 
       <button
         type="button"
         class="refresh-button"
         :disabled="loading"
+        aria-label="지식 폴더 새로고침"
         @click="loadKnowledgeTree"
       >
         ↻
       </button>
-    </header>
-
+    </div>
     <p
       v-if="loading"
       class="sidebar-state"
@@ -256,79 +244,30 @@ onMounted(loadKnowledgeTree)
 .knowledge-sidebar {
   display: flex;
   flex-direction: column;
+
   width: 100%;
   height: 100%;
-  padding: 20px 14px;
+
+  padding: 16px var(--sidebar-padding-x) 20px;
+
   overflow-y: auto;
   background: var(--color-surface);
   box-sizing: border-box;
 }
 
-.sidebar-header {
+.knowledge-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding: 0 8px 14px;
-  border-bottom: 1px solid var(--color-border-soft);
+  gap: 8px;
+  margin-top: 0;
+  margin-bottom: 20px;
 }
 
-.sidebar-header h2 {
-  margin: 2px 0 0;
-  color: var(--color-text);
-  font-size: 17px;
-}
-
-.eyebrow {
-  margin: 0;
-  color: var(--color-primary);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
-.refresh-button {
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-small);
-  color: var(--color-text-muted);
-  background: var(--color-surface-raised);
-  cursor: pointer;
-}
-
-.refresh-button:hover {
-  color: var(--color-primary);
-  border-color: var(--color-border-primary);
-}
-
-.refresh-button:disabled {
-  cursor: wait;
-  opacity: 0.55;
-}
-
-.sidebar-state {
-  padding: 20px 10px;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.sidebar-state.error {
-  color: var(--color-danger);
-}
-
-.tree {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
 
 .search-box {
   position: relative;
-  margin-bottom: 14px;
+  flex: 1;
+  min-width: 0;
 }
 
 .search-box input {
@@ -359,5 +298,16 @@ onMounted(loadKnowledgeTree)
   background: transparent;
   cursor: pointer;
   transform: translateY(-50%);
+}
+
+.refresh-button {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-raised);
+  cursor: pointer;
 }
 </style>

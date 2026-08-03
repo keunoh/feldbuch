@@ -1,5 +1,6 @@
 <script setup>
 import {nextTick, ref} from "vue";
+import SidebarSectionLabel from "@/components/sidebar/SidebarSectionLabel.vue";
 
 defineProps({
   conversations: {
@@ -142,24 +143,10 @@ function formatConversationTime(conversation) {
 
 <template>
   <aside class="conversation-sidebar">
-    <div class="brand">
-      <div class="brand-title">
-        FELDBUCH
-        <span class="brand-prompt">&gt;_</span>
-      </div>
-
-      <span
-        class="brand-spark"
-        aria-hidden="true"
-      >
-        +
-      </span>
-    </div>
-
     <div class="sidebar-header">
-      <p class="section-label">
+      <SidebarSectionLabel>
         CONVERSATIONS
-      </p>
+      </SidebarSectionLabel>
 
       <button
         type="button"
@@ -174,7 +161,7 @@ function formatConversationTime(conversation) {
           +
         </span>
         <span>
-          {{ creating ? '생성 중...' : '+ 새 학습 시작' }}
+          새 학습 시작
         </span>
       </button>
     </div>
@@ -258,8 +245,10 @@ function formatConversationTime(conversation) {
 
 <style scoped>
 .conversation-sidebar {
+  position: relative;
   width: 100%;
   height: 100%;
+  padding: 16px var(--sidebar-padding-x) 20px;
   overflow-y: auto;
   box-sizing: border-box;
 }
@@ -279,67 +268,20 @@ function formatConversationTime(conversation) {
   pointer-events: none;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 34px;
-  padding: 0 4px;
-}
-
-.brand-title {
-  color: var(--color-primary);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: 0.045em;
-  text-shadow: 0 0 18px var(--color-primary-glow);
-}
-
-.brand-prompt {
-  display: inline-block;
-  margin-left: 4px;
-  animation: promptBlink 1.1s steps(1) infinite;
-}
-
-.brand-spark {
-  color: var(--color-primary);
-  font-size: 15px;
-  text-shadow: 0 0 8px var(--color-primary),
-  0 0 20px var(--color-primary-glow);
-  animation: sparkPulse 2.6s ease-in-out infinite;
-}
-
-.sidebar-header {
-  margin-bottom: 18px;
-}
-
-.section-label {
-  margin: 0 0 12px 4px;
-  color: var(--color-text-muted);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
 .create-button {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+
   width: 100%;
   min-height: 42px;
+  margin: 0 0 20px;
   padding: 10px 14px;
+
   border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-medium);
+
   color: var(--color-primary);
   background: linear-gradient(
     135deg,
@@ -347,15 +289,19 @@ function formatConversationTime(conversation) {
     transparent 58%
   ),
   var(--color-surface);
+
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.025),
   0 0 0 rgba(66, 245, 123, 0);
+
   font-family: "JetBrains Mono",
   "SFMono-Regular",
   Consolas,
   monospace;
   font-size: 13px;
   font-weight: 700;
+
   cursor: pointer;
+
   transition: color var(--transition-fast),
   border-color var(--transition-fast),
   background var(--transition-fast),
@@ -609,40 +555,11 @@ function formatConversationTime(conversation) {
   font-size: 11px;
 }
 
-@keyframes promptBlink {
-  0%,
-  48% {
-    opacity: 1;
-  }
-
-  49%,
-  100% {
-    opacity: 0.2;
-  }
-}
-
-@keyframes sparkPulse {
-  0%,
-  100% {
-    opacity: 0.45;
-    transform: scale(0.85) rotate(0deg);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.08) rotate(45deg);
-  }
-}
-
 @media (max-width: 900px) {
   .conversation-sidebar {
     width: 210px;
     min-width: 210px;
     padding-inline: 14px;
-  }
-
-  .brand-title {
-    font-size: 18px;
   }
 }
 </style>

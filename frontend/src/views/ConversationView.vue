@@ -16,7 +16,7 @@ import {logout} from "@/utils/auth.js";
 import ChatInput from '@/components/chat/ChatInput.vue'
 import MessageList from '@/components/chat/MessageList.vue'
 import StudyInfoPanel from '@/components/chat/StudyInfoPanel.vue'
-import WorkspaceSidebar from '@/components/layout/WorkspaceSidebar.vue'
+import WorkspaceSidebar from '@/components/sidebar/WorkspaceSidebar.vue'
 import KnowledgeWorkspace from "@/components/knowledge/KnowledgeWorkspace.vue";
 import {STORAGE_KEYS} from "@/constants/storageKeys.js";
 
