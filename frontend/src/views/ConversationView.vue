@@ -17,7 +17,7 @@ import ChatInput from '@/components/chat/ChatInput.vue'
 import MessageList from '@/components/chat/MessageList.vue'
 import StudyInfoPanel from '@/components/chat/StudyInfoPanel.vue'
 import WorkspaceSidebar from '@/components/layout/WorkspaceSidebar.vue'
-import KnowledgeNoteList from '@/components/knowledge/KnowledgeNoteList.vue'
+import KnowledgeWorkspace from "@/components/knowledge/KnowledgeWorkspace.vue";
 
 const router = useRouter();
 
@@ -34,6 +34,11 @@ const sendingMessage = ref(false);
 
 const sidebarMode = ref('conversation');
 const selectedKnowledgeId = ref(null);
+const selectedKnowledgeNoteId = ref(null);
+
+function selectKnowledgeNote(noteId) {
+  selectedKnowledgeNoteId.value = noteId;
+}
 
 function changeSidebarMode(mode) {
   sidebarMode.value = mode
@@ -378,40 +383,18 @@ onMounted(async () => {
     </template>
 
     <template v-else>
-      <main
-        class="knowledge-area"
+      <KnowledgeWorkspace
+        :knowledge-id="selectedKnowledgeId"
       >
-        <header class="knowledge-header">
-          <div>
-            <p class="knowledge-eyebrow">
-              KNOWLEDGE NOTES
-            </p>
-
-            <h1>
-              지식 노트
-            </h1>
-          </div>
-
+        <template #header-action>
           <button
             class="logout-button"
             @click="logoutUser"
           >
             로그아웃
           </button>
-        </header>
-
-        <div
-          v-if="selectedKnowledgeId === null"
-          class="knowledge-empty"
-        >
-          왼쪽에서 지식 폴더를 선택해주세요.
-        </div>
-
-        <KnowledgeNoteList
-          v-else
-          :knowledge-id="selectedKnowledgeId"
-        />
-      </main>
+        </template>
+      </KnowledgeWorkspace>
     </template>
   </div>
 </template>
@@ -492,55 +475,5 @@ onMounted(async () => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-}
-
-
-.knowledge-area {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-  box-sizing: border-box;
-  background: radial-gradient(
-    circle at 50% 0%,
-    rgba(66, 245, 123, 0.035),
-    transparent 34%
-  ),
-  var(--color-bg);
-}
-
-.knowledge-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--color-border-soft);
-}
-
-.knowledge-header h1 {
-  margin: 2px 0 0;
-  color: var(--color-text);
-  font-size: 24px;
-}
-
-.knowledge-eyebrow {
-  margin: 0;
-  color: var(--color-primary);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
-.knowledge-empty {
-  display: grid;
-  flex: 1;
-  place-items: center;
-  color: var(--color-text-muted);
-  font-size: 14px;
 }
 </style>
