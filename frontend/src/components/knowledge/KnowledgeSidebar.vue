@@ -4,6 +4,13 @@ import {onMounted, ref} from 'vue'
 import {getKnowledgeTree} from '@/api/knowledgeApi.js'
 import KnowledgeTreeNode from '@/components/knowledge/KnowledgeTreeNode.vue'
 
+defineProps({
+  selectedKnowledgeId: {
+    type: Number,
+    default: null,
+  }
+})
+
 const emit = defineEmits([
   'select-knowledge',
 ])
@@ -19,7 +26,10 @@ async function loadKnowledgeTree() {
   try {
     const response = await getKnowledgeTree()
 
-    knowledgeTree.value = response.data
+    knowledgeTree.value =
+      Array.isArray(response.data)
+        ? response.data
+        : []
   } catch (error) {
     console.error(error)
 
@@ -54,6 +64,7 @@ onMounted(loadKnowledgeTree)
       </div>
 
       <button
+        type="button"
         class="refresh-button"
         :disabled="loading"
         @click="loadKnowledgeTree"
@@ -91,6 +102,7 @@ onMounted(loadKnowledgeTree)
         v-for="node in knowledgeTree"
         :key="node.id"
         :node="node"
+        :selected-id="selectedKnowledgeId"
         @select="selectKnowledge"
       />
     </div>
@@ -147,6 +159,11 @@ onMounted(loadKnowledgeTree)
 .refresh-button:hover {
   color: var(--color-primary);
   border-color: var(--color-border-primary);
+}
+
+.refresh-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .sidebar-state {

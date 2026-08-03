@@ -10,6 +10,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  selectedId: {
+    type: Number,
+    default: null,
+  }
 });
 
 const emit = defineEmits([
@@ -40,7 +44,12 @@ function selectNode() {
 </script>
 
 <template>
-  <div class="tree-node">
+  <div
+    class="tree-node"
+    :class="{
+      active: node.id === selectedId
+    }"
+  >
     <div
       class="node-row"
       :style="{
@@ -58,6 +67,7 @@ function selectNode() {
       </button>
 
       <button
+        type="button"
         class="node-button"
         @click="selectNode"
       >
@@ -83,6 +93,7 @@ function selectNode() {
         :key="child.id"
         :node="child"
         :depth="depth + 1"
+        :selected-id="selectedId"
         @select="emit('select', $event)"
       />
     </div>
@@ -95,6 +106,8 @@ function selectNode() {
   align-items: center;
   min-height: 36px;
   border-radius: 7px;
+  transition: color var(--transition-fast),
+  background var(--transition-fast);
 }
 
 .node-row:hover {
@@ -140,5 +153,14 @@ function selectNode() {
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tree-node.active > .node-row {
+  background: var(--color-primary-soft);
+}
+
+.tree-node.active > .node-row .node-name {
+  color: var(--color-primary);
+  font-weight: 700;
 }
 </style>

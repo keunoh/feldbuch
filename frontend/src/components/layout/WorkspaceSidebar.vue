@@ -84,6 +84,7 @@ function changeMode(nextMode) {
       <KnowledgeSidebar
         v-else
         class="sidebar-content"
+        :selected-knowledge-id="selectedKnowledgeId"
         @select-knowledge="emit('select-knowledge', $event)"
       />
     </div>
