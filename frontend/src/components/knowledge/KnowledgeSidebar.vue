@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 
 import {getKnowledgeTree} from '@/api/knowledgeApi.js'
 import KnowledgeTreeNode from '@/components/knowledge/KnowledgeTreeNode.vue'
@@ -19,6 +19,74 @@ const knowledgeTree = ref([])
 const loading = ref(false)
 const errorMessage = ref('')
 const expandedIds = ref(new Set());
+const searchKeyword = ref('')
+
+const filteredKnowledgeTree = computed(() => {
+  return filterTree(
+    knowledgeTree.value,
+    searchKeyword.value
+  )
+})
+
+const visibleExpandedIds = computed(() => {
+  if (!searchKeyword.value.trim()) {
+    return expandedIds.value
+  }
+
+  return collectExpandableIds(
+    filteredKnowledgeTree.value,
+  )
+})
+
+function filterTree(nodes, keyword) {
+  const normalizedKeyword =
+    keyword.trim().toLowerCase()
+
+  if (!normalizedKeyword) {
+    return nodes
+  }
+
+  return nodes
+    .map(node => {
+      const filteredChildren =
+        filterTree(
+          node.children ?? [],
+          normalizedKeyword
+        )
+
+      const matchesSelf =
+        node.name
+          .toLowerCase()
+          .includes(normalizedKeyword)
+
+      if (!matchesSelf && filteredChildren.length === 0) {
+        return null
+      }
+
+      return {
+        ...node,
+        children: filteredChildren,
+      }
+    })
+    .filter(Boolean)
+}
+
+function collectExpandableIds(nodes, result = new Set()) {
+  for (const node of nodes) {
+    const children = node.children ?? []
+
+    if (children.length > 0) {
+      result.add(node.id)
+
+      collectExpandableIds(
+        children,
+        result
+      )
+    }
+  }
+
+  return result
+}
 
 function initializeExpandedNodes() {
   expandedIds.value = new Set(
@@ -77,6 +145,24 @@ onMounted(loadKnowledgeTree)
 <template>
   <aside class="knowledge-sidebar">
     <header class="sidebar-header">
+      <div class="search-box">
+        <input
+          v-model="searchKeyword"
+          type="search"
+          placeholder="지식 폴더 검색"
+          aria-label="지식 폴더 검색"
+        />
+
+        <button
+          v-if="searchKeyword"
+          type="button"
+          class="clear-search-button"
+          aria-label="검색어 지우기"
+          @click="searchKeyword = ''"
+        >
+          ×
+        </button>
+      </div>
       <div>
         <p class="eyebrow">
           KNOWLEDGE
@@ -118,16 +204,24 @@ onMounted(loadKnowledgeTree)
       아직 정리된 지식이 없습니다.
     </p>
 
+    <p
+      v-else-if="filteredKnowledgeTree.length === 0"
+      class="sidebar-state"
+    >
+      검색 결과가 없습니다.
+    </p>
+
     <div
       v-else
       class="tree"
     >
       <KnowledgeTreeNode
-        v-for="node in knowledgeTree"
+        v-for="node in filteredKnowledgeTree"
         :key="node.id"
         :node="node"
         :selected-id="selectedKnowledgeId"
-        :expanded-ids="expandedIds"
+        :expanded-ids="visibleExpandedIds"
+        :search-keyword="searchKeyword"
         @select="selectKnowledge"
         @toggle="toggleNode"
       />
@@ -207,5 +301,40 @@ onMounted(loadKnowledgeTree)
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 9px 34px 9px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: var(--color-border-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.clear-search-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(-50%);
 }
 </style>

@@ -1,5 +1,6 @@
 <script setup>
 import {computed} from 'vue';
+import SearchHighlight from "@/components/common/SearchHighlight.vue";
 
 const props = defineProps({
   node: {
@@ -17,6 +18,10 @@ const props = defineProps({
   expandedIds: {
     type: Object,
     required: true,
+  },
+  searchKeyword: {
+    type: String,
+    default: '',
   }
 });
 
@@ -92,7 +97,10 @@ function selectNode() {
         </span>
 
         <span class="node-name">
-          {{ node.name }}
+          <SearchHighlight
+            :text="node.name"
+            :keyword="searchKeyword"
+          />
         </span>
       </button>
     </div>
@@ -108,6 +116,7 @@ function selectNode() {
         :depth="depth + 1"
         :selected-id="selectedId"
         :expanded-ids="expandedIds"
+        :search-keyword="searchKeyword"
         @select="emit('select', $event)"
         @toggle="emit('toggle', $event)"
       />
