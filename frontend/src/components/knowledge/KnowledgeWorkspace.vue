@@ -1,6 +1,6 @@
 <script setup>
 
-import {ref, watch} from "vue";
+import {watch} from "vue";
 
 import KnowledgeNoteList from "@/components/knowledge/KnowledgeNoteList.vue";
 import KnowledgeNoteDetail from "@/components/knowledge/KnowledgeNoteDetail.vue";
@@ -9,19 +9,32 @@ const props = defineProps({
   knowledgeId: {
     type: Number,
     default: null,
+  },
+  selectedNoteId: {
+    type: Number,
+    default: null,
   }
 })
 
-const selectedNoteId = ref(null);
+const emit = defineEmits([
+  "select-note"
+]);
+
 
 function selectNote(noteId) {
-  selectedNoteId.value = noteId;
+  emit(
+    'select-note',
+    noteId
+  )
 }
 
 watch(
   () => props.knowledgeId,
   () => {
-    selectedNoteId.value = null
+    emit(
+      "select-note",
+      null
+    )
   },
 )
 </script>

@@ -18,6 +18,7 @@ import MessageList from '@/components/chat/MessageList.vue'
 import StudyInfoPanel from '@/components/chat/StudyInfoPanel.vue'
 import WorkspaceSidebar from '@/components/layout/WorkspaceSidebar.vue'
 import KnowledgeWorkspace from "@/components/knowledge/KnowledgeWorkspace.vue";
+import {STORAGE_KEYS} from "@/constants/storageKeys.js";
 
 const router = useRouter();
 
@@ -32,16 +33,31 @@ const deletingConversationId = ref(null);
 const updatingConversationId = ref(null);
 const sendingMessage = ref(false);
 
-const SIDEBAR_MODE_KEY = 'feldbuch.sidebarMode'
-const SELECTED_KNOWLEDGE_ID_KEY = 'feldbuch.selectedKnowledgeId'
-const SELECTED_CONVERSATION_ID_KEY = 'feldbuch.selectedConversationId'
 const sidebarMode = ref(loadSidebarMode())
-const storeKnowledgeId = localStorage.getItem(SELECTED_KNOWLEDGE_ID_KEY);
+const storedKnowledgeId = localStorage.getItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_ID);
+const storedKnowledgeNoteId = localStorage.getItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_NOTE_ID);
+
 const selectedKnowledgeId = ref(
-  storeKnowledgeId && Number.isInteger(Number(storeKnowledgeId))
-    ? Number(storeKnowledgeId)
+  storedKnowledgeId && Number.isInteger(Number(storedKnowledgeId))
+    ? Number(storedKnowledgeId)
     : null,
 );
+
+const selectedKnowledgeNoteId = ref(
+  storedKnowledgeNoteId && Number.isInteger(Number(storedKnowledgeNoteId))
+    ? Number(storedKnowledgeNoteId)
+    : null,
+);
+
+function selectKnowledgeNote(noteId) {
+  selectedKnowledgeNoteId.value = noteId;
+
+  if (noteId === null) {
+    localStorage.removeItem(STORAGE_KEYS.SELECTED_NOTE);
+  }
+
+  localStorage.setItem(STORAGE_KEYS.SELECTED_NOTE, String(noteId));
+}
 
 const selectedConversation = computed(() => {
   return conversations.value.find(
@@ -51,7 +67,7 @@ const selectedConversation = computed(() => {
 })
 
 function findInitialConversationId() {
-  const storedId = localStorage.getItem(SELECTED_CONVERSATION_ID_KEY);
+  const storedId = localStorage.getItem(STORAGE_KEYS.SELECTED_CONVERSATION_ID);
 
   if (!storedId) {
     return conversations.value[0]?.id ?? null;
@@ -60,7 +76,7 @@ function findInitialConversationId() {
   const parsedId = Number(storedId);
 
   if (!Number.isInteger(parsedId)) {
-    localStorage.removeItem(SELECTED_CONVERSATION_ID_KEY);
+    localStorage.removeItem(STORAGE_KEYS.SELECTED_CONVERSATION_ID);
 
     return conversations.value[0]?.id ?? null
   }
@@ -74,7 +90,7 @@ function findInitialConversationId() {
     return parsedId
   }
 
-  localStorage.removeItem(SELECTED_CONVERSATION_ID_KEY);
+  localStorage.removeItem(STORAGE_KEYS.SELECTED_CONVERSATION_ID);
 
   return conversations.value[0]?.id ?? null
 }
@@ -82,7 +98,7 @@ function findInitialConversationId() {
 
 function loadSidebarMode() {
 
-  const mode = localStorage.getItem(SIDEBAR_MODE_KEY);
+  const mode = localStorage.getItem(STORAGE_KEYS.SIDEBAR_MODE);
 
   if (mode === 'conversation' || mode === 'knowledge') {
     return mode
@@ -94,14 +110,15 @@ function loadSidebarMode() {
 function changeSidebarMode(mode) {
   sidebarMode.value = mode
 
-  localStorage.setItem(SIDEBAR_MODE_KEY, mode)
+  localStorage.setItem(STORAGE_KEYS.SIDEBAR_MODE, mode)
 }
 
 function selectKnowledge(knowledgeId) {
   selectedKnowledgeId.value = knowledgeId;
 
-  localStorage.setItem(SELECTED_KNOWLEDGE_ID_KEY, String(knowledgeId)
-  )
+  localStorage.setItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_ID, String(knowledgeId))
+
+  selectKnowledgeNote(null);
 }
 
 async function scrollToBottom() {
@@ -141,7 +158,7 @@ async function selectConversation(conversationId) {
 
     selectedConversationId.value = conversationId;
 
-    localStorage.setItem(SELECTED_CONVERSATION_ID_KEY, String(conversationId));
+    localStorage.setItem(STORAGE_KEYS.SELECTED_CONVERSATION_ID, String(conversationId));
 
     await scrollToBottom();
   } catch (error) {
@@ -151,7 +168,7 @@ async function selectConversation(conversationId) {
     messages.value = [];
     selectedConversationId.value = null;
 
-    localStorage.removeItem(SELECTED_CONVERSATION_ID_KEY);
+    localStorage.removeItem(STORAGE_KEYS.SELECTED_CONVERSATION_ID);
   }
 }
 
@@ -215,7 +232,7 @@ async function removeConversation(conversationId) {
     messages.value = [];
     selectedConversationId.value = null;
 
-    localStorage.removeItem(SELECTED_CONVERSATION_ID_KEY);
+    localStorage.removeItem(STORAGE_KEYS.SELECTED_CONVERSATION_ID);
 
     const nextConversation = conversations.value[0];
 
@@ -437,6 +454,8 @@ onMounted(async () => {
     <template v-else>
       <KnowledgeWorkspace
         :knowledge-id="selectedKnowledgeId"
+        :selected-note-id="selectedKnowledgeNoteId"
+        @select-note="selectKnowledgeNote"
       >
         <template #header-action>
           <button
