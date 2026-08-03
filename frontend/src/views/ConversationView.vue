@@ -33,13 +33,52 @@ const updatingConversationId = ref(null);
 const sendingMessage = ref(false);
 
 const SIDEBAR_MODE_KEY = 'feldbuch.sidebarMode'
+const SELECTED_KNOWLEDGE_ID_KEY = 'feldbuch.selectedKnowledgeId'
+const SELECTED_CONVERSATION_ID_KEY = 'feldbuch.selectedConversationId'
 const sidebarMode = ref(loadSidebarMode())
-const storeKnowledgeId = localStorage.getItem('selectedKnowledgeId');
+const storeKnowledgeId = localStorage.getItem(SELECTED_KNOWLEDGE_ID_KEY);
 const selectedKnowledgeId = ref(
-  storeKnowledgeId
-    ? Number(localStorage.getItem('selectedKnowledgeId'))
+  storeKnowledgeId && Number.isInteger(Number(storeKnowledgeId))
+    ? Number(storeKnowledgeId)
     : null,
 );
+
+const selectedConversation = computed(() => {
+  return conversations.value.find(
+    conversation =>
+      conversation.id === selectedConversationId.value
+  );
+})
+
+function findInitialConversationId() {
+  const storedId = localStorage.getItem(SELECTED_CONVERSATION_ID_KEY);
+
+  if (!storedId) {
+    return conversations.value[0]?.id ?? null;
+  }
+
+  const parsedId = Number(storedId);
+
+  if (!Number.isInteger(parsedId)) {
+    localStorage.removeItem(SELECTED_CONVERSATION_ID_KEY);
+
+    return conversations.value[0]?.id ?? null
+  }
+
+  const exists =
+    conversations.value.some(
+      item => item.id === parsedId
+    )
+
+  if (exists) {
+    return parsedId
+  }
+
+  localStorage.removeItem(SELECTED_CONVERSATION_ID_KEY);
+
+  return conversations.value[0]?.id ?? null
+}
+
 
 function loadSidebarMode() {
 
@@ -61,9 +100,7 @@ function changeSidebarMode(mode) {
 function selectKnowledge(knowledgeId) {
   selectedKnowledgeId.value = knowledgeId;
 
-  localStorage.setItem(
-    'selectedKnowledgeId',
-    String(knowledgeId)
+  localStorage.setItem(SELECTED_KNOWLEDGE_ID_KEY, String(knowledgeId)
   )
 }
 
@@ -78,13 +115,6 @@ async function scrollToBottom() {
 
   container.scrollTop = container.scrollHeight;
 }
-
-const selectedConversation = computed(() => {
-  return conversations.value.find(
-    conversation =>
-      conversation.id === selectedConversationId.value
-  );
-})
 
 async function loadConversations() {
   const response = await getConversations();
@@ -106,10 +136,12 @@ async function loadConversation(conversationId) {
 }
 
 async function selectConversation(conversationId) {
-  selectedConversationId.value = conversationId;
-
   try {
     await loadConversation(conversationId);
+
+    selectedConversationId.value = conversationId;
+
+    localStorage.setItem(SELECTED_CONVERSATION_ID_KEY, String(conversationId));
 
     await scrollToBottom();
   } catch (error) {
@@ -117,6 +149,9 @@ async function selectConversation(conversationId) {
 
     conversation.value = null;
     messages.value = [];
+    selectedConversationId.value = null;
+
+    localStorage.removeItem(SELECTED_CONVERSATION_ID_KEY);
   }
 }
 
@@ -179,6 +214,8 @@ async function removeConversation(conversationId) {
     conversation.value = null;
     messages.value = [];
     selectedConversationId.value = null;
+
+    localStorage.removeItem(SELECTED_CONVERSATION_ID_KEY);
 
     const nextConversation = conversations.value[0];
 
@@ -253,7 +290,6 @@ async function sendMessage(content) {
   }
 
   const conversationId = selectedConversationId.value;
-  const timestamp = Date.now();
 
   const optimisticUserMessage = {
     id: `temp-user-${Date.now()}`,
@@ -327,10 +363,10 @@ onMounted(async () => {
   try {
     await loadConversations();
 
-    if (conversations.value.length > 0) {
-      await selectConversation(
-        conversations.value[0].id
-      );
+    const initialConversationId = findInitialConversationId()
+
+    if (initialConversationId !== null) {
+      await selectConversation(initialConversationId);
     }
   } catch (error) {
     console.error(error);
