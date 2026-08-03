@@ -53,10 +53,10 @@ function selectKnowledgeNote(noteId) {
   selectedKnowledgeNoteId.value = noteId;
 
   if (noteId === null) {
-    localStorage.removeItem(STORAGE_KEYS.SELECTED_NOTE);
+    localStorage.removeItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_NOTE_ID);
   }
 
-  localStorage.setItem(STORAGE_KEYS.SELECTED_NOTE, String(noteId));
+  localStorage.setItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_NOTE_ID, String(noteId));
 }
 
 const selectedConversation = computed(() => {
