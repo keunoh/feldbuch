@@ -32,7 +32,8 @@ const deletingConversationId = ref(null);
 const updatingConversationId = ref(null);
 const sendingMessage = ref(false);
 
-const sidebarMode = ref('conversation');
+const SIDEBAR_MODE_KEY = 'feldbuch.sidebarMode'
+const sidebarMode = ref(loadSidebarMode())
 const storeKnowledgeId = localStorage.getItem('selectedKnowledgeId');
 const selectedKnowledgeId = ref(
   storeKnowledgeId
@@ -40,8 +41,21 @@ const selectedKnowledgeId = ref(
     : null,
 );
 
+function loadSidebarMode() {
+
+  const mode = localStorage.getItem(SIDEBAR_MODE_KEY);
+
+  if (mode === 'conversation' || mode === 'knowledge') {
+    return mode
+  }
+
+  return 'conversation'
+}
+
 function changeSidebarMode(mode) {
   sidebarMode.value = mode
+
+  localStorage.setItem(SIDEBAR_MODE_KEY, mode)
 }
 
 function selectKnowledge(knowledgeId) {
@@ -334,6 +348,7 @@ onMounted(async () => {
       :creating="creatingConversation"
       :deleting-conversation-id="deletingConversationId"
       :updating-conversation-id="updatingConversationId"
+      :mode="sidebarMode"
       @select-conversation="selectConversation"
       @create-conversation="createNewConversation"
       @delete-conversation="removeConversation"

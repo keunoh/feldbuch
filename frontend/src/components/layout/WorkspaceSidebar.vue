@@ -1,6 +1,4 @@
 <script setup>
-import {ref} from 'vue'
-
 import ConversationSidebar from '@/components/conversation/ConversationSidebar.vue'
 
 import KnowledgeSidebar from '@/components/knowledge/KnowledgeSidebar.vue'
@@ -30,6 +28,10 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  mode: {
+    type: String,
+    default: 'conversation',
+  }
 })
 
 const emit = defineEmits([
@@ -41,11 +43,7 @@ const emit = defineEmits([
   'change-mode',
 ])
 
-const mode = ref('conversation')
-
 function changeMode(nextMode) {
-  mode.value = nextMode
-
   emit('change-mode', nextMode)
 }
 </script>
@@ -55,7 +53,7 @@ function changeMode(nextMode) {
     <div class="sidebar-tabs">
       <button
         type="button"
-        :class="{ active: mode === 'conversation' }"
+        :class="{ active: props.mode === 'conversation' }"
         @click="changeMode('conversation')"
       >
         대화
@@ -72,7 +70,7 @@ function changeMode(nextMode) {
 
     <div class="sidebar-body">
       <ConversationSidebar
-        v-if="mode === 'conversation'"
+        v-if="props.mode === 'conversation'"
         class="sidebar-content"
         :conversations="props.conversations"
         :selected-conversation-id="props.selectedConversationId"
