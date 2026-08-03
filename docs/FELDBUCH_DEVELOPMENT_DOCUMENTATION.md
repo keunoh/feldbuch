@@ -14,13 +14,17 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 - `WorkspaceSidebar`가 왼쪽 고정 영역에서 `대화`와 `지식` 탭을 전환합니다.
 - `대화` 모드에서는 대화 목록, 채팅 메시지, 입력창, 선택 대화의 학습 정보 패널을 렌더링합니다.
-- `지식` 모드에서는 Knowledge 폴더 트리를 보여주고, 선택된 폴더의 KnowledgeNote 목록을 조회합니다.
+- `지식` 모드에서는 Knowledge 폴더 트리, 선택된 폴더의 KnowledgeNote 목록, 선택한 노트의 상세 요약과 키워드를 함께 렌더링합니다.
+- Knowledge 폴더와 노트 목록은 검색을 지원하고, 검색어는 `SearchHighlight`로 강조합니다.
+- 선택한 사이드바 모드, 대화, Knowledge 폴더, Knowledge 경로, Knowledge 노트는 `localStorage`에 저장해 새로고침 후 복원합니다.
 - 로그아웃은 대화/지식 모드 양쪽 헤더에서 동일하게 제공됩니다.
 - 대화 메시지 전송은 사용자 메시지와 빈 Assistant 메시지를 낙관적으로 추가한 뒤 SSE 토큰을 누적 표시하고, 완료 후 상세를 재조회합니다.
 
-## Main Screen
+## Screens
 
 ![Feldbuch Main Chat Screen](./images/screenshots/feldbuch-main-chat-screen.png)
+
+![Feldbuch Knowledge Notes Screen](./images/screenshots/feldbuch-knowledge-notes-screen.png)
 
 ## Tech Stack
 
@@ -29,6 +33,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 | Language | Java 21 |
 | Framework | Spring Boot 3.5 |
 | Security | Spring Security, JWT |
+| Auth Config | Google OAuth2 client properties |
 | Database | MySQL, H2 Test DB |
 | ORM / Query | Spring Data JPA, QueryDSL |
 | AI | OpenAI REST API, OpenAI SSE Streaming |
@@ -110,13 +115,19 @@ flowchart TD
 - Knowledge Tree 조회 API, KnowledgeNote 목록/상세 조회 API
 - Thymeleaf 기반 로그인/대화 비교 화면
 - Vue 3 + Vite SPA: `LoginView`, `ConversationView`
-- Vue 컴포넌트: `WorkspaceSidebar`, `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`, `KnowledgeSidebar`, `KnowledgeTreeNode`, `KnowledgeNoteList`
+- Vue 컴포넌트: `WorkspaceSidebar`, `SidebarHeader`, `SidebarTabs`, `SidebarSectionLabel`, `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`, `KnowledgeSidebar`, `KnowledgeTreeNode`, `KnowledgeWorkspace`, `KnowledgeNoteList`, `KnowledgeNoteDetail`, `SearchHighlight`
 - 새 대화 생성, 대화 제목 인라인 수정, 대화 삭제 UI
 - 대화 생성/수정/삭제/메시지 전송 중복 요청 방지 상태
 - 메시지 전송 중 AI 응답 작성 로딩 표시
 - 메시지 목록 자동 스크롤
 - AI 응답 Markdown 렌더링, highlight.js 코드 문법 강조, DOMPurify sanitize
 - 코드 블록 언어 표시와 클립보드 COPY 버튼
+- Knowledge 폴더 검색, 노트 검색, 검색 결과 없음 상태 표시
+- Knowledge 검색어 하이라이트
+- Knowledge breadcrumb 표시
+- Knowledge 노트 목록 선택 상태 표시
+- Knowledge 노트 상세 화면에서 제목, 설명, 요약, 키워드 표시
+- 사이드바 모드, 선택 대화, 선택 Knowledge 폴더, 선택 Knowledge 경로, 선택 Knowledge 노트 localStorage 저장/복원
 - Request ID Filter, SLF4J MDC 기반 requestId 저장/해제, `X-Request-Id` 응답 헤더
 - Axios 공통 API client와 Request/Response Interceptor
 - Vue Router Guard 기반 인증 라우트 보호
@@ -134,6 +145,10 @@ flowchart TD
 - OpenAI Base URL: `https://api.openai.com/v1`
 - OpenAI 모델 설정 키: `openai.model`
 - 현재 기본 모델: `gpt-4.1-nano`
+- Google OAuth2 client-id 설정 키: `GOOGLE_CLIENT_ID`
+- Google OAuth2 client-secret 설정 키: `GOOGLE_CLIENT_SECRET`
+- Google OAuth2 scope: `openid`, `profile`, `email`
+- 현재 Spring Security와 Vue 로그인 흐름은 JWT 폼 로그인 중심이며, OAuth2 인증 플로우는 아직 연결하지 않았습니다.
 - 로컬 Docker 인프라: MySQL, Redis
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
 - Knowledge 추출 배치 로컬 실행 플래그: `feldbuch.batch.knowledge-extraction.run=true`
@@ -250,8 +265,12 @@ flowchart TD
     ConversationView --> MessageList
     ConversationView --> ChatInput
     ConversationView --> StudyInfoPanel
-    ConversationView --> KnowledgeNoteList
+    ConversationView --> KnowledgeWorkspace
+    KnowledgeWorkspace --> KnowledgeNoteList
+    KnowledgeWorkspace --> KnowledgeNoteDetail
     KnowledgeNoteList --> KnowledgeApi
+    KnowledgeNoteList --> SearchHighlight
+    KnowledgeSidebar --> SearchHighlight
 
     AuthApi --> ApiClient
     ConversationApi --> ApiClient
@@ -269,12 +288,18 @@ flowchart TD
 - `App.vue`: `RouterView`를 렌더링하는 Vue 앱 루트
 - `router/index.js`: `/login`, `/conversations` 라우트와 인증 Guard 관리
 - `LoginView.vue`: 로그인 폼, 로그인 API 호출, 토큰 저장, 대화 화면 이동
-- `ConversationView.vue`: 대화/지식 워크스페이스 컨테이너, 선택 상태와 요청 중 상태 관리
+- `ConversationView.vue`: 대화/지식 워크스페이스 컨테이너, 선택 상태와 요청 중 상태 관리, localStorage 기반 선택 상태 복원
 - `WorkspaceSidebar.vue`: 대화/지식 탭 전환과 하위 사이드바 이벤트 중계
+- `SidebarHeader.vue`: Feldbuch 로고와 새 대화 생성 버튼
+- `SidebarTabs.vue`: 대화/지식 모드 전환 버튼
+- `SidebarSectionLabel.vue`: 사이드바 섹션 라벨 공통 컴포넌트
 - `ConversationSidebar.vue`: 대화 목록, 선택 상태, 새 대화 생성, 인라인 제목 수정, 삭제 버튼
-- `KnowledgeSidebar.vue`: Knowledge 폴더 트리 조회, 새로고침, 선택 이벤트 전달
-- `KnowledgeTreeNode.vue`: 재귀 폴더 노드 렌더링, 펼침/접힘, 폴더 선택
-- `KnowledgeNoteList.vue`: 선택 Knowledge 폴더의 노트 목록 조회
+- `KnowledgeSidebar.vue`: Knowledge 폴더 트리 조회, 폴더 검색, 새로고침, 선택 이벤트 전달
+- `KnowledgeTreeNode.vue`: 재귀 폴더 노드 렌더링, 펼침/접힘, 폴더 선택, 검색어 강조
+- `KnowledgeWorkspace.vue`: Knowledge breadcrumb, 노트 목록 패널, 노트 상세 패널 조합
+- `KnowledgeNoteList.vue`: 선택 Knowledge 폴더의 노트 목록 조회, 노트 검색, 검색어 강조, 선택 상태 표시
+- `KnowledgeNoteDetail.vue`: 선택한 Knowledge 노트의 제목, 설명, 요약, 키워드 표시
+- `SearchHighlight.vue`: 폴더/노트 검색어 부분 강조
 - `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링, Markdown, 코드 강조, COPY 버튼, 로딩 메시지
 - `ChatInput.vue`: 사용자 입력을 `send` 이벤트로 상위 컴포넌트에 전달하고 전송 중 입력 비활성화
 - `StudyInfoPanel.vue`: 선택 대화의 주제, 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
@@ -332,21 +357,33 @@ Knowledge 화면 데이터 흐름:
 ```text
 WorkspaceSidebar 지식 탭 선택
   ↓
+localStorage feldbuch.sidebarMode 갱신
+  ↓
 KnowledgeSidebar mounted
   ↓
 GET /api/knowledge/tree
   ↓
-KnowledgeTreeNode 재귀 렌더링
+폴더 검색어에 따라 KnowledgeTreeNode 재귀 렌더링
   ↓
 폴더 선택
   ↓
-ConversationView.selectedKnowledgeId 갱신
+ConversationView.selectedKnowledgeId / selectedKnowledgePath 갱신
   ↓
-KnowledgeNoteList
+localStorage feldbuch.selectedKnowledgeId / feldbuch.selectedKnowledgePath 저장
+  ↓
+KnowledgeWorkspace
   ↓
 GET /api/knowledge/{knowledgeId}/notes
   ↓
-노트 제목 목록 렌더링
+노트 목록 렌더링과 노트 검색
+  ↓
+노트 선택
+  ↓
+localStorage feldbuch.selectedKnowledgeNoteId 저장
+  ↓
+GET /api/knowledge/notes/{noteId}
+  ↓
+KnowledgeNoteDetail 제목/설명/요약/키워드 렌더링
 ```
 
 ## API Communication
@@ -449,9 +486,10 @@ frontend/src
 ├── assets
 ├── components
 │   ├── chat
-│   ├── conversation
+│   ├── common
 │   ├── knowledge
-│   └── layout
+│   └── sidebar
+├── constants
 ├── router
 ├── utils
 └── views
@@ -469,6 +507,9 @@ frontend/src
 - Markdown 렌더링과 sanitize 책임을 `markdownRenderer.js`로 분리
 - Knowledge 폴더 트리 자기 참조 모델링
 - KnowledgePathResolver로 AI 응답 경로 기반 폴더 자동 조회/생성
+- Knowledge 워크스페이스를 목록 패널과 상세 패널로 분리
+- 폴더/노트 검색어 하이라이트를 공통 컴포넌트로 분리
+- 사용자의 마지막 작업 위치를 localStorage로 복원
 - Batch 대상 조회와 재시도 조건을 QueryDSL로 관리
 - Knowledge 추출 상태 변경은 별도 트랜잭션으로 반영
 - Request ID 기반 요청 추적
@@ -476,8 +517,9 @@ frontend/src
 
 ## Roadmap
 
-- Knowledge 노트 상세 화면 연결
-- Knowledge 폴더/노트 관리 UI 확장
+- OAuth2 로그인 플로우 연결
+- Knowledge 노트 원본 Conversation 이동 링크
+- Knowledge 폴더/노트 생성/수정/삭제 UI 확장
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
 - Knowledge 추출 Batch 정기 스케줄러 연결

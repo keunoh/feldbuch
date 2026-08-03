@@ -52,8 +52,8 @@ AI와 함께 공부한 과정과 결과를 기록하고 돌아볼 수 있는 개
 
 ### 3. AI 요약
 
-- [ ] 대화 내용 자동 요약
-- [ ] 학습한 핵심 개념 추출
+- [x] 대화 내용 자동 요약
+- [x] 학습한 핵심 개념 추출
 - [ ] 사용자가 질문한 내용 정리
 - [ ] 이해하지 못한 내용 또는 추가 학습 항목 추출
 - [ ] 대화 종료 시 학습 노트 생성
@@ -103,7 +103,8 @@ AI와 함께 공부한 과정과 결과를 기록하고 돌아볼 수 있는 개
 
 - [ ] 대화 제목 검색
 - [ ] 메시지 내용 검색
-- [ ] 학습 노트 검색
+- [x] 폴더 내 학습 노트 검색
+- [ ] 전체 학습 노트 검색
 - [ ] 태그 검색
 - [ ] 날짜 범위 검색
 - [ ] 학습 주제 통합 검색
@@ -119,16 +120,16 @@ AI와 대화
   ↓
 Spring Batch가 요약 대상 대화 조회
   ↓
-AI가 카테고리 분류 + 짧은 학습 요약 생성
+AI가 Knowledge 경로 분류 + 짧은 학습 요약 생성
   ↓
-카테고리 폴더 자동 생성
+Knowledge 폴더 자동 생성
   ↓
 학습 노트 저장
   ↓
 사용자는 카테고리별 요약 노트 열람
 ```
 
-현재 코드에서는 `category`/`study_note`라는 이름 대신 `knowledge`/`knowledge_notes` 도메인으로 1단계 저장 모델을 시작했다.
+현재 코드에서는 `category`/`study_note`라는 이름 대신 `knowledge`/`knowledge_notes` 도메인으로 저장 모델을 구성한다.
 
 #### 9-1. 도메인 및 DB 모델
 
@@ -178,10 +179,10 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
 - [x] KnowledgeNote 저장 Command 서비스 단위 테스트
 - [ ] 대화 내용을 사용자가 직접 입력해 수동 학습 노트로 저장하는 서비스 추가
 - [ ] KnowledgeNote 생성 요청 DTO 추가
-- [ ] KnowledgeNote 응답 DTO 추가
+- [x] KnowledgeNote 응답 DTO 추가
 - [ ] KnowledgeNote 생성 API 추가
-- [ ] KnowledgeNote 단건 조회 API 추가
-- [ ] KnowledgeNote 목록 조회 API 추가
+- [x] KnowledgeNote 단건 조회 API 추가
+- [x] KnowledgeNote 목록 조회 API 추가
 - [ ] 같은 Conversation에서 중복 생성 방지 정책 정리
 
 #### 9-3. AI 구조화 요약
@@ -205,7 +206,7 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
 
 ```json
 {
-  "categoryPath": [
+  "knowledgePath": [
     "개발",
     "Spring"
   ],
@@ -253,12 +254,17 @@ AI가 카테고리 분류 + 짧은 학습 요약 생성
 #### 9-5. 학습 화면
 
 - [ ] `/study` 라우트 추가
-- [ ] 왼쪽 Knowledge 폴더 트리 화면 추가
-- [ ] 오른쪽 학습 노트 목록 화면 추가
-- [ ] 학습 노트 본문 화면 추가
-- [ ] 키워드 표시
+- [x] 왼쪽 Knowledge 폴더 트리 화면 추가
+- [x] Knowledge 폴더 검색
+- [x] 오른쪽 학습 노트 목록 화면 추가
+- [x] 폴더 내 학습 노트 검색
+- [x] 검색어 하이라이트
+- [x] Knowledge breadcrumb 표시
+- [x] 학습 노트 본문 화면 추가
+- [x] 키워드 표시
+- [x] 마지막 선택한 사이드바 모드, Knowledge 폴더, Knowledge 노트 복원
 - [ ] 원본 Conversation으로 이동하는 링크 추가
-- [ ] Knowledge별 노트 필터링
+- [x] Knowledge별 노트 필터링
 - [ ] 최근 생성된 학습 노트 표시
 
 #### 9-6. 관리 및 개선
