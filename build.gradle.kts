@@ -59,6 +59,9 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.7")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.7")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.7")
+
+    // OAuth
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 }
 
 tasks.withType<Test> {
