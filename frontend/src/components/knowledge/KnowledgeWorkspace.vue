@@ -13,6 +13,10 @@ const props = defineProps({
   selectedNoteId: {
     type: Number,
     default: null,
+  },
+  knowledgePath: {
+    type: Array,
+    default: () => [],
   }
 })
 
@@ -50,6 +54,36 @@ watch(
         <h1>
           지식 노트
         </h1>
+
+        <nav
+          v-if="knowledgePath.length > 0"
+          class="knowledge-breadcrumb"
+          aria-label="Knowledge 경로"
+        >
+          <template
+            v-for="(name, index) in knowledgePath"
+            :key="`${index}-${name}`"
+          >
+            <span
+              class="breadcrumb-item"
+              :class="{
+                current:
+                  index === knowledgePath.length - 1
+              }"
+            >
+              {{ name }}
+            </span>
+
+            <span
+              v-if="index < knowledgePath.length - 1"
+              class="breadcrumb-separator"
+              aria-hidden="true"
+            >
+              ›
+            </span>
+          </template>
+        </nav>
+
       </div>
 
       <slot name="header-action"/>
@@ -171,6 +205,26 @@ watch(
 .detail-empty {
   height: 100%;
   min-height: 240px;
+}
+
+.knowledge-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.breadcrumb-separator {
+  color: var(--color-text-muted);
+  opacity: 0.65;
+}
+
+.breadcrumb-item.current {
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {

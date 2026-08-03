@@ -49,6 +49,38 @@ const selectedKnowledgeNoteId = ref(
     : null,
 );
 
+const selectedKnowledgePath = ref(
+  loadStoredKnowledgePath()
+)
+
+const selectedConversation = computed(() => {
+  return conversations.value.find(
+    conversation =>
+      conversation.id === selectedConversationId.value
+  );
+})
+
+function loadStoredKnowledgePath() {
+  const storedPath =
+    localStorage.getItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_PATH)
+
+  if (!storedPath) {
+    return []
+  }
+
+  try {
+    const parsedPath = JSON.parse(storedPath)
+
+    return Array.isArray(parsedPath)
+      ? parsedPath
+      : []
+  } catch (error) {
+    localStorage.removeItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_PATH)
+
+    return []
+  }
+}
+
 function selectKnowledgeNote(noteId) {
   selectedKnowledgeNoteId.value = noteId;
 
@@ -58,13 +90,6 @@ function selectKnowledgeNote(noteId) {
 
   localStorage.setItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_NOTE_ID, String(noteId));
 }
-
-const selectedConversation = computed(() => {
-  return conversations.value.find(
-    conversation =>
-      conversation.id === selectedConversationId.value
-  );
-})
 
 function findInitialConversationId() {
   const storedId = localStorage.getItem(STORAGE_KEYS.SELECTED_CONVERSATION_ID);
@@ -113,10 +138,12 @@ function changeSidebarMode(mode) {
   localStorage.setItem(STORAGE_KEYS.SIDEBAR_MODE, mode)
 }
 
-function selectKnowledge(knowledgeId) {
-  selectedKnowledgeId.value = knowledgeId;
+function selectKnowledge({id, path}) {
+  selectedKnowledgeId.value = id;
+  selectedKnowledgePath.value = path;
 
-  localStorage.setItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_ID, String(knowledgeId))
+  localStorage.setItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_ID, String(id))
+  localStorage.setItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_PATH, JSON.stringify(path))
 
   selectKnowledgeNote(null);
 }
@@ -454,6 +481,7 @@ onMounted(async () => {
     <template v-else>
       <KnowledgeWorkspace
         :knowledge-id="selectedKnowledgeId"
+        :knowledge-path="selectedKnowledgePath"
         :selected-note-id="selectedKnowledgeNoteId"
         @select-note="selectKnowledgeNote"
       >

@@ -22,13 +22,24 @@ const props = defineProps({
   searchKeyword: {
     type: String,
     default: '',
+  },
+  path: {
+    type: Array,
+    default: () => [],
   }
 });
 
 const emit = defineEmits([
-  'select'
+  'select',
+  'toggle'
 ]);
 
+const currentPath = computed(() => {
+  return [
+    ...props.path,
+    props.node.name,
+  ]
+})
 
 const hasChildren = computed(() => {
   return Array.isArray(props.node.children)
@@ -56,7 +67,10 @@ function toggle() {
 function selectNode() {
   emit(
     'select',
-    props.node.id
+    {
+      id: props.node.id,
+      path: currentPath.value,
+    }
   );
 }
 </script>
@@ -114,6 +128,7 @@ function selectNode() {
         :key="child.id"
         :node="child"
         :depth="depth + 1"
+        :path="currentPath"
         :selected-id="selectedId"
         :expanded-ids="expandedIds"
         :search-keyword="searchKeyword"

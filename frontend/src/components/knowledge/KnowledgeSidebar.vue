@@ -38,6 +38,20 @@ const visibleExpandedIds = computed(() => {
   )
 })
 
+const filteredKnowledgeCount = computed(() => {
+
+  function count(nodes) {
+
+    return nodes.reduce(
+      (total, node) =>
+        total + 1 + count(node.children ?? []),
+      0
+    )
+  }
+
+  return count(filteredKnowledgeTree.value)
+})
+
 function filterTree(nodes, keyword) {
   const normalizedKeyword =
     keyword.trim().toLowerCase()
@@ -132,10 +146,10 @@ async function loadKnowledgeTree() {
   }
 }
 
-function selectKnowledge(knowledgeId) {
+function selectKnowledge(selection) {
   emit(
     'select-knowledge',
-    knowledgeId,
+    selection,
   )
 }
 
@@ -152,6 +166,14 @@ onMounted(loadKnowledgeTree)
           placeholder="지식 폴더 검색"
           aria-label="지식 폴더 검색"
         />
+
+        <p
+          v-if="searchKeyword"
+          class="search-result"
+        >
+          {{ filteredKnowledgeCount }}개의
+          Knowledge
+        </p>
 
         <button
           v-if="searchKeyword"
@@ -219,6 +241,7 @@ onMounted(loadKnowledgeTree)
         v-for="node in filteredKnowledgeTree"
         :key="node.id"
         :node="node"
+        :path="[]"
         :selected-id="selectedKnowledgeId"
         :expanded-ids="visibleExpandedIds"
         :search-keyword="searchKeyword"

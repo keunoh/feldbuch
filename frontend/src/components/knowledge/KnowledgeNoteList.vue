@@ -48,6 +48,10 @@ const filteredNotes = computed(() => {
   })
 })
 
+const filteredNoteCount = computed(() => {
+  return filteredNotes.value.length
+})
+
 watch(
   () => props.knowledgeId,
   async (knowledgeId) => {
@@ -91,6 +95,14 @@ watch(
         placeholder="노트 검색"
         aria-label="Knowledge 노트 검색"
       />
+
+      <p
+        v-if="searchKeyword"
+        class="search-result"
+      >
+        {{ filteredNoteCount }}
+        개의 노트
+      </p>
 
       <button
         v-if="searchKeyword"
@@ -256,5 +268,11 @@ watch(
   color: var(--color-text-muted);
   font-size: 13px;
   text-align: center;
+}
+
+.search-result {
+  padding: 6px 4px 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
 }
 </style>
