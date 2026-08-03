@@ -18,6 +18,28 @@ const emit = defineEmits([
 const knowledgeTree = ref([])
 const loading = ref(false)
 const errorMessage = ref('')
+const expandedIds = ref(new Set());
+
+function initializeExpandedNodes() {
+  expandedIds.value = new Set(
+    knowledgeTree.value.map(node => node.id)
+  )
+}
+
+function toggleNode(id) {
+
+  // 여기서 Set을 새로 만드는 이유는 Vue의 반응성 때문이다.
+  const next =
+    new Set(expandedIds.value)
+
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+
+  expandedIds.value = next
+}
 
 async function loadKnowledgeTree() {
   loading.value = true
@@ -30,6 +52,8 @@ async function loadKnowledgeTree() {
       Array.isArray(response.data)
         ? response.data
         : []
+
+    initializeExpandedNodes()
   } catch (error) {
     console.error(error)
 
@@ -103,7 +127,9 @@ onMounted(loadKnowledgeTree)
         :key="node.id"
         :node="node"
         :selected-id="selectedKnowledgeId"
+        :expanded-ids="expandedIds"
         @select="selectKnowledge"
+        @toggle="toggleNode"
       />
     </div>
   </aside>

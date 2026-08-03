@@ -14,6 +14,10 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  selectedKnowledgeId: {
+    type: Number,
+    default: null,
+  },
   creating: {
     type: Boolean,
     default: false,
@@ -84,7 +88,7 @@ function changeMode(nextMode) {
       <KnowledgeSidebar
         v-else
         class="sidebar-content"
-        :selected-knowledge-id="selectedKnowledgeId"
+        :selected-knowledge-id="props.selectedKnowledgeId"
         @select-knowledge="emit('select-knowledge', $event)"
       />
     </div>

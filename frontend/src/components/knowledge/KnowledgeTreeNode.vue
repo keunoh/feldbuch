@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref} from 'vue';
+import {computed} from 'vue';
 
 const props = defineProps({
   node: {
@@ -13,6 +13,10 @@ const props = defineProps({
   selectedId: {
     type: Number,
     default: null,
+  },
+  expandedIds: {
+    type: Object,
+    required: true,
   }
 });
 
@@ -20,19 +24,28 @@ const emit = defineEmits([
   'select'
 ]);
 
-const expanded = ref(true);
 
 const hasChildren = computed(() => {
   return Array.isArray(props.node.children)
     && props.node.children.length > 0;
 });
 
+// expanded는 읽기 전용 computed이기 때문이다.
+const expanded = computed(() => {
+  return props.expandedIds.has(
+    props.node.id
+  )
+})
+
 function toggle() {
   if (!hasChildren.value) {
     return;
   }
 
-  expanded.value = !expanded.value;
+  emit(
+    'toggle',
+    props.node.id,
+  )
 }
 
 function selectNode() {
@@ -94,7 +107,9 @@ function selectNode() {
         :node="child"
         :depth="depth + 1"
         :selected-id="selectedId"
+        :expanded-ids="expandedIds"
         @select="emit('select', $event)"
+        @toggle="emit('toggle', $event)"
       />
     </div>
   </div>

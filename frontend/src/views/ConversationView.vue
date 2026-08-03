@@ -33,12 +33,12 @@ const updatingConversationId = ref(null);
 const sendingMessage = ref(false);
 
 const sidebarMode = ref('conversation');
-const selectedKnowledgeId = ref(null);
-const selectedKnowledgeNoteId = ref(null);
-
-function selectKnowledgeNote(noteId) {
-  selectedKnowledgeNoteId.value = noteId;
-}
+const storeKnowledgeId = localStorage.getItem('selectedKnowledgeId');
+const selectedKnowledgeId = ref(
+  storeKnowledgeId
+    ? Number(localStorage.getItem('selectedKnowledgeId'))
+    : null,
+);
 
 function changeSidebarMode(mode) {
   sidebarMode.value = mode
@@ -47,10 +47,10 @@ function changeSidebarMode(mode) {
 function selectKnowledge(knowledgeId) {
   selectedKnowledgeId.value = knowledgeId;
 
-  console.log(
-    '선택한 Knowledge:',
-    knowledgeId
-  );
+  localStorage.setItem(
+    'selectedKnowledgeId',
+    String(knowledgeId)
+  )
 }
 
 async function scrollToBottom() {
@@ -330,6 +330,7 @@ onMounted(async () => {
     <WorkspaceSidebar
       :conversations="conversations"
       :selected-conversation-id="selectedConversationId"
+      :selected-knowledge-id="selectedKnowledgeId"
       :creating="creatingConversation"
       :deleting-conversation-id="deletingConversationId"
       :updating-conversation-id="updatingConversationId"
