@@ -1,6 +1,7 @@
 package io.github.kaltz.feldbuch.config;
 
 import io.github.kaltz.feldbuch.auth.jwt.JwtAuthenticationFilter;
+import io.github.kaltz.feldbuch.auth.oauth2.GoogleOidcUserService;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetailsService;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final GoogleOidcUserService googleOidcUserService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -81,8 +83,14 @@ public class SecurityConfig {
                  * /oauth2/authorization/google
                  * /login/oauth2/code/google
                  */
-                .oauth2Login(oauth2 -> {
-                })
+                .oauth2Login(oauth2 ->
+                        oauth2
+                                .userInfoEndpoint(userInfo ->
+                                        userInfo.oidcUserService(
+                                                googleOidcUserService
+                                        )
+                                )
+                )
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class

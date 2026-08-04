@@ -19,9 +19,6 @@ import java.util.UUID;
 @Transactional
 public class GoogleLoginService {
 
-    private static final String INVALID_GOOGLE_ACCOUNT =
-            "invalid_google_account";
-
     private final UserRepository userRepository;
     private final UserIdentityRepository userIdentityRepository;
     private final PasswordEncoder passwordEncoder;
