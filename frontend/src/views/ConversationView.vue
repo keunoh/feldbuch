@@ -60,6 +60,35 @@ const selectedConversation = computed(() => {
   );
 })
 
+async function refreshConversationTitle(
+  conversationId,
+  options = {},
+) {
+  const {
+    maxAttempts = 5,
+    interval = 700,
+  } = options
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const response = await getConversation(conversationId);
+
+    const updatedConversation = response.data
+
+    updateConversationTitleInState(
+      updatedConversation.id,
+      updatedConversation.title,
+    )
+
+    if (updatedConversation.title !== '새 대화') {
+      return
+    }
+
+    await new Promise(response =>
+      setTimeout(response, interval)
+    )
+  }
+}
+
 function loadStoredKnowledgePath() {
   const storedPath =
     localStorage.getItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_PATH)
@@ -364,7 +393,6 @@ async function sendMessage(content) {
       {
         onToken(token) {
           streamingAssistantMessage.content += token;
-
           scrollToBottom();
         },
 
@@ -383,6 +411,15 @@ async function sendMessage(content) {
     moveConversationToTop(conversationId);
 
     await scrollToBottom();
+
+    refreshConversationTitle(
+      conversationId,
+    ).catch(error => {
+      console.error(
+        '대화 제목 갱신 실패:',
+        error,
+      )
+    })
   } catch (error) {
     console.log(error);
 

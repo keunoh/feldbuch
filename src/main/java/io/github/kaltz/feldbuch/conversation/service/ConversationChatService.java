@@ -28,6 +28,7 @@ public class ConversationChatService {
     private final ChatContextBuilder chatContextBuilder;
     private final ChatService chatService;
     private final ConversationReader conversationReader;
+    private final ConversationStreamCompletionService streamCompletionService;
 
     // 읽기만 해도
     // USER 저장 > AI 호출 > ASSISTANT 저장 > 응답
@@ -102,9 +103,10 @@ public class ConversationChatService {
                             String content =
                                     assistantContent.toString();
 
-                            messageCommandService.createAssistantMessage(
+                            streamCompletionService.complete(
                                     userId,
                                     conversationId,
+                                    userMessage,
                                     content
                             );
 
