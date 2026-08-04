@@ -25,26 +25,46 @@ public class ConversationRepositoryImpl implements ConversationRepositoryCustom 
     @Override
     public List<Conversation> findKnowledgeExtractionTargets() {
 
+        return queryFactory
+                .selectFrom(conversation)
+                .where(
+                        knowledgeExtractionTargetCondition()
+                )
+                .orderBy(
+                        conversation.updatedAt.asc()
+                )
+                .fetch();
+    }
+
+    @Override
+    public boolean existsKnowledgeExtractionTarget() {
+
+        Integer result =
+                queryFactory
+                        .selectOne()
+                        .from(conversation)
+                        .where(
+                                knowledgeExtractionTargetCondition()
+                        )
+                        .fetchFirst();
+
+        return result != null;
+    }
+
+    private BooleanExpression knowledgeExtractionTargetCondition() {
         LocalDateTime retryAvailableBefore =
                 LocalDateTime.now(clock)
                         .minusMinutes(
                                 RETRY_DELAY_MINUTES
                         );
 
-        return queryFactory
-                .selectFrom(conversation)
-                .where(
-                        conversation.status.eq(
-                                ConversationStatus.COMPLETED
-                        ),
+        return conversation.status
+                .eq(ConversationStatus.COMPLETED)
+                .and(
                         pendingOrRetryable(
                                 retryAvailableBefore
                         )
-                )
-                .orderBy(
-                        conversation.updatedAt.asc()
-                )
-                .fetch();
+                );
     }
 
     private BooleanExpression pendingOrRetryable(LocalDateTime retryAvailableBefore) {

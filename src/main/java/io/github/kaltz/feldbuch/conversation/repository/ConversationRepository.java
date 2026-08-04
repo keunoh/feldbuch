@@ -11,4 +11,5 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     Optional<Conversation> findByIdAndUserId(Long conversationId, Long userId);
 
     List<Conversation> findAllByUserIdOrderByUpdatedAtDesc(Long userId);
+
 }

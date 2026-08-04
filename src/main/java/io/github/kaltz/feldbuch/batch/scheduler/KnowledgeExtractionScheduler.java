@@ -1,6 +1,7 @@
 package io.github.kaltz.feldbuch.batch.scheduler;
 
 import io.github.kaltz.feldbuch.batch.config.KnowledgeExtractionBatchConfig;
+import io.github.kaltz.feldbuch.conversation.reader.KnowledgeConversationReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -20,6 +21,7 @@ public class KnowledgeExtractionScheduler {
             "[KNOWLEDGE_EXTRACTION_SCHEDULER]";
 
     private final JobLauncher jobLauncher;
+    private final KnowledgeConversationReader conversationReader;
 
     @Qualifier(
             KnowledgeExtractionBatchConfig.JOB_NAME
@@ -34,6 +36,16 @@ public class KnowledgeExtractionScheduler {
                     "${batch.knowledge-extraction.fixed-delay:60000}"
     )
     public void run() {
+
+        if (!conversationReader.hasExtractionTarget()) {
+            log.debug(
+                    "{} skip. No extraction targets.",
+                    BATCH_LOG
+            );
+
+            return;
+        }
+        
         JobParameters jobParameters =
                 new JobParametersBuilder()
                         .addLong(

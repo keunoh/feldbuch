@@ -20,4 +20,11 @@ public class KnowledgeConversationReader {
         return conversationRepository
                 .findKnowledgeExtractionTargets();
     }
+
+    public boolean hasExtractionTarget() {
+
+        return conversationRepository
+                .existsKnowledgeExtractionTarget();
+    }
+
 }

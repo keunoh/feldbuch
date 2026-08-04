@@ -7,4 +7,7 @@ import java.util.List;
 public interface ConversationRepositoryCustom {
 
     List<Conversation> findKnowledgeExtractionTargets();
+
+    boolean existsKnowledgeExtractionTarget();
+
 }
