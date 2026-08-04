@@ -61,10 +61,11 @@ class KnowledgeExtractionTaskletTest {
 
     @Test
     void 지식_추출_배치를_실행한다() throws Exception {
-
         // given
         when(conversationReader.findExtractionTargets())
-                .thenReturn(List.of(conversation));
+                .thenReturn(
+                        List.of(conversation)
+                );
 
         when(conversation.getId())
                 .thenReturn(1L);
@@ -84,7 +85,9 @@ class KnowledgeExtractionTaskletTest {
 
         // then
         assertThat(status)
-                .isEqualTo(RepeatStatus.FINISHED);
+                .isEqualTo(
+                        RepeatStatus.FINISHED
+                );
 
         InOrder inOrder =
                 inOrder(
@@ -105,8 +108,7 @@ class KnowledgeExtractionTaskletTest {
                         1L
                 );
 
-        inOrder.verify(statusService)
-                .complete(1L);
+        inOrder.verifyNoMoreInteractions();
 
         verify(statusService, never())
                 .fail(
@@ -116,8 +118,8 @@ class KnowledgeExtractionTaskletTest {
     }
 
     @Test
-    void 한_대화의_지식_추출이_실패해도_다음_대화를_계속_처리한다() throws Exception {
-
+    void 한_대화의_지식_추출이_실패해도_다음_대화를_계속_처리한다()
+            throws Exception {
         // given
         Long failedConversationId = 1L;
         Long failedUserId = 100L;
@@ -134,25 +136,40 @@ class KnowledgeExtractionTaskletTest {
                 );
 
         when(failedConversation.getId())
-                .thenReturn(failedConversationId);
+                .thenReturn(
+                        failedConversationId
+                );
 
         when(failedConversation.getUser())
-                .thenReturn(failedUser);
+                .thenReturn(
+                        failedUser
+                );
 
         when(failedUser.getId())
-                .thenReturn(failedUserId);
+                .thenReturn(
+                        failedUserId
+                );
 
         when(successConversation.getId())
-                .thenReturn(successConversationId);
+                .thenReturn(
+                        successConversationId
+                );
 
         when(successConversation.getUser())
-                .thenReturn(successUser);
+                .thenReturn(
+                        successUser
+                );
 
         when(successUser.getId())
-                .thenReturn(successUserId);
+                .thenReturn(
+                        successUserId
+                );
 
-        // 아래 설정이 첫 번째 대화의 AI 지식 추출 실패를 흉내 낸다.
-        doThrow(new RuntimeException("AI 호출 실패"))
+        doThrow(
+                new RuntimeException(
+                        "AI 호출 실패"
+                )
+        )
                 .when(extractionService)
                 .extract(
                         failedUserId,
@@ -168,20 +185,24 @@ class KnowledgeExtractionTaskletTest {
 
         // then
         assertThat(status)
-                .isEqualTo(RepeatStatus.FINISHED);
+                .isEqualTo(
+                        RepeatStatus.FINISHED
+                );
 
-        InOrder inOrder = inOrder(
-                conversationReader,
-                statusService,
-                extractionService
-        );
+        InOrder inOrder =
+                inOrder(
+                        conversationReader,
+                        statusService,
+                        extractionService
+                );
 
         inOrder.verify(conversationReader)
                 .findExtractionTargets();
 
-        // 첫 번째 대화
         inOrder.verify(statusService)
-                .start(failedConversationId);
+                .start(
+                        failedConversationId
+                );
 
         inOrder.verify(extractionService)
                 .extract(
@@ -195,9 +216,10 @@ class KnowledgeExtractionTaskletTest {
                         "AI 호출 실패"
                 );
 
-        // 두 번째 대화
         inOrder.verify(statusService)
-                .start(successConversationId);
+                .start(
+                        successConversationId
+                );
 
         inOrder.verify(extractionService)
                 .extract(
@@ -205,11 +227,7 @@ class KnowledgeExtractionTaskletTest {
                         successConversationId
                 );
 
-        inOrder.verify(statusService)
-                .complete(successConversationId);
-
-        verify(statusService, never())
-                .complete(failedConversationId);
+        inOrder.verifyNoMoreInteractions();
 
         verify(statusService, never())
                 .fail(
@@ -217,5 +235,4 @@ class KnowledgeExtractionTaskletTest {
                         "AI 호출 실패"
                 );
     }
-
 }

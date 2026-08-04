@@ -8,7 +8,6 @@ import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -19,7 +18,7 @@ public class KnowledgeNoteCommandService {
 
     private final KnowledgeNoteRepository knowledgeNoteRepository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public KnowledgeNote saveAiSummary(
             User user,
             Conversation conversation,

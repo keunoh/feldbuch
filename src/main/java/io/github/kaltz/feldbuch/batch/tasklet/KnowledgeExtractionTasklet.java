@@ -56,8 +56,6 @@ public class KnowledgeExtractionTasklet implements Tasklet {
                         conversationId
                 );
 
-                statusService.complete(conversationId);
-
                 successCount++;
 
                 log.info(

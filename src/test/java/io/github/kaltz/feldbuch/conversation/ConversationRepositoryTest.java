@@ -32,6 +32,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 class ConversationRepositoryTest {
 
+    private static final LocalDateTime CURRENT_TIME =
+            LocalDateTime.of(
+                    2026,
+                    8,
+                    2,
+                    12,
+                    0
+            );
+
     @Autowired
     private ConversationRepository conversationRepository;
 
@@ -42,18 +51,20 @@ class ConversationRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        user = User.builder()
-                .email("test@test.com")
-                .password("password")
-                .nickname("tester")
-                .role(UserRole.USER)
-                .build();
+        user =
+                User.builder()
+                        .email("test@test.com")
+                        .password("password")
+                        .nickname("tester")
+                        .role(UserRole.USER)
+                        .build();
 
         em.persist(user);
     }
 
     @TestConfiguration
     static class FixedClockConfig {
+
         @Bean
         public Clock clock() {
             return Clock.fixed(
@@ -68,11 +79,11 @@ class ConversationRepositoryTest {
     @Test
     void 완료되고_지식_추출_상태가_NONE이면_배치_대상으로_조회한다() {
         // given
-        Conversation conversation =
-                createCompletedConversation("미처리 대화");
+        createCompletedConversation(
+                "미처리 대화"
+        );
 
-        em.flush();
-        em.clear();
+        flushAndClear();
 
         // when
         List<Conversation> result =
@@ -81,51 +92,28 @@ class ConversationRepositoryTest {
 
         // then
         assertThat(result)
-                .extracting(Conversation::getTitle)
-                .containsExactly("미처리 대화");
+                .extracting(
+                        Conversation::getTitle
+                )
+                .containsExactly(
+                        "미처리 대화"
+                );
     }
 
     @Test
     void 실패했고_재시도_횟수가_3회_미만이며_대기시간이_지났으면_조회한다() {
         // given
         Conversation conversation =
-                createCompletedConversation("재시도 가능");
+                createCompletedConversation(
+                        "재시도 가능"
+                );
 
         conversation.failKnowledgeExtraction(
                 "OpenAI 서버 오류",
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        2,
-                        11,
-                        58
-                )
+                CURRENT_TIME.minusMinutes(2)
         );
 
-        em.flush();
-
-        /**
-         * 엔티티 메서드는 현재 시각을 저장하므로,
-         * 재시도 대기시간이 지난 상황을 만들기 위해 DB 값을 직접 조정한다.
-         */
-//        em.createNativeQuery("""
-//                        UPDATE conversations
-//                        SET knowledge_extract_failed_at = :failedAt
-//                        WHERE id = :conversationId
-//                        """)
-//                .setParameter(
-//                        "failedAt",
-//                        LocalDateTime.now()
-//                                .minusMinutes(2)
-//                )
-//                .setParameter(
-//                        "conversationId",
-//                        conversation.getId()
-//                )
-//                .executeUpdate();
-//
-//        em.flush();
-//        em.clear();
+        flushAndClear();
 
         // when
         List<Conversation> result =
@@ -134,49 +122,41 @@ class ConversationRepositoryTest {
 
         // then
         assertThat(result)
-                .extracting(Conversation::getTitle)
-                .containsExactly("재시도 가능");
+                .extracting(
+                        Conversation::getTitle
+                )
+                .containsExactly(
+                        "재시도 가능"
+                );
     }
 
     @Test
     void 실패_횟수가_3회면_배치_대상에서_제외한다() {
         // given
         Conversation conversation =
-                createCompletedConversation("재시도 초과");
-
-        LocalDateTime failedAt =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        2,
-                        12,
-                        0
+                createCompletedConversation(
+                        "재시도 초과"
                 );
 
-        conversation.failKnowledgeExtraction("첫 번째 실패", failedAt);
-        conversation.failKnowledgeExtraction("두 번째 실패", failedAt);
-        conversation.failKnowledgeExtraction("세 번째 실패", failedAt);
+        LocalDateTime failedAt =
+                CURRENT_TIME.minusMinutes(2);
 
-        em.flush();
+        conversation.failKnowledgeExtraction(
+                "첫 번째 실패",
+                failedAt
+        );
 
-//        em.createNativeQuery("""
-//                        UPDATE conversations
-//                        SET knowledge_extract_failed_at = :failedAt
-//                        WHERE id = :conversationId
-//                        """)
-//                .setParameter(
-//                        "failedAt",
-//                        LocalDateTime.now()
-//                                .minusMinutes(2)
-//                )
-//                .setParameter(
-//                        "conversationId",
-//                        conversation.getId()
-//                )
-//                .executeUpdate();
-//
-//        em.flush();
-//        em.clear();
+        conversation.failKnowledgeExtraction(
+                "두 번째 실패",
+                failedAt
+        );
+
+        conversation.failKnowledgeExtraction(
+                "세 번째 실패",
+                failedAt
+        );
+
+        flushAndClear();
 
         // when
         List<Conversation> result =
@@ -185,29 +165,28 @@ class ConversationRepositoryTest {
 
         // then
         assertThat(result)
-                .extracting(Conversation::getTitle)
-                .doesNotContain("재시도 초과");
+                .extracting(
+                        Conversation::getTitle
+                )
+                .doesNotContain(
+                        "재시도 초과"
+                );
     }
 
     @Test
     void 실패했지만_재시도_대기시간이_지나지_않았으면_제외한다() {
         // given
         Conversation conversation =
-                createCompletedConversation("대기 중");
+                createCompletedConversation(
+                        "대기 중"
+                );
 
         conversation.failKnowledgeExtraction(
                 "일시적인 서버 오류",
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        2,
-                        12,
-                        0
-                )
+                CURRENT_TIME
         );
 
-        em.flush();
-        em.clear();
+        flushAndClear();
 
         // when
         List<Conversation> result =
@@ -216,8 +195,12 @@ class ConversationRepositoryTest {
 
         // then
         assertThat(result)
-                .extracting(Conversation::getTitle)
-                .doesNotContain("대기 중");
+                .extracting(
+                        Conversation::getTitle
+                )
+                .doesNotContain(
+                        "대기 중"
+                );
     }
 
     @Test
@@ -230,8 +213,8 @@ class ConversationRepositoryTest {
                 );
 
         em.persist(conversation);
-        em.flush();
-        em.clear();
+
+        flushAndClear();
 
         // when
         List<Conversation> result =
@@ -240,33 +223,102 @@ class ConversationRepositoryTest {
 
         // then
         assertThat(result)
-                .extracting(Conversation::getTitle)
-                .doesNotContain("진행 중인 대화");
+                .extracting(
+                        Conversation::getTitle
+                )
+                .doesNotContain(
+                        "진행 중인 대화"
+                );
+    }
+
+    @Test
+    void 이미_지식_추출이_완료된_대화는_제외한다() {
+        // given
+        Conversation extracted =
+                createCompletedConversation(
+                        "추출 완료"
+                );
+
+        extracted.completeKnowledgeExtraction(
+                10L
+        );
+
+        flushAndClear();
+
+        // when
+        List<Conversation> result =
+                conversationRepository
+                        .findKnowledgeExtractionTargets();
+
+        // then
+        assertThat(result)
+                .extracting(
+                        Conversation::getTitle
+                )
+                .doesNotContain(
+                        "추출 완료"
+                );
+    }
+
+    @Test
+    void 지식_추출_대상이_존재하면_true를_반환한다() {
+        // given
+        createCompletedConversation(
+                "추출 대상"
+        );
+
+        flushAndClear();
+
+        // when
+        boolean result =
+                conversationRepository
+                        .existsKnowledgeExtractionTarget();
+
+        // then
+        assertThat(result)
+                .isTrue();
+    }
+
+    @Test
+    void 지식_추출_대상이_없으면_false를_반환한다() {
+        // given
+        Conversation active =
+                Conversation.create(
+                        user,
+                        "진행 중"
+                );
+
+        em.persist(active);
+
+        Conversation extracted =
+                createCompletedConversation(
+                        "이미 추출됨"
+                );
+
+        extracted.completeKnowledgeExtraction(
+                20L
+        );
+
+        flushAndClear();
+
+        // when
+        boolean result =
+                conversationRepository
+                        .existsKnowledgeExtractionTarget();
+
+        // then
+        assertThat(result)
+                .isFalse();
     }
 
     @Test
     @DisplayName("지식 추출 대상 Conversation을 조회한다.")
     void findKnowledgeExtractionTargets() {
-
         // given
-//        User user = User.builder()
-//                .email("test@test.com")
-//                .password("1234")
-//                .nickname("tester")
-//                .role(UserRole.USER)
-//                .build();
-//
-//        em.persist(user);
-
         Conversation target =
-                Conversation.create(
-                        user,
+                createCompletedConversation(
                         "Spring"
                 );
-
-        target.complete();
-
-        em.persist(target);
 
         Conversation active =
                 Conversation.create(
@@ -277,18 +329,15 @@ class ConversationRepositoryTest {
         em.persist(active);
 
         Conversation extracted =
-                Conversation.create(
-                        user,
+                createCompletedConversation(
                         "JPA"
                 );
 
-        extracted.complete();
-        extracted.completeKnowledgeExtraction();
+        extracted.completeKnowledgeExtraction(
+                100L
+        );
 
-        em.persist(extracted);
-
-        em.flush();
-        em.clear();
+        flushAndClear();
 
         // when
         List<Conversation> result =
@@ -299,29 +348,136 @@ class ConversationRepositoryTest {
         assertThat(result)
                 .hasSize(1);
 
-        assertThat(result.getFirst().getTitle())
-                .isEqualTo("Spring");
+        Conversation found =
+                result.getFirst();
 
-        assertThat(result.getFirst().getStatus())
+        assertThat(found.getId())
+                .isEqualTo(
+                        target.getId()
+                );
+
+        assertThat(found.getTitle())
+                .isEqualTo(
+                        "Spring"
+                );
+
+        assertThat(found.getStatus())
                 .isEqualTo(
                         ConversationStatus.COMPLETED
                 );
 
-        assertThat(result.getFirst().getKnowledgeExtractStatus())
+        assertThat(found.getKnowledgeExtractStatus())
                 .isEqualTo(
                         KnowledgeExtractStatus.NONE
                 );
     }
 
-    private Conversation createCompletedConversation(String title) {
+    @Test
+    void 마지막_메시지_이후_기준_시간이_지난_ACTIVE_대화를_조회한다() {
+        // given
+        Conversation inactive =
+                Conversation.create(
+                        user,
+                        "오래된 대화"
+                );
 
+        inactive.recordMessageActivity(
+                LocalDateTime.of(
+                        2026,
+                        8,
+                        2,
+                        11,
+                        0
+                )
+        );
+
+        em.persist(inactive);
+
+        Conversation recent =
+                Conversation.create(
+                        user,
+                        "최근 대화"
+                );
+
+        recent.recordMessageActivity(
+                LocalDateTime.of(
+                        2026,
+                        8,
+                        2,
+                        11,
+                        50
+                )
+        );
+
+        em.persist(recent);
+
+        Conversation completed =
+                Conversation.create(
+                        user,
+                        "이미 완료된 대화"
+                );
+
+        completed.recordMessageActivity(
+                LocalDateTime.of(
+                        2026,
+                        8,
+                        2,
+                        10,
+                        0
+                )
+        );
+
+        completed.complete();
+
+        em.persist(completed);
+
+        em.flush();
+        em.clear();
+
+        LocalDateTime cutoff =
+                LocalDateTime.of(
+                        2026,
+                        8,
+                        2,
+                        11,
+                        30
+                );
+
+        // when
+        List<Conversation> result =
+                conversationRepository
+                        .findInactiveActiveConversations(
+                                cutoff
+                        );
+
+        // then
+        assertThat(result)
+                .extracting(
+                        Conversation::getTitle
+                )
+                .containsExactly(
+                        "오래된 대화"
+                );
+    }
+
+    private Conversation createCompletedConversation(
+            String title
+    ) {
         Conversation conversation =
-                Conversation.create(user, title);
+                Conversation.create(
+                        user,
+                        title
+                );
 
         conversation.complete();
 
         em.persist(conversation);
 
         return conversation;
+    }
+
+    private void flushAndClear() {
+        em.flush();
+        em.clear();
     }
 }

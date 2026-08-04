@@ -20,49 +20,52 @@ public class KnowledgeExtractionStatusService {
     /**
      * 지식 추출 작업 시작 상태로 변경한다.
      * <p>
-     * 배치의 외부 트랜잭션과 분리하여 즉시 반영한다.
+     * 배치 Step의 트랜잭션과 분리하여
+     * PROCESSING 상태를 즉시 반영한다.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void start(Long conversationId) {
-
-        Conversation conversation = getConversation(conversationId);
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW
+    )
+    public void start(
+            Long conversationId
+    ) {
+        Conversation conversation =
+                getConversation(conversationId);
 
         conversation.startKnowledgeExtraction();
     }
 
     /**
-     * 지식 추출 작업 완료 상태로 변경한다.
+     * 지식 추출 실패 상태로 변경한다.
+     * <p>
+     * 원래 추출 트랜잭션이 롤백된 뒤에도
+     * 실패 상태를 별도로 기록한다.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void complete(Long conversationId) {
-
-        Conversation conversation = getConversation(conversationId);
-
-        conversation.completeKnowledgeExtraction();
-    }
-
-    /**
-     * 지식 추출 작업 실패 상태로 변경한다.
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void fail(Long conversationId, String errorMessage) {
-
-        Conversation conversation = getConversation(conversationId);
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW
+    )
+    public void fail(
+            Long conversationId,
+            String errorMessage
+    ) {
+        Conversation conversation =
+                getConversation(conversationId);
 
         conversation.failKnowledgeExtraction(
                 errorMessage,
                 LocalDateTime.now(clock)
         );
-
     }
 
-    private Conversation getConversation(Long conversationId) {
-
+    private Conversation getConversation(
+            Long conversationId
+    ) {
         return conversationRepository
                 .findById(conversationId)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
-                                "대화를 찾을 수 없습니다. conversationId=" + conversationId
+                                "대화를 찾을 수 없습니다. conversationId="
+                                        + conversationId
                         )
                 );
     }

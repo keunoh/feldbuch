@@ -14,7 +14,8 @@ import java.util.List;
 import static io.github.kaltz.feldbuch.conversation.entity.QConversation.conversation;
 
 @RequiredArgsConstructor
-public class ConversationRepositoryImpl implements ConversationRepositoryCustom {
+public class ConversationRepositoryImpl
+        implements ConversationRepositoryCustom {
 
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_MINUTES = 1L;
@@ -24,7 +25,6 @@ public class ConversationRepositoryImpl implements ConversationRepositoryCustom 
 
     @Override
     public List<Conversation> findKnowledgeExtractionTargets() {
-
         return queryFactory
                 .selectFrom(conversation)
                 .where(
@@ -38,7 +38,6 @@ public class ConversationRepositoryImpl implements ConversationRepositoryCustom 
 
     @Override
     public boolean existsKnowledgeExtractionTarget() {
-
         Integer result =
                 queryFactory
                         .selectOne()
@@ -51,7 +50,35 @@ public class ConversationRepositoryImpl implements ConversationRepositoryCustom 
         return result != null;
     }
 
-    private BooleanExpression knowledgeExtractionTargetCondition() {
+    @Override
+    public List<Conversation> findInactiveActiveConversations(
+            LocalDateTime cutoff
+    ) {
+        if (cutoff == null) {
+            throw new IllegalArgumentException(
+                    "자동 완료 기준 시각은 필수입니다."
+            );
+        }
+
+        return queryFactory
+                .selectFrom(conversation)
+                .where(
+                        conversation.status.eq(
+                                ConversationStatus.ACTIVE
+                        ),
+                        conversation.lastMessageAt.isNotNull(),
+                        conversation.lastMessageAt.loe(
+                                cutoff
+                        )
+                )
+                .orderBy(
+                        conversation.lastMessageAt.asc()
+                )
+                .fetch();
+    }
+
+    private BooleanExpression
+    knowledgeExtractionTargetCondition() {
         LocalDateTime retryAvailableBefore =
                 LocalDateTime.now(clock)
                         .minusMinutes(
@@ -67,28 +94,39 @@ public class ConversationRepositoryImpl implements ConversationRepositoryCustom 
                 );
     }
 
-    private BooleanExpression pendingOrRetryable(LocalDateTime retryAvailableBefore) {
-
+    private BooleanExpression pendingOrRetryable(
+            LocalDateTime retryAvailableBefore
+    ) {
         BooleanExpression pending =
                 conversation
                         .knowledgeExtractStatus
-                        .eq(KnowledgeExtractStatus.NONE);
+                        .eq(
+                                KnowledgeExtractStatus.NONE
+                        );
 
         BooleanExpression retryableFailure =
                 conversation
                         .knowledgeExtractStatus
-                        .eq(KnowledgeExtractStatus.FAILED)
+                        .eq(
+                                KnowledgeExtractStatus.FAILED
+                        )
                         .and(
                                 conversation
                                         .knowledgeExtractRetryCount
-                                        .lt(MAX_RETRY_COUNT)
+                                        .lt(
+                                                MAX_RETRY_COUNT
+                                        )
                         )
                         .and(
                                 conversation
                                         .knowledgeExtractFailedAt
-                                        .loe(retryAvailableBefore)
+                                        .loe(
+                                                retryAvailableBefore
+                                        )
                         );
 
-        return pending.or(retryableFailure);
+        return pending.or(
+                retryableFailure
+        );
     }
 }

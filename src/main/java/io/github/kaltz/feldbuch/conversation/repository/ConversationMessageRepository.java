@@ -12,6 +12,17 @@ public interface ConversationMessageRepository extends JpaRepository<Conversatio
 
     List<ConversationMessage> findAllByConversationIdOrderBySequenceAsc(Long conversationId);
 
+    List<ConversationMessage>
+    findAllByConversationIdOrderByIdAsc(
+            Long conversationId
+    );
+
+    List<ConversationMessage>
+    findAllByConversationIdAndIdGreaterThanOrderByIdAsc(
+            Long conversationId,
+            Long messageId
+    );
+
     void deleteAllByConversationId(Long conversationId);
 
     default int nextSequence(Long conversationId) {

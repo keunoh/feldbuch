@@ -3,8 +3,10 @@ package io.github.kaltz.feldbuch.knowledge.service;
 import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeSummaryResponse;
 import io.github.kaltz.feldbuch.ai.service.AiKnowledgeSummaryService;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
+import io.github.kaltz.feldbuch.conversation.entity.ConversationMessage;
 import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
-import io.github.kaltz.feldbuch.knowledge.context.ConversationKnowledgeContextBuilder;
+import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContext;
+import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContextBuilder;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.reader.UserReader;
@@ -31,7 +33,7 @@ class KnowledgeExtractionServiceTest {
     private ConversationReader conversationReader;
 
     @Mock
-    private ConversationKnowledgeContextBuilder contextBuilder;
+    private ConversationAiContextBuilder contextBuilder;
 
     @Mock
     private AiKnowledgeSummaryService aiKnowledgeSummaryService;
@@ -46,6 +48,12 @@ class KnowledgeExtractionServiceTest {
     private Conversation conversation;
 
     @Mock
+    private ConversationMessage userMessage;
+
+    @Mock
+    private ConversationMessage assistantMessage;
+
+    @Mock
     private KnowledgeNote knowledgeNote;
 
     @InjectMocks
@@ -57,13 +65,22 @@ class KnowledgeExtractionServiceTest {
         Long userId = 1L;
         Long conversationId = 1L;
 
-        String conversationContext = """
+        String conversationContent = """
                 USER:
                 Spring Batch가 무엇인지 설명해줘.
                 
                 AI:
                 Spring Batch는 대용량 일괄 처리를 위한 프레임워크입니다.
                 """.trim();
+
+        ConversationAiContext context =
+                new ConversationAiContext(
+                        List.of(
+                                userMessage,
+                                assistantMessage
+                        ),
+                        conversationContent
+                );
 
         AiKnowledgeSummaryResponse response =
                 new AiKnowledgeSummaryResponse(
@@ -82,17 +99,33 @@ class KnowledgeExtractionServiceTest {
                         )
                 );
 
+        when(userMessage.getId())
+                .thenReturn(10L);
+
+        when(assistantMessage.getId())
+                .thenReturn(11L);
+
         when(userReader.get(userId))
                 .thenReturn(user);
 
-        when(conversationReader.get(userId, conversationId))
-                .thenReturn(conversation);
+        when(
+                conversationReader.get(
+                        userId,
+                        conversationId
+                )
+        ).thenReturn(conversation);
 
-        when(contextBuilder.build(userId, conversationId))
-                .thenReturn(conversationContext);
+        when(
+                contextBuilder.build(
+                        conversation
+                )
+        ).thenReturn(context);
 
-        when(aiKnowledgeSummaryService.summarize(conversationContext))
-                .thenReturn(response);
+        when(
+                aiKnowledgeSummaryService.summarize(
+                        conversationContent
+                )
+        ).thenReturn(response);
 
         when(
                 knowledgeNoteCommandService.saveAiSummary(
@@ -110,27 +143,35 @@ class KnowledgeExtractionServiceTest {
                 );
 
         // then
-        assertThat(result).isSameAs(knowledgeNote);
+        assertThat(result)
+                .isSameAs(knowledgeNote);
 
-        InOrder inOrder = Mockito.inOrder(
-                userReader,
-                conversationReader,
-                contextBuilder,
-                aiKnowledgeSummaryService,
-                knowledgeNoteCommandService
-        );
+        InOrder inOrder =
+                Mockito.inOrder(
+                        userReader,
+                        conversationReader,
+                        contextBuilder,
+                        aiKnowledgeSummaryService,
+                        knowledgeNoteCommandService,
+                        conversation
+                );
 
         inOrder.verify(userReader)
                 .get(userId);
 
         inOrder.verify(conversationReader)
-                .get(userId, conversationId);
+                .get(
+                        userId,
+                        conversationId
+                );
 
         inOrder.verify(contextBuilder)
-                .build(userId, conversationId);
+                .build(conversation);
 
         inOrder.verify(aiKnowledgeSummaryService)
-                .summarize(conversationContext);
+                .summarize(
+                        conversationContent
+                );
 
         inOrder.verify(knowledgeNoteCommandService)
                 .saveAiSummary(
@@ -139,7 +180,11 @@ class KnowledgeExtractionServiceTest {
                         response
                 );
 
+        inOrder.verify(conversation)
+                .completeKnowledgeExtraction(
+                        11L
+                );
+
         inOrder.verifyNoMoreInteractions();
     }
-
 }
