@@ -1,0 +1,63 @@
+package io.github.kaltz.feldbuch.batch.scheduler;
+
+import io.github.kaltz.feldbuch.batch.config.KnowledgeExtractionBatchConfig;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class KnowledgeExtractionScheduler {
+
+    private static final String BATCH_LOG =
+            "[KNOWLEDGE_EXTRACTION_SCHEDULER]";
+
+    private final JobLauncher jobLauncher;
+
+    @Qualifier(
+            KnowledgeExtractionBatchConfig.JOB_NAME
+    )
+    private final Job knowledgeExtractionJob;
+
+    /**
+     * 1분마다 지식 추출 대화를 확인한다.
+     */
+    @Scheduled(
+            fixedDelayString =
+                    "${batch.knowledge-extraction.fixed-delay:60000}"
+    )
+    public void run() {
+        JobParameters jobParameters =
+                new JobParametersBuilder()
+                        .addLong(
+                                "requestedAt",
+                                System.currentTimeMillis()
+                        )
+                        .toJobParameters();
+
+        try {
+            log.info(
+                    "{} Job launch requested.",
+                    BATCH_LOG
+            );
+
+            jobLauncher.run(
+                    knowledgeExtractionJob,
+                    jobParameters
+            );
+        } catch (Exception exception) {
+            log.error(
+                    "{} Job launch failed.",
+                    BATCH_LOG,
+                    exception
+            );
+        }
+    }
+}
