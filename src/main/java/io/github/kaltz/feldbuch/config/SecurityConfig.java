@@ -41,7 +41,9 @@ public class SecurityConfig {
                 })
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.IF_REQUIRED
+                        )
                 )
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(
@@ -58,12 +60,29 @@ public class SecurityConfig {
                                 "/images/**",
 
                                 "/api/users/signup",
-                                "/api/auth/login"
+                                "/api/auth/login",
+
+                                /**
+                                 * Google OAuth2 로그인 시작 경로
+                                 */
+                                "/oauth2/authorization/**",
+                                /**
+                                 * Google 인증 후 Spring Security 콜백 경로
+                                 */
+                                "/login/oauth2/code/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(form -> form.disable())
+                /*
+                 * OAuth2 / OIDC 로그인 활성화
+                 *
+                 * /oauth2/authorization/google
+                 * /login/oauth2/code/google
+                 */
+                .oauth2Login(oauth2 -> {
+                })
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class

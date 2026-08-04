@@ -38,6 +38,9 @@ public enum ErrorCode {
 
     // KnowledgeNote
     KNOWLEDGE_NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "KNOTE-001", "KnowledgeNote를 찾을 수 없습니다."),
+
+    // OAuth2
+    INVALID_GOOGLE_ACCOUNT(HttpStatus.UNAUTHORIZED, "OAUTH2-001", "유효하지 않은 Google 계정입니다."),
     ;
 
 

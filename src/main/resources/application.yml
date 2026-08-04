@@ -19,18 +19,6 @@ spring:
     job:
       enabled: false
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope:
-              - openid
-              - profile
-              - email
-
 openai:
   base-url: https://api.openai.com/v1
   model: gpt-4.1-nano
