@@ -13,7 +13,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -32,12 +31,10 @@ public class SecurityConfig {
     private final GoogleOidcUserService googleOidcUserService;
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            GoogleOidcUserService googleOidcUserService
+    ) throws Exception {
         http
                 .cors(cors -> {
                 })
@@ -75,8 +72,12 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(form -> form.disable())
+                .httpBasic(httpBasic ->
+                        httpBasic.disable()
+                )
+                .formLogin(form ->
+                        form.disable()
+                )
                 /*
                  * OAuth2 / OIDC 로그인 활성화
                  *
@@ -84,19 +85,21 @@ public class SecurityConfig {
                  * /login/oauth2/code/google
                  */
                 .oauth2Login(oauth2 ->
-                        oauth2
-                                .userInfoEndpoint(userInfo ->
-                                        userInfo.oidcUserService(
-                                                googleOidcUserService
-                                        )
+                        oauth2.userInfoEndpoint(userInfo ->
+                                userInfo.oidcUserService(
+                                        googleOidcUserService
                                 )
+                        )
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 )
                 .exceptionHandling(exception ->
-                        exception.authenticationEntryPoint(jwtAuthenticationEntryPoint));
+                        exception.authenticationEntryPoint(
+                                jwtAuthenticationEntryPoint
+                        )
+                );
 
         return http.build();
     }
@@ -107,7 +110,8 @@ public class SecurityConfig {
             CustomUserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder
     ) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider();
 
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
