@@ -19,6 +19,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 선택한 사이드바 모드, 대화, Knowledge 폴더, Knowledge 경로, Knowledge 노트는 `localStorage`에 저장해 새로고침 후 복원합니다.
 - 로그아웃은 대화/지식 모드 양쪽 헤더에서 동일하게 제공됩니다.
 - 대화 메시지 전송은 사용자 메시지와 빈 Assistant 메시지를 낙관적으로 추가한 뒤 SSE 토큰을 누적 표시하고, 완료 후 상세를 재조회합니다.
+- 메시지가 저장될 때 Conversation은 ACTIVE 상태와 `lastMessageAt`을 갱신하며, 완료된 대화에 새 메시지가 추가되면 다음 증분 Knowledge 추출을 위해 추출 상태를 다시 `NONE`으로 준비합니다.
 
 ## Screens
 
@@ -94,11 +95,15 @@ flowchart TD
 - Conversation 제목 수정/삭제 API
 - ConversationMessage Entity, Controller, Command/Query Service
 - Conversation별 메시지 순서 저장
+- Conversation별 마지막 메시지 활동 시각 저장
+- Conversation 자동 완료 Scheduler와 Completion Service
+- 비활성 ACTIVE Conversation 조회 QueryDSL 쿼리
 - 대화 내역을 OpenAI Chat Completion 메시지 컨텍스트로 변환
 - Conversation Chat API와 Conversation Chat Stream API
 - `StreamResponse` 기반 `TOKEN`, `COMPLETE`, `ERROR` 스트리밍 이벤트 계약
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - Conversation Knowledge 추출 상태 필드와 실패 재시도 메타데이터
+- Conversation Knowledge 추출 체크포인트 `lastExtractedMessageId`
 - Knowledge Entity, KnowledgeNote Entity, KnowledgeNote Keyword ElementCollection
 - KnowledgeRepository, KnowledgeNoteRepository
 - KnowledgePathResolver
@@ -106,11 +111,12 @@ flowchart TD
 - KnowledgeSummaryPrompt
 - AiKnowledgeSummaryService, OpenAiKnowledgeSummaryService
 - KnowledgeExtractionService, KnowledgeExtractionStatusService
-- ConversationKnowledgeContextBuilder
+- ConversationAiContextBuilder
 - KnowledgeConversationReader
 - KnowledgeExtractionBatchConfig, KnowledgeExtractionTasklet, LocalKnowledgeExtractionJobRunner
+- KnowledgeExtractionScheduler
 - 사용자별 Knowledge 루트/자식 조회, 동일 폴더명 중복 확인 쿼리
-- QueryDSL 기반 Knowledge 추출 대상 Conversation 조회 쿼리
+- QueryDSL 기반 Knowledge 추출 대상 Conversation 조회와 대상 존재 여부 확인 쿼리
 - KnowledgeNote의 Knowledge별/Conversation별/사용자별 조회 쿼리
 - Knowledge Tree 조회 API, KnowledgeNote 목록/상세 조회 API
 - Thymeleaf 기반 로그인/대화 비교 화면
@@ -152,8 +158,14 @@ flowchart TD
 - 로컬 Docker 인프라: MySQL, Redis
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
 - Knowledge 추출 배치 로컬 실행 플래그: `feldbuch.batch.knowledge-extraction.run=true`
+- Knowledge 추출 스케줄러 간격 설정 키: `batch.knowledge-extraction.fixed-delay`
+- Knowledge 추출 스케줄러 기본 간격: `60000` ms
 - Knowledge 추출 배치 Job 이름: `knowledgeExtractionJob`
 - Knowledge 추출 배치 Step 이름: `knowledgeExtractionStep`
+- Conversation 자동 완료 스케줄러 간격 설정 키: `conversation.auto-completion.fixed-delay`
+- Conversation 자동 완료 스케줄러 기본 간격: `60000` ms
+- Conversation 자동 완료 비활성 시간 설정 키: `conversation.auto-completion.inactivity-timeout`
+- Conversation 자동 완료 기본 비활성 시간: `30m`
 
 ## Architecture
 
@@ -211,6 +223,10 @@ flowchart TD
     ConversationController --> ConversationQueryService
     ConversationMessageController --> ConversationMessageCommandService
     ConversationMessageController --> ConversationMessageQueryService
+    ConversationCompletionScheduler --> ConversationCompletionService
+    ConversationCompletionService --> ConversationRepository
+    ConversationMessageCommandService --> Conversation
+    Conversation --> LastMessageAt
 ```
 
 ### Knowledge and Batch
@@ -231,13 +247,16 @@ flowchart TD
     KnowledgePathResolver --> KnowledgeRepository
     KnowledgeNoteCommandService --> KnowledgeNoteRepository
 
+    KnowledgeExtractionScheduler --> KnowledgeConversationReader
+    KnowledgeExtractionScheduler --> KnowledgeExtractionJob
     LocalKnowledgeExtractionJobRunner --> KnowledgeExtractionJob
     KnowledgeExtractionJob --> KnowledgeExtractionStep
     KnowledgeExtractionStep --> KnowledgeExtractionTasklet
     KnowledgeExtractionTasklet --> KnowledgeConversationReader
     KnowledgeExtractionTasklet --> KnowledgeExtractionService
     KnowledgeExtractionTasklet --> KnowledgeExtractionStatusService
-    KnowledgeExtractionService --> ConversationKnowledgeContextBuilder
+    KnowledgeExtractionService --> ConversationAiContextBuilder
+    ConversationAiContextBuilder --> ConversationMessageReader
     KnowledgeExtractionService --> OpenAiKnowledgeSummaryService
     KnowledgeExtractionService --> KnowledgeNoteCommandService
 ```
@@ -432,7 +451,7 @@ StreamResponse
 - `users`: 노트, 대화, Knowledge의 소유자
 - `notes`: 개발 노트와 학습 상태
 - `ai_job`: 비동기 AI 요약 작업 상태
-- `conversations`: AI 학습 대화 세션과 Knowledge 추출 상태
+- `conversations`: AI 학습 대화 세션, 마지막 메시지 활동 시각, Knowledge 추출 상태와 체크포인트
 - `conversation_messages`: 대화별 USER/ASSISTANT 메시지
 - `knowledge`: 사용자별 지식 폴더 트리
 - `knowledge_notes`: 대화에서 AI가 추출한 학습 노트
@@ -440,19 +459,40 @@ StreamResponse
 
 ## Knowledge Extraction Batch
 
-Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 위한 Spring Batch 작업입니다.
+Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 위한 Spring Batch 작업입니다. Conversation은 메시지가 저장될 때 `lastMessageAt`을 갱신하고 ACTIVE 상태가 되며, 자동 완료 스케줄러가 일정 시간 비활성인 ACTIVE 대화를 COMPLETED로 전환합니다. COMPLETED 대화만 Knowledge 추출 대상이 됩니다.
 
 - Job 이름: `knowledgeExtractionJob`
 - Step 이름: `knowledgeExtractionStep`
 - 실행 방식: Tasklet 기반 단일 Step
-- 실행 시점: `local` 프로필에서 `feldbuch.batch.knowledge-extraction.run=true` 설정 시 애플리케이션 시작 직후 1회 실행
-- Job Parameter: `executionTime=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
+- 실행 시점: `KnowledgeExtractionScheduler`가 `batch.knowledge-extraction.fixed-delay` 기준으로 대상 존재 여부를 확인한 뒤 Job 실행
+- 기본 스케줄 간격: 60초
+- 로컬 수동 실행: `local` 프로필에서 `feldbuch.batch.knowledge-extraction.run=true` 설정 시 애플리케이션 시작 직후 1회 실행
+- Scheduler Job Parameter: `requestedAt=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
+- Local Runner Job Parameter: `executionTime=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
 - 반복 방식: 한 번 실행할 때 조회된 대상 Conversation 목록을 순회 처리
-- 현재 정기 주기: 별도 Scheduler/Cron은 아직 없음
-- 대상 조건: `status = COMPLETED`이고 `knowledgeExtractStatus = NONE`
+- 대상 조건: `status = COMPLETED`이고 `knowledgeExtractStatus = NONE` 또는 재시도 가능한 `FAILED`
 - 재시도 조건: `knowledgeExtractStatus = FAILED`, `knowledgeExtractRetryCount < 3`, `knowledgeExtractFailedAt <= now - 1 minute`
+- 제외 조건: ACTIVE 대화, 이미 `COMPLETED`로 추출된 대화, 실패 횟수 3회 이상, 실패 후 1분 대기 시간이 지나지 않은 대화
+- 처리 순서: `updatedAt ASC`
+- 대상 존재 확인: `existsKnowledgeExtractionTarget()`으로 스케줄러가 불필요한 Job 실행을 건너뜀
 - 성공 처리: `PROCESSING -> COMPLETED`, 오류 메시지와 실패 시각 초기화
 - 실패 처리: `FAILED`로 변경, 재시도 횟수 증가, 실패 메시지와 실패 시각 저장
+- 체크포인트: 성공 시 `lastExtractedMessageId`에 마지막 추출 메시지 ID를 저장
+- 증분 추출: 완료된 대화에 새 메시지가 추가되면 상태를 `NONE`으로 되돌리고 `lastExtractedMessageId` 이후 메시지만 AI 컨텍스트로 구성
+
+## Conversation Auto Completion
+
+비활성 대화 자동 완료는 사용자가 명시적으로 대화를 닫지 않아도 Knowledge 추출 대상이 자연스럽게 만들어지도록 하는 스케줄링 흐름입니다.
+
+- Scheduler: `ConversationCompletionScheduler`
+- Service: `ConversationCompletionService`
+- Repository query: `findInactiveActiveConversations(cutoff)`
+- 기본 실행 간격: `conversation.auto-completion.fixed-delay=60000`
+- 기본 비활성 시간: `conversation.auto-completion.inactivity-timeout=30m`
+- 대상 조건: `status = ACTIVE`, `lastMessageAt IS NOT NULL`, `lastMessageAt <= cutoff`
+- 제외 조건: 최근 메시지가 있는 ACTIVE 대화, 이미 COMPLETED인 대화, 메시지가 아직 없는 대화
+- 정렬 기준: `lastMessageAt ASC`
+- 유효성: 비활성 시간은 null, 0, 음수일 수 없음
 
 ## Project Structure
 
@@ -503,6 +543,9 @@ frontend/src
 - Facade와 Async Service를 통한 AI Job 요청 흐름 분리
 - OpenAI 일반 요청과 SSE 스트리밍 요청 계층 분리
 - Conversation 메시지 영속화 후 AI 컨텍스트 구성
+- 메시지 저장 시 `lastMessageAt` 갱신과 완료 대화 재활성화
+- 비활성 ACTIVE 대화 자동 완료 후 Knowledge 추출 대상으로 연결
+- `lastExtractedMessageId` 기반 증분 Knowledge 추출
 - 낙관적 사용자 메시지와 스트리밍 Assistant 메시지 렌더링
 - Markdown 렌더링과 sanitize 책임을 `markdownRenderer.js`로 분리
 - Knowledge 폴더 트리 자기 참조 모델링
@@ -511,6 +554,7 @@ frontend/src
 - 폴더/노트 검색어 하이라이트를 공통 컴포넌트로 분리
 - 사용자의 마지막 작업 위치를 localStorage로 복원
 - Batch 대상 조회와 재시도 조건을 QueryDSL로 관리
+- Scheduler에서 대상 존재 여부를 먼저 확인해 불필요한 Batch 실행 방지
 - Knowledge 추출 상태 변경은 별도 트랜잭션으로 반영
 - Request ID 기반 요청 추적
 - Thymeleaf 화면은 비교용으로 유지하고 Vue SPA를 주 사용자 화면으로 전환
@@ -522,8 +566,8 @@ frontend/src
 - Knowledge 폴더/노트 생성/수정/삭제 UI 확장
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
-- Knowledge 추출 Batch 정기 스케줄러 연결
 - Knowledge 추출 대상 조회 인덱스 추가
+- Conversation 자동 완료/Knowledge 추출 스케줄러 운영 설정 외부화 고도화
 - AI 태그 생성
 - 코드 리뷰
 - 학습 퀴즈 생성

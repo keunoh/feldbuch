@@ -22,9 +22,12 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Conversation Message 저장과 대화 컨텍스트 기반 AI 채팅
 - OpenAI WebClient 기반 SSE 스트리밍 응답
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
+- 메시지 저장 시 Conversation 활동 시각 갱신과 완료 대화 재활성화
+- 30분 기본 비활성 시간 이후 ACTIVE Conversation 자동 완료
 - 완료된 Conversation 기반 Knowledge 추출 대상 관리
+- 마지막 추출 메시지 ID 기반 증분 Knowledge 추출 체크포인트
 - Knowledge 폴더 트리와 AI 추출 KnowledgeNote 저장
-- Knowledge 추출 Batch Job/Step/Tasklet과 실패 재시도 상태 관리
+- Knowledge 추출 Batch Job/Step/Tasklet, 스케줄러, 실패 재시도 상태 관리
 - Vue Router Guard, Axios Interceptor, Fetch 기반 SSE 클라이언트
 - Markdown 렌더링, DOMPurify sanitize, highlight.js 코드 강조, 코드 복사 UX
 - 대화/지식 탭을 가진 Workspace Sidebar와 Knowledge 노트 워크스페이스
@@ -57,6 +60,8 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
 - Knowledge 추출 배치는 로컬 프로필에서 `feldbuch.batch.knowledge-extraction.run=true`일 때 `ApplicationRunner`가 애플리케이션 시작 직후 1회 실행합니다.
+- Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 기본값은 60초입니다.
+- Conversation 자동 완료 스케줄러는 `conversation.auto-completion.fixed-delay` 기본 60초마다 실행되고, `conversation.auto-completion.inactivity-timeout` 기본 30분을 기준으로 비활성 ACTIVE 대화를 COMPLETED로 전환합니다.
 
 ## Frontend Direction
 
@@ -114,6 +119,10 @@ flowchart TD
     ConversationChatService --> OpenAiWebClient
     OpenAiWebClient --> OpenAI
 
+    ConversationCompletionScheduler --> ConversationCompletionService
+    ConversationCompletionService --> ConversationRepository
+    KnowledgeExtractionScheduler --> KnowledgeExtractionJob
+    KnowledgeExtractionJob --> KnowledgeExtractionTasklet
     KnowledgeExtractionTasklet --> KnowledgeExtractionService
     KnowledgeExtractionService --> OpenAiKnowledgeSummaryService
     KnowledgeExtractionService --> KnowledgeNoteCommandService
@@ -125,10 +134,10 @@ flowchart TD
 src/main/java/io.github.kaltz.feldbuch
 ├── ai               # OpenAI 연동, 요약, 채팅, AI Job
 ├── auth             # 로그인, JWT 인증
-├── batch            # Spring Batch 요약/Knowledge 추출 파이프라인
+├── batch            # Spring Batch 요약/Knowledge 추출 파이프라인과 스케줄러
 ├── common           # 공통 응답, 예외, requestId 로깅
 ├── config           # Security, Redis, OpenAI, Batch 설정
-├── conversation     # 대화, 메시지, 대화형 AI
+├── conversation     # 대화, 메시지, 대화형 AI, 비활성 대화 자동 완료
 ├── knowledge        # 지식 폴더, AI 추출 학습 노트
 ├── note             # 개발 노트 CRUD/Search
 ├── redis            # Redis 유틸리티
@@ -157,7 +166,6 @@ frontend/src
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
-- Knowledge 추출 Batch 정기 스케줄러 연결
 - AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
 - Docker Compose 운영 구성 정리
 - 테스트 커버리지와 모니터링 확장
