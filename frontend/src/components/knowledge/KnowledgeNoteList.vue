@@ -1,8 +1,8 @@
 <script setup>
-
 import {computed, ref, watch} from 'vue'
 
 import {getKnowledgeNotes} from "@/api/knowledgeApi.js";
+
 import SearchHighlight from "@/components/common/SearchHighlight.vue";
 
 const props = defineProps({
@@ -16,21 +16,20 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits([
+  'select-note'
+]);
 
 const notes = ref([]);
 const loading = ref(false);
 const errorMessage = ref('');
-const searchKeyword = ref('')
-
-const emit = defineEmits([
-  'select-note'
-]);
+const searchKeyword = ref('');
 
 const filteredNotes = computed(() => {
   const keyword =
     searchKeyword.value
       .trim()
-      .toLowerCase()
+      .toLowerCase();
 
   if (!keyword) {
     return notes.value;
@@ -38,70 +37,102 @@ const filteredNotes = computed(() => {
 
   return notes.value.filter(note => {
     const title =
-      note.title?.toLowerCase() ?? ''
+      note.title?.toLowerCase() ?? '';
 
     const summary =
-      note.summary?.toLowerCase() ?? ''
+      note.summary?.toLowerCase() ?? '';
 
     return title.includes(keyword)
-      || summary.includes(keyword)
-  })
-})
+      || summary.includes(keyword);
+  });
+});
 
 const filteredNoteCount = computed(() => {
-  return filteredNotes.value.length
-})
+  return filteredNotes.value.length;
+});
+
+async function loadNotes() {
+  const knowledgeId =
+    props.knowledgeId;
+
+  if (!knowledgeId) {
+    notes.value = [];
+    return;
+  }
+
+  loading.value = true;
+  errorMessage.value = '';
+
+  try {
+    const response =
+      await getKnowledgeNotes(
+        knowledgeId
+      );
+
+    notes.value =
+      Array.isArray(response.data)
+        ? response.data
+        : [];
+  } catch (error) {
+    console.error(
+      'Knowledge 노트 목록 조회 실패',
+      error
+    );
+
+    notes.value = [];
+    errorMessage.value =
+      '노트 목록을 불러오지 못했습니다.';
+  } finally {
+    loading.value = false;
+  }
+}
 
 watch(
   () => props.knowledgeId,
-  async (knowledgeId) => {
-    if (!knowledgeId) {
-      notes.value = [];
-      return;
-    }
+  async () => {
+    searchKeyword.value = '';
 
-    loading.value = true;
-    errorMessage.value = '';
+    emit(
+      'select-note',
+      null
+    );
 
-    try {
-      const response = await getKnowledgeNotes(knowledgeId);
-
-      notes.value =
-        Array.isArray(response.data)
-          ? response.data
-          : []
-    } catch (error) {
-      console.log(error);
-
-      errorMessage.value =
-        '노트 목록을 불러오지 못했습니다.'
-    } finally {
-      loading.value = false;
-    }
+    await loadNotes();
   },
   {
     immediate: true,
   }
-)
+);
 </script>
 
 <template>
 
   <div class="knowledge-note-list">
     <div class="note-search">
-      <input
-        v-model="searchKeyword"
-        type="search"
-        placeholder="노트 검색"
-        aria-label="Knowledge 노트 검색"
-      />
+      <div class="note-search-row">
+        <input
+          v-model="searchKeyword"
+          type="search"
+          placeholder="노트 검색"
+          aria-label="Knowledge 노트 검색"
+        />
+
+        <button
+          type="button"
+          class="refresh-button"
+          :disabled="loading"
+          aria-label="노트 목록 새로고침"
+          @click="loadNotes"
+        >
+          ↻
+        </button>
+      </div>
 
       <p
         v-if="searchKeyword"
         class="search-result"
       >
-        {{ filteredNoteCount }}
-        개의 노트
+        {{ filteredNoteCount }}개의 노트
       </p>
 
       <button
@@ -274,5 +305,38 @@ watch(
   padding: 6px 4px 0;
   color: var(--color-text-muted);
   font-size: 12px;
+}
+
+.note-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-search-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.refresh-button {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  color: var(--color-primary);
+  background: var(--color-surface-raised);
+  cursor: pointer;
+}
+
+.refresh-button:hover {
+  border-color: var(--color-border-primary);
+  background: var(--color-primary-soft);
+}
+
+.refresh-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 </style>

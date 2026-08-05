@@ -28,8 +28,13 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class KnowledgePathResolverTest {
 
+    private static final Long USER_ID = 1L;
+
     @Mock
     private KnowledgeRepository knowledgeRepository;
+
+    @Mock
+    private KnowledgeRootCategoryResolver rootCategoryResolver;
 
     @Mock
     private KnowledgeFolderSelectionService folderSelectionService;
@@ -43,6 +48,7 @@ class KnowledgePathResolverTest {
         resolver =
                 new KnowledgePathResolver(
                         knowledgeRepository,
+                        rootCategoryResolver,
                         folderSelectionService
                 );
 
@@ -56,17 +62,23 @@ class KnowledgePathResolverTest {
         ReflectionTestUtils.setField(
                 user,
                 "id",
-                1L
+                USER_ID
         );
     }
 
     @Test
-    void 고정_대분류와_하위_경로를_순서대로_생성한다() {
+    void 서버가_결정한_대분류와_하위_경로를_순서대로_생성한다() {
         // given
+        List<String> path =
+                List.of(
+                        "Spring Framework",
+                        "Spring WebFlux"
+                );
+
         Knowledge root =
                 createRootKnowledge(
                         10L,
-                        "웹 개발"
+                        "WEB_DEVELOPMENT"
                 );
 
         Knowledge spring =
@@ -80,14 +92,20 @@ class KnowledgePathResolverTest {
                 createChildKnowledge(
                         12L,
                         spring,
-                        "WebFlux"
+                        "Spring WebFlux"
                 );
+
+        when(
+                rootCategoryResolver.resolve(path)
+        ).thenReturn(
+                KnowledgeRootCategory.WEB_DEVELOPMENT
+        );
 
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIsNullAndName(
-                                1L,
-                                "웹 개발"
+                                USER_ID,
+                                "WEB_DEVELOPMENT"
                         )
         ).thenReturn(
                 Optional.of(root)
@@ -96,7 +114,7 @@ class KnowledgePathResolverTest {
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIdAndName(
-                                1L,
+                                USER_ID,
                                 10L,
                                 "Spring Framework"
                         )
@@ -107,7 +125,7 @@ class KnowledgePathResolverTest {
         when(
                 knowledgeRepository
                         .findAllByUserIdAndParentIdOrderByNameAsc(
-                                1L,
+                                USER_ID,
                                 10L
                         )
         ).thenReturn(
@@ -116,27 +134,30 @@ class KnowledgePathResolverTest {
 
         when(
                 folderSelectionService.select(
-                        "웹 개발",
-                        "웹 개발",
+                        "WEB_DEVELOPMENT",
+                        "WEB_DEVELOPMENT",
                         "Spring Framework",
                         List.of()
                 )
         ).thenReturn(
-                new AiKnowledgeFolderSelectionResponse(
-                        AiKnowledgeFolderSelectionType.CREATE,
-                        null
-                )
+                createSelection()
         );
 
-        when(knowledgeRepository.save(any(Knowledge.class)))
-                .thenReturn(spring, webFlux);
+        when(
+                knowledgeRepository.save(
+                        any(Knowledge.class)
+                )
+        ).thenReturn(
+                spring,
+                webFlux
+        );
 
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIdAndName(
-                                1L,
+                                USER_ID,
                                 11L,
-                                "WebFlux"
+                                "Spring WebFlux"
                         )
         ).thenReturn(
                 Optional.empty()
@@ -145,7 +166,7 @@ class KnowledgePathResolverTest {
         when(
                 knowledgeRepository
                         .findAllByUserIdAndParentIdOrderByNameAsc(
-                                1L,
+                                USER_ID,
                                 11L
                         )
         ).thenReturn(
@@ -154,27 +175,20 @@ class KnowledgePathResolverTest {
 
         when(
                 folderSelectionService.select(
-                        "웹 개발",
+                        "WEB_DEVELOPMENT",
                         "Spring Framework",
-                        "WebFlux",
+                        "Spring WebFlux",
                         List.of()
                 )
         ).thenReturn(
-                new AiKnowledgeFolderSelectionResponse(
-                        AiKnowledgeFolderSelectionType.CREATE,
-                        null
-                )
+                createSelection()
         );
 
         // when
         Knowledge result =
                 resolver.resolve(
                         user,
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
-                        List.of(
-                                "Spring Framework",
-                                "WebFlux"
-                        )
+                        path
                 );
 
         // then
@@ -183,86 +197,103 @@ class KnowledgePathResolverTest {
 
         InOrder inOrder =
                 inOrder(
+                        rootCategoryResolver,
                         knowledgeRepository,
                         folderSelectionService
                 );
 
+        inOrder.verify(rootCategoryResolver)
+                .resolve(path);
+
         inOrder.verify(knowledgeRepository)
                 .findByUserIdAndParentIsNullAndName(
-                        1L,
-                        "웹 개발"
+                        USER_ID,
+                        "WEB_DEVELOPMENT"
                 );
 
         inOrder.verify(knowledgeRepository)
                 .findByUserIdAndParentIdAndName(
-                        1L,
+                        USER_ID,
                         10L,
                         "Spring Framework"
                 );
 
         inOrder.verify(knowledgeRepository)
                 .findAllByUserIdAndParentIdOrderByNameAsc(
-                        1L,
+                        USER_ID,
                         10L
                 );
 
         inOrder.verify(folderSelectionService)
                 .select(
-                        "웹 개발",
-                        "웹 개발",
+                        "WEB_DEVELOPMENT",
+                        "WEB_DEVELOPMENT",
                         "Spring Framework",
                         List.of()
                 );
 
         inOrder.verify(knowledgeRepository)
-                .save(any(Knowledge.class));
+                .save(
+                        any(Knowledge.class)
+                );
 
         inOrder.verify(knowledgeRepository)
                 .findByUserIdAndParentIdAndName(
-                        1L,
+                        USER_ID,
                         11L,
-                        "WebFlux"
+                        "Spring WebFlux"
                 );
 
         inOrder.verify(knowledgeRepository)
                 .findAllByUserIdAndParentIdOrderByNameAsc(
-                        1L,
+                        USER_ID,
                         11L
                 );
 
         inOrder.verify(folderSelectionService)
                 .select(
-                        "웹 개발",
+                        "WEB_DEVELOPMENT",
                         "Spring Framework",
-                        "WebFlux",
+                        "Spring WebFlux",
                         List.of()
                 );
 
         inOrder.verify(knowledgeRepository)
-                .save(any(Knowledge.class));
+                .save(
+                        any(Knowledge.class)
+                );
     }
 
     @Test
-    void 동일한_이름의_폴더가_있으면_AI를_호출하지_않고_재사용한다() {
+    void 동일한_이름의_하위_폴더가_있으면_AI를_호출하지_않고_재사용한다() {
         // given
+        List<String> path =
+                List.of("Spring Framework");
+
         Knowledge root =
                 createRootKnowledge(
                         10L,
-                        "웹 개발"
+                        "WEB_DEVELOPMENT"
                 );
 
         Knowledge spring =
                 createChildKnowledge(
                         11L,
                         root,
-                        "Spring"
+                        "Spring Framework"
                 );
+
+        when(
+                rootCategoryResolver.resolve(path)
+        ).thenReturn(
+                KnowledgeRootCategory.WEB_DEVELOPMENT
+        );
 
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIsNullAndName(
-                                1L,
-                                "웹 개발"
+                                USER_ID,
+                                "WEB_DEVELOPMENT"
                         )
         ).thenReturn(
                 Optional.of(root)
@@ -271,9 +302,9 @@ class KnowledgePathResolverTest {
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIdAndName(
-                                1L,
+                                USER_ID,
                                 10L,
-                                "Spring"
+                                "Spring Framework"
                         )
         ).thenReturn(
                 Optional.of(spring)
@@ -283,8 +314,7 @@ class KnowledgePathResolverTest {
         Knowledge result =
                 resolver.resolve(
                         user,
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
-                        List.of("Spring")
+                        path
                 );
 
         // then
@@ -300,16 +330,21 @@ class KnowledgePathResolverTest {
                 );
 
         verify(knowledgeRepository, never())
-                .save(any(Knowledge.class));
+                .save(
+                        any(Knowledge.class)
+                );
     }
 
     @Test
     void AI가_기존_폴더를_선택하면_해당_폴더를_재사용한다() {
         // given
+        List<String> path =
+                List.of("Spring Framework");
+
         Knowledge root =
                 createRootKnowledge(
                         10L,
-                        "웹 개발"
+                        "WEB_DEVELOPMENT"
                 );
 
         Knowledge spring =
@@ -319,11 +354,24 @@ class KnowledgePathResolverTest {
                         "Spring"
                 );
 
+        List<KnowledgeFolderCandidate> candidates =
+                List.of(
+                        KnowledgeFolderCandidate.from(
+                                spring
+                        )
+                );
+
+        when(
+                rootCategoryResolver.resolve(path)
+        ).thenReturn(
+                KnowledgeRootCategory.WEB_DEVELOPMENT
+        );
+
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIsNullAndName(
-                                1L,
-                                "웹 개발"
+                                USER_ID,
+                                "WEB_DEVELOPMENT"
                         )
         ).thenReturn(
                 Optional.of(root)
@@ -332,7 +380,7 @@ class KnowledgePathResolverTest {
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIdAndName(
-                                1L,
+                                USER_ID,
                                 10L,
                                 "Spring Framework"
                         )
@@ -343,7 +391,7 @@ class KnowledgePathResolverTest {
         when(
                 knowledgeRepository
                         .findAllByUserIdAndParentIdOrderByNameAsc(
-                                1L,
+                                USER_ID,
                                 10L
                         )
         ).thenReturn(
@@ -352,14 +400,10 @@ class KnowledgePathResolverTest {
 
         when(
                 folderSelectionService.select(
-                        "웹 개발",
-                        "웹 개발",
+                        "WEB_DEVELOPMENT",
+                        "WEB_DEVELOPMENT",
                         "Spring Framework",
-                        List.of(
-                                KnowledgeFolderCandidate.from(
-                                        spring
-                                )
-                        )
+                        candidates
                 )
         ).thenReturn(
                 new AiKnowledgeFolderSelectionResponse(
@@ -372,7 +416,7 @@ class KnowledgePathResolverTest {
                 knowledgeRepository
                         .findByIdAndUserId(
                                 11L,
-                                1L
+                                USER_ID
                         )
         ).thenReturn(
                 Optional.of(spring)
@@ -382,10 +426,7 @@ class KnowledgePathResolverTest {
         Knowledge result =
                 resolver.resolve(
                         user,
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
-                        List.of(
-                                "Spring Framework"
-                        )
+                        path
                 );
 
         // then
@@ -393,16 +434,21 @@ class KnowledgePathResolverTest {
                 .isSameAs(spring);
 
         verify(knowledgeRepository, never())
-                .save(any(Knowledge.class));
+                .save(
+                        any(Knowledge.class)
+                );
     }
 
     @Test
     void AI가_CREATE를_선택하면_새_폴더를_생성한다() {
         // given
+        List<String> path =
+                List.of("Spring Framework");
+
         Knowledge root =
                 createRootKnowledge(
                         10L,
-                        "웹 개발"
+                        "WEB_DEVELOPMENT"
                 );
 
         Knowledge react =
@@ -419,11 +465,24 @@ class KnowledgePathResolverTest {
                         "Spring Framework"
                 );
 
+        List<KnowledgeFolderCandidate> candidates =
+                List.of(
+                        KnowledgeFolderCandidate.from(
+                                react
+                        )
+                );
+
+        when(
+                rootCategoryResolver.resolve(path)
+        ).thenReturn(
+                KnowledgeRootCategory.WEB_DEVELOPMENT
+        );
+
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIsNullAndName(
-                                1L,
-                                "웹 개발"
+                                USER_ID,
+                                "WEB_DEVELOPMENT"
                         )
         ).thenReturn(
                 Optional.of(root)
@@ -432,7 +491,7 @@ class KnowledgePathResolverTest {
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIdAndName(
-                                1L,
+                                USER_ID,
                                 10L,
                                 "Spring Framework"
                         )
@@ -443,7 +502,7 @@ class KnowledgePathResolverTest {
         when(
                 knowledgeRepository
                         .findAllByUserIdAndParentIdOrderByNameAsc(
-                                1L,
+                                USER_ID,
                                 10L
                         )
         ).thenReturn(
@@ -452,20 +511,13 @@ class KnowledgePathResolverTest {
 
         when(
                 folderSelectionService.select(
-                        "웹 개발",
-                        "웹 개발",
+                        "WEB_DEVELOPMENT",
+                        "WEB_DEVELOPMENT",
                         "Spring Framework",
-                        List.of(
-                                KnowledgeFolderCandidate.from(
-                                        react
-                                )
-                        )
+                        candidates
                 )
         ).thenReturn(
-                new AiKnowledgeFolderSelectionResponse(
-                        AiKnowledgeFolderSelectionType.CREATE,
-                        null
-                )
+                createSelection()
         );
 
         when(
@@ -480,10 +532,7 @@ class KnowledgePathResolverTest {
         Knowledge result =
                 resolver.resolve(
                         user,
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
-                        List.of(
-                                "Spring Framework"
-                        )
+                        path
                 );
 
         // then
@@ -496,7 +545,9 @@ class KnowledgePathResolverTest {
                 );
 
         verify(knowledgeRepository)
-                .save(captor.capture());
+                .save(
+                        captor.capture()
+                );
 
         Knowledge saved =
                 captor.getValue();
@@ -511,14 +562,115 @@ class KnowledgePathResolverTest {
     }
 
     @Test
+    void AI가_선택한_기존_폴더를_찾을_수_없으면_실패한다() {
+        // given
+        List<String> path =
+                List.of("Spring Framework");
+
+        Knowledge root =
+                createRootKnowledge(
+                        10L,
+                        "WEB_DEVELOPMENT"
+                );
+
+        Knowledge spring =
+                createChildKnowledge(
+                        11L,
+                        root,
+                        "Spring"
+                );
+
+        List<KnowledgeFolderCandidate> candidates =
+                List.of(
+                        KnowledgeFolderCandidate.from(
+                                spring
+                        )
+                );
+
+        when(
+                rootCategoryResolver.resolve(path)
+        ).thenReturn(
+                KnowledgeRootCategory.WEB_DEVELOPMENT
+        );
+
+        when(
+                knowledgeRepository
+                        .findByUserIdAndParentIsNullAndName(
+                                USER_ID,
+                                "WEB_DEVELOPMENT"
+                        )
+        ).thenReturn(
+                Optional.of(root)
+        );
+
+        when(
+                knowledgeRepository
+                        .findByUserIdAndParentIdAndName(
+                                USER_ID,
+                                10L,
+                                "Spring Framework"
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        when(
+                knowledgeRepository
+                        .findAllByUserIdAndParentIdOrderByNameAsc(
+                                USER_ID,
+                                10L
+                        )
+        ).thenReturn(
+                List.of(spring)
+        );
+
+        when(
+                folderSelectionService.select(
+                        "WEB_DEVELOPMENT",
+                        "WEB_DEVELOPMENT",
+                        "Spring Framework",
+                        candidates
+                )
+        ).thenReturn(
+                new AiKnowledgeFolderSelectionResponse(
+                        AiKnowledgeFolderSelectionType.EXISTING,
+                        999L
+                )
+        );
+
+        when(
+                knowledgeRepository
+                        .findByIdAndUserId(
+                                999L,
+                                USER_ID
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        // when & then
+        assertThatThrownBy(() ->
+                resolver.resolve(
+                        user,
+                        path
+                )
+        )
+                .isInstanceOf(
+                        IllegalStateException.class
+                )
+                .hasMessageContaining(
+                        "knowledgeId=999"
+                );
+    }
+
+    @Test
     void 하위_경로가_2단계를_초과하면_실패한다() {
         assertThatThrownBy(() ->
                 resolver.resolve(
                         user,
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
                         List.of(
-                                "Spring",
-                                "WebFlux",
+                                "Spring Framework",
+                                "Spring WebFlux",
                                 "Reactive Streams"
                         )
                 )
@@ -529,23 +681,112 @@ class KnowledgePathResolverTest {
                 .hasMessage(
                         "Knowledge 하위 경로는 최대 2단계까지 허용됩니다."
                 );
+
+        verify(rootCategoryResolver, never())
+                .resolve(any());
     }
 
     @Test
-    void 대분류가_null이면_실패한다() {
+    void 하위_경로가_null이면_실패한다() {
         assertThatThrownBy(() ->
                 resolver.resolve(
                         user,
-                        null,
-                        List.of("Spring")
+                        null
                 )
         )
                 .isInstanceOf(
                         IllegalArgumentException.class
                 )
                 .hasMessage(
-                        "Knowledge 대분류는 필수입니다."
+                        "Knowledge 하위 경로는 필수입니다."
                 );
+    }
+
+    @Test
+    void 하위_경로가_비어있으면_실패한다() {
+        assertThatThrownBy(() ->
+                resolver.resolve(
+                        user,
+                        List.of()
+                )
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "Knowledge 하위 경로는 필수입니다."
+                );
+    }
+
+    @Test
+    void 유효한_하위_경로가_없으면_실패한다() {
+        assertThatThrownBy(() ->
+                resolver.resolve(
+                        user,
+                        List.of(
+                                " ",
+                                "\t"
+                        )
+                )
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "Knowledge 하위 경로에 유효한 이름이 없습니다."
+                );
+    }
+
+    @Test
+    void 사용자가_null이면_실패한다() {
+        assertThatThrownBy(() ->
+                resolver.resolve(
+                        null,
+                        List.of(
+                                "Spring Framework"
+                        )
+                )
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "사용자는 필수입니다."
+                );
+    }
+
+    @Test
+    void 저장되지_않은_사용자이면_실패한다() {
+        // given
+        User unsavedUser =
+                User.builder()
+                        .email("unsaved@test.com")
+                        .password("password")
+                        .nickname("unsaved")
+                        .build();
+
+        // when & then
+        assertThatThrownBy(() ->
+                resolver.resolve(
+                        unsavedUser,
+                        List.of(
+                                "Spring Framework"
+                        )
+                )
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "저장되지 않은 사용자는 Knowledge 경로를 생성할 수 없습니다."
+                );
+    }
+
+    private AiKnowledgeFolderSelectionResponse createSelection() {
+        return new AiKnowledgeFolderSelectionResponse(
+                AiKnowledgeFolderSelectionType.CREATE,
+                null
+        );
     }
 
     private Knowledge createRootKnowledge(

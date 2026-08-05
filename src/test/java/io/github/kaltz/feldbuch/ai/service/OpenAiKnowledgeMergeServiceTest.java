@@ -12,7 +12,6 @@ import io.github.kaltz.feldbuch.config.OpenAiProperties;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
-import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.entity.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -124,7 +123,6 @@ class OpenAiKnowledgeMergeServiceTest {
 
         String json = """
                 {
-                  "rootCategory": "WEB_DEVELOPMENT",
                   "knowledgePath": [
                     "Spring Framework",
                     "Spring Batch"
@@ -156,11 +154,6 @@ class OpenAiKnowledgeMergeServiceTest {
                 );
 
         // then
-        assertThat(result.rootCategory())
-                .isEqualTo(
-                        KnowledgeRootCategory.WEB_DEVELOPMENT
-                );
-
         assertThat(result.knowledgePath())
                 .containsExactly(
                         "Spring Framework",
@@ -201,7 +194,6 @@ class OpenAiKnowledgeMergeServiceTest {
 
         String json = """
                 {
-                  "rootCategory": "WEB_DEVELOPMENT",
                   "knowledgePath": ["Spring Framework", "Spring Batch"],
                   "title": "Spring Batch",
                   "description": "Spring Batch 통합 노트",

@@ -16,32 +16,37 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-// AI가 준 경로를 실제 Knowledge 트리로 변환해 주는 클래스이다.
 public class KnowledgePathResolver {
 
     private static final int MAX_CHILD_PATH_DEPTH = 2;
 
     private final KnowledgeRepository knowledgeRepository;
 
+    private final KnowledgeRootCategoryResolver
+            rootCategoryResolver;
+
     private final KnowledgeFolderSelectionService
             folderSelectionService;
 
     /**
-     * 고정 대분류와 AI가 생성한 하위 경로를
-     * 실제 Knowledge 트리로 변환한다.
+     * AI가 생성한 하위 경로를 기반으로
+     * 서버에서 대분류를 결정하고 실제 Knowledge 트리로 변환한다.
      */
     @Transactional
     public Knowledge resolve(
             User user,
-            KnowledgeRootCategory rootCategory,
             List<String> childPath
     ) {
         validateUser(user);
-        validateRootCategory(rootCategory);
 
         List<String> normalizedChildPath =
                 normalizeChildPath(
                         childPath
+                );
+
+        KnowledgeRootCategory rootCategory =
+                rootCategoryResolver.resolve(
+                        normalizedChildPath
                 );
 
         Knowledge current =
@@ -70,7 +75,7 @@ public class KnowledgePathResolver {
             KnowledgeRootCategory rootCategory
     ) {
         String rootName =
-                rootCategory.getDisplayName();
+                rootCategory.name();
 
         return knowledgeRepository
                 .findByUserIdAndParentIsNullAndName(
@@ -93,9 +98,6 @@ public class KnowledgePathResolver {
             Knowledge parent,
             String requestedFolderName
     ) {
-        /*
-         * 동일 이름이 존재하면 AI 호출 없이 즉시 재사용한다.
-         */
         return knowledgeRepository
                 .findByUserIdAndParentIdAndName(
                         user.getId(),
@@ -111,7 +113,6 @@ public class KnowledgePathResolver {
                         )
                 );
     }
-
 
     private Knowledge selectOrCreateChild(
             User user,
@@ -135,7 +136,7 @@ public class KnowledgePathResolver {
 
         AiKnowledgeFolderSelectionResponse selection =
                 folderSelectionService.select(
-                        rootCategory.getDisplayName(),
+                        rootCategory.name(),
                         parent.getName(),
                         requestedFolderName,
                         candidates
@@ -231,16 +232,6 @@ public class KnowledgePathResolver {
         if (user.getId() == null) {
             throw new IllegalArgumentException(
                     "저장되지 않은 사용자는 Knowledge 경로를 생성할 수 없습니다."
-            );
-        }
-    }
-
-    private void validateRootCategory(
-            KnowledgeRootCategory rootCategory
-    ) {
-        if (rootCategory == null) {
-            throw new IllegalArgumentException(
-                    "Knowledge 대분류는 필수입니다."
             );
         }
     }

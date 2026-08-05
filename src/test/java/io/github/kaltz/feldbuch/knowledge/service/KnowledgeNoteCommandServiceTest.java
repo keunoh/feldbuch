@@ -6,7 +6,6 @@ import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
-import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.entity.UserRole;
@@ -106,7 +105,6 @@ class KnowledgeNoteCommandServiceTest {
 
         summaryResponse =
                 new AiKnowledgeSummaryResponse(
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
                         List.of(
                                 "Spring Framework",
                                 "Spring Batch"
@@ -123,7 +121,6 @@ class KnowledgeNoteCommandServiceTest {
 
         mergeResponse =
                 new AiKnowledgeMergeResponse(
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
                         List.of(
                                 "Spring Framework",
                                 "Spring Batch"
@@ -170,7 +167,6 @@ class KnowledgeNoteCommandServiceTest {
         verify(knowledgePathResolver)
                 .resolve(
                         user,
-                        summaryResponse.rootCategory(),
                         summaryResponse.knowledgePath()
                 );
 
@@ -265,7 +261,6 @@ class KnowledgeNoteCommandServiceTest {
         when(
                 knowledgePathResolver.resolve(
                         user,
-                        mergeResponse.rootCategory(),
                         mergeResponse.knowledgePath()
                 )
         ).thenReturn(
@@ -284,7 +279,6 @@ class KnowledgeNoteCommandServiceTest {
         verify(knowledgePathResolver)
                 .resolve(
                         user,
-                        mergeResponse.rootCategory(),
                         mergeResponse.knowledgePath()
                 );
 
@@ -320,7 +314,6 @@ class KnowledgeNoteCommandServiceTest {
         when(
                 knowledgePathResolver.resolve(
                         user,
-                        mergeResponse.rootCategory(),
                         mergeResponse.knowledgePath()
                 )
         ).thenReturn(
@@ -383,7 +376,6 @@ class KnowledgeNoteCommandServiceTest {
         verify(knowledgePathResolver, never())
                 .resolve(
                         any(),
-                        any(),
                         any()
                 );
     }
@@ -392,7 +384,6 @@ class KnowledgeNoteCommandServiceTest {
         when(
                 knowledgePathResolver.resolve(
                         user,
-                        summaryResponse.rootCategory(),
                         summaryResponse.knowledgePath()
                 )
         ).thenReturn(

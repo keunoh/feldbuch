@@ -15,11 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class KnowledgeNoteCommandService {
 
-    private final KnowledgePathResolver
-            knowledgePathResolver;
+    private final KnowledgePathResolver knowledgePathResolver;
 
-    private final KnowledgeNoteRepository
-            knowledgeNoteRepository;
+    private final KnowledgeNoteRepository knowledgeNoteRepository;
 
     /**
      * 새롭게 추출된 대화 범위를 개별 학습 노트로 저장한다.
@@ -32,12 +30,14 @@ public class KnowledgeNoteCommandService {
             Conversation conversation,
             AiKnowledgeSummaryResponse response
     ) {
+        validateUser(user);
+        validateConversation(conversation);
         validateSummaryResponse(response);
 
         Knowledge knowledge =
                 resolveKnowledge(
                         user,
-                        response
+                        response.knowledgePath()
                 );
 
         KnowledgeNote note =
@@ -65,12 +65,14 @@ public class KnowledgeNoteCommandService {
             Conversation conversation,
             AiKnowledgeSummaryResponse response
     ) {
+        validateUser(user);
+        validateConversation(conversation);
         validateSummaryResponse(response);
 
         Knowledge knowledge =
                 resolveKnowledge(
                         user,
-                        response
+                        response.knowledgePath()
                 );
 
         KnowledgeNote note =
@@ -91,6 +93,9 @@ public class KnowledgeNoteCommandService {
 
     /**
      * 기존 통합 노트를 AI 병합 결과로 갱신한다.
+     * <p>
+     * 병합 결과의 지식 경로가 달라진 경우에는
+     * 통합 노트를 새 Knowledge 폴더로 이동한다.
      */
     @Transactional
     public KnowledgeNote updateConsolidated(
@@ -98,13 +103,13 @@ public class KnowledgeNoteCommandService {
             KnowledgeNote note,
             AiKnowledgeMergeResponse response
     ) {
-        validateMergeResponse(response);
+        validateUser(user);
         validateConsolidatedNote(note);
+        validateMergeResponse(response);
 
-        Knowledge knowledge =
-                knowledgePathResolver.resolve(
+        Knowledge resolvedKnowledge =
+                resolveKnowledge(
                         user,
-                        response.rootCategory(),
                         response.knowledgePath()
                 );
 
@@ -115,12 +120,14 @@ public class KnowledgeNoteCommandService {
                 response.keywords()
         );
 
-        if (!sameKnowledge(
-                note.getKnowledge(),
-                knowledge
-        )) {
+        if (
+                !sameKnowledge(
+                        note.getKnowledge(),
+                        resolvedKnowledge
+                )
+        ) {
             note.moveTo(
-                    knowledge
+                    resolvedKnowledge
             );
         }
 
@@ -129,12 +136,11 @@ public class KnowledgeNoteCommandService {
 
     private Knowledge resolveKnowledge(
             User user,
-            AiKnowledgeSummaryResponse response
+            java.util.List<String> knowledgePath
     ) {
         return knowledgePathResolver.resolve(
                 user,
-                response.rootCategory(),
-                response.knowledgePath()
+                knowledgePath
         );
     }
 
@@ -149,18 +155,53 @@ public class KnowledgeNoteCommandService {
         if (
                 current == null
                         || resolved == null
-                        || current.getId() == null
-                        || resolved.getId() == null
         ) {
             return false;
         }
 
-        return current.getId()
-                .equals(
-                        resolved.getId()
-                );
+        Long currentId =
+                current.getId();
+
+        Long resolvedId =
+                resolved.getId();
+
+        if (
+                currentId == null
+                        || resolvedId == null
+        ) {
+            return false;
+        }
+
+        return currentId.equals(
+                resolvedId
+        );
     }
 
+    private void validateUser(
+            User user
+    ) {
+        if (user == null) {
+            throw new IllegalArgumentException(
+                    "사용자는 필수입니다."
+            );
+        }
+
+        if (user.getId() == null) {
+            throw new IllegalArgumentException(
+                    "저장되지 않은 사용자는 KnowledgeNote를 저장할 수 없습니다."
+            );
+        }
+    }
+
+    private void validateConversation(
+            Conversation conversation
+    ) {
+        if (conversation == null) {
+            throw new IllegalArgumentException(
+                    "원본 대화는 필수입니다."
+            );
+        }
+    }
 
     private void validateSummaryResponse(
             AiKnowledgeSummaryResponse response
@@ -170,6 +211,10 @@ public class KnowledgeNoteCommandService {
                     "AI 지식 요약 응답은 필수입니다."
             );
         }
+
+        validateKnowledgePath(
+                response.knowledgePath()
+        );
     }
 
     private void validateMergeResponse(
@@ -178,6 +223,23 @@ public class KnowledgeNoteCommandService {
         if (response == null) {
             throw new IllegalArgumentException(
                     "AI 지식 병합 응답은 필수입니다."
+            );
+        }
+
+        validateKnowledgePath(
+                response.knowledgePath()
+        );
+    }
+
+    private void validateKnowledgePath(
+            java.util.List<String> knowledgePath
+    ) {
+        if (
+                knowledgePath == null
+                        || knowledgePath.isEmpty()
+        ) {
+            throw new IllegalArgumentException(
+                    "Knowledge 경로는 필수입니다."
             );
         }
     }

@@ -11,7 +11,6 @@ import io.github.kaltz.feldbuch.ai.prompt.KnowledgeSummaryPrompt;
 import io.github.kaltz.feldbuch.common.exception.CustomException;
 import io.github.kaltz.feldbuch.common.exception.ErrorCode;
 import io.github.kaltz.feldbuch.config.OpenAiProperties;
-import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,9 +20,11 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService {
+public class OpenAiKnowledgeSummaryService
+        implements AiKnowledgeSummaryService {
 
-    private static final String SUMMARY_LOG = "[AI_KNOWLEDGE_SUMMARY]";
+    private static final String SUMMARY_LOG =
+            "[AI_KNOWLEDGE_SUMMARY]";
 
     private static final int MAX_KNOWLEDGE_PATH_DEPTH = 2;
 
@@ -37,8 +38,9 @@ public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService 
     private final ObjectMapper objectMapper;
 
     @Override
-    public AiKnowledgeSummaryResponse summarize(String conversation) {
-
+    public AiKnowledgeSummaryResponse summarize(
+            String conversation
+    ) {
         ChatCompletionRequest request =
                 createRequest(conversation);
 
@@ -64,15 +66,13 @@ public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService 
                 List.of(
                         new Message(
                                 "system",
-                                KnowledgeSummaryPrompt
-                                        .systemPrompt()
+                                KnowledgeSummaryPrompt.systemPrompt()
                         ),
                         new Message(
                                 "user",
-                                KnowledgeSummaryPrompt
-                                        .userPrompt(
-                                                conversation
-                                        )
+                                KnowledgeSummaryPrompt.userPrompt(
+                                        conversation
+                                )
                         )
                 )
         );
@@ -82,11 +82,14 @@ public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService 
             String json
     ) {
         try {
+
             return objectMapper.readValue(
                     json,
                     AiKnowledgeSummaryResponse.class
             );
+
         } catch (JsonProcessingException exception) {
+
             log.error(
                     "{} Failed to parse response. response={}",
                     SUMMARY_LOG,
@@ -109,14 +112,7 @@ public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService 
             );
         }
 
-        if (response.rootCategory() == null) {
-            throw invalidResponse(
-                    "AI 지식 요약의 대분류가 없습니다."
-            );
-        }
-
         validateKnowledgePath(
-                response.rootCategory(),
                 response.knowledgePath()
         );
 
@@ -141,7 +137,6 @@ public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService 
     }
 
     private void validateKnowledgePath(
-            KnowledgeRootCategory rootCategory,
             List<String> knowledgePath
     ) {
         if (
@@ -174,25 +169,6 @@ public class OpenAiKnowledgeSummaryService implements AiKnowledgeSummaryService 
         if (containsBlank) {
             throw invalidResponse(
                     "AI 지식 경로에 빈 값이 포함되어 있습니다."
-            );
-        }
-
-        boolean containsRootCategory =
-                knowledgePath.stream()
-                        .map(String::trim)
-                        .anyMatch(path ->
-                                path.equalsIgnoreCase(
-                                        rootCategory.name()
-                                )
-                                        || path.equalsIgnoreCase(
-                                        rootCategory
-                                                .getDisplayName()
-                                )
-                        );
-
-        if (containsRootCategory) {
-            throw invalidResponse(
-                    "AI 지식 경로에 대분류가 중복되어 있습니다."
             );
         }
     }

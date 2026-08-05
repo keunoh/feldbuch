@@ -11,7 +11,6 @@ import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContext;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContextBuilder;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
-import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.reader.UserReader;
@@ -535,7 +534,6 @@ class KnowledgeExtractionServiceTest {
 
     private AiKnowledgeSummaryResponse createSummaryResponse() {
         return new AiKnowledgeSummaryResponse(
-                KnowledgeRootCategory.WEB_DEVELOPMENT,
                 List.of(
                         "Spring Framework",
                         "Spring Batch"
@@ -553,7 +551,6 @@ class KnowledgeExtractionServiceTest {
 
     private AiKnowledgeMergeResponse createMergeResponse() {
         return new AiKnowledgeMergeResponse(
-                KnowledgeRootCategory.WEB_DEVELOPMENT,
                 List.of(
                         "Spring Framework",
                         "Spring Batch"

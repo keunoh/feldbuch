@@ -81,35 +81,6 @@ class KnowledgeMergePromptTest {
                 );
     }
 
-    @Test
-    void 시스템_프롬프트에_병합_규칙과_고정_대분류를_포함한다() {
-        // when
-        String result =
-                KnowledgeMergePrompt.systemPrompt();
-
-        // then
-        assertThat(result)
-                .contains(
-                        "기존 통합 학습 노트",
-                        "새 증분 학습 노트",
-                        "중복을 제거",
-                        "\"rootCategory\"",
-                        "\"knowledgePath\"",
-                        "\"title\"",
-                        "\"description\"",
-                        "\"summary\"",
-                        "\"keywords\"",
-                        "WEB_DEVELOPMENT",
-                        "웹 개발",
-                        "DATABASE",
-                        "데이터베이스"
-                );
-
-        assertThat(result)
-                .contains(
-                        "knowledgePath는 최대 2단계"
-                );
-    }
 
     @Test
     void 사용자_프롬프트에_통합_노트와_증분_노트의_전체_내용을_포함한다() {

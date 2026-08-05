@@ -8,7 +8,6 @@ import io.github.kaltz.feldbuch.ai.dto.openai.Choice;
 import io.github.kaltz.feldbuch.ai.dto.openai.Message;
 import io.github.kaltz.feldbuch.common.exception.CustomException;
 import io.github.kaltz.feldbuch.config.OpenAiProperties;
-import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -59,7 +58,6 @@ class OpenAiKnowledgeSummaryServiceTest {
 
         String json = """
                 {
-                  "rootCategory": "DATABASE",
                   "knowledgePath": [
                     "JPA",
                     "영속성 관리"
@@ -95,11 +93,6 @@ class OpenAiKnowledgeSummaryServiceTest {
                 service.summarize("JPA를 공부했다.");
 
         // then
-        assertThat(result.rootCategory())
-                .isEqualTo(
-                        KnowledgeRootCategory.DATABASE
-                );
-
         assertThat(result.knowledgePath())
                 .containsExactly(
                         "JPA",
@@ -149,56 +142,6 @@ class OpenAiKnowledgeSummaryServiceTest {
         ).isInstanceOf(CustomException.class);
     }
 
-    @Test
-    void 지원하지_않는_대분류를_반환하면_예외가_발생한다() {
-        // given
-        when(properties.getModel())
-                .thenReturn(
-                        "gpt-4.1-mini"
-                );
-
-        String json = """
-                {
-                  "rootCategory": "BACKEND",
-                  "knowledgePath": [
-                    "Spring"
-                  ],
-                  "title": "Spring",
-                  "description": "Spring 학습 노트",
-                  "summary": "Spring의 기본 개념을 정리했습니다.",
-                  "keywords": [
-                    "Spring",
-                    "IoC",
-                    "DI"
-                  ]
-                }
-                """;
-
-        ChatCompletionResponse response =
-                new ChatCompletionResponse(
-                        List.of(
-                                new Choice(
-                                        new Message(
-                                                "assistant",
-                                                json
-                                        )
-                                )
-                        )
-                );
-
-        when(aiClient.chat(any()))
-                .thenReturn(response);
-
-        // when & then
-        assertThatThrownBy(() ->
-                service.summarize(
-                        "Spring을 공부했다."
-                )
-        )
-                .isInstanceOf(
-                        CustomException.class
-                );
-    }
 
     @Test
     void 하위_지식_경로가_2단계를_초과하면_예외가_발생한다() {
@@ -210,7 +153,6 @@ class OpenAiKnowledgeSummaryServiceTest {
 
         String json = """
                 {
-                  "rootCategory": "WEB_DEVELOPMENT",
                   "knowledgePath": [
                     "Spring",
                     "WebFlux",
@@ -248,55 +190,5 @@ class OpenAiKnowledgeSummaryServiceTest {
                 .isInstanceOf(CustomException.class);
     }
 
-    @Test
-    void knowledgePath에_대분류가_중복되면_예외가_발생한다() {
-        // given
-        when(properties.getModel())
-                .thenReturn(
-                        "gpt-4.1-mini"
-                );
-
-        String json = """
-                {
-                  "rootCategory": "DATABASE",
-                  "knowledgePath": [
-                    "데이터베이스",
-                    "JPA"
-                  ],
-                  "title": "JPA",
-                  "description": "JPA 학습 노트",
-                  "summary": "JPA의 기본 개념을 정리했습니다.",
-                  "keywords": [
-                    "JPA",
-                    "Entity",
-                    "Repository"
-                  ]
-                }
-                """;
-
-        ChatCompletionResponse response =
-                new ChatCompletionResponse(
-                        List.of(
-                                new Choice(
-                                        new Message(
-                                                "assistant",
-                                                json
-                                        )
-                                )
-                        )
-                );
-
-        when(aiClient.chat(any()))
-                .thenReturn(response);
-
-        // when & then
-        assertThatThrownBy(() ->
-                service.summarize(
-                        "JPA를 공부했다."
-                )
-        )
-                .isInstanceOf(
-                        CustomException.class
-                );
-    }
+    
 }
