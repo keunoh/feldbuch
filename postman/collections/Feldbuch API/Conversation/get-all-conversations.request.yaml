@@ -3,3 +3,8 @@ name: Get All Conversations
 method: GET
 url: '{{baseUrl}}/api/conversations'
 order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

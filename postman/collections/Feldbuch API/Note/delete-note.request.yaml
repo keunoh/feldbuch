@@ -3,6 +3,11 @@ name: Delete Note
 method: DELETE
 url: '{{baseUrl}}/api/notes/{{noteId}}'
 order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
 pathVariables:
   - key: noteId
-    value: '1'
+    value: '{{noteId}}'

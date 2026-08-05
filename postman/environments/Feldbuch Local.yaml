@@ -8,3 +8,15 @@ values:
     value: ''
     type: secret
     enabled: true
+  - key: noteId
+    value: '1'
+    type: default
+    enabled: true
+  - key: conversationId
+    value: '1'
+    type: default
+    enabled: true
+  - key: jobId
+    value: '1'
+    type: default
+    enabled: true

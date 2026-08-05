@@ -3,6 +3,11 @@ name: Get Conversation Messages
 method: GET
 url: '{{baseUrl}}/api/conversations/{{conversationId}}/messages'
 order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
 pathVariables:
   - key: conversationId
-    value: '1'
+    value: '{{conversationId}}'

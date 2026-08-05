@@ -3,6 +3,11 @@ name: Get Note
 method: GET
 url: '{{baseUrl}}/api/notes/{{noteId}}'
 order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
 pathVariables:
   - key: noteId
-    value: '1'
+    value: '{{noteId}}'

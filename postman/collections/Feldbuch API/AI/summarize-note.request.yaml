@@ -3,6 +3,11 @@ name: Summarize Note
 method: POST
 url: '{{baseUrl}}/api/ai/notes/{{noteId}}/summary'
 order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
 pathVariables:
   - key: noteId
-    value: '1'
+    value: '{{noteId}}'

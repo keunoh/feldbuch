@@ -6,9 +6,14 @@ order: 6000
 headers:
   - key: Content-Type
     value: application/json
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
 pathVariables:
   - key: noteId
-    value: '1'
+    value: '{{noteId}}'
 body:
   type: json
   content: |-

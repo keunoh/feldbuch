@@ -1,8 +1,11 @@
 $kind: http-request
-name: Delete Conversation
-method: DELETE
+name: Update Conversation
+method: PATCH
 url: '{{baseUrl}}/api/conversations/{{conversationId}}'
-order: 4500
+order: 3500
+headers:
+  - key: Content-Type
+    value: application/json
 auth:
   type: bearer
   credentials:
@@ -11,3 +14,9 @@ auth:
 pathVariables:
   - key: conversationId
     value: '{{conversationId}}'
+body:
+  type: json
+  content: |-
+    {
+      "title": "수정된 대화 제목"
+    }

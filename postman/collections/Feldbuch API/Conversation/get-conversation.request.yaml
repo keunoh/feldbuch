@@ -3,6 +3,11 @@ name: Get Conversation
 method: GET
 url: '{{baseUrl}}/api/conversations/{{conversationId}}'
 order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
 pathVariables:
   - key: conversationId
-    value: '1'
+    value: '{{conversationId}}'

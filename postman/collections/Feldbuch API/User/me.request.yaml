@@ -3,3 +3,8 @@ name: Get My Info
 method: GET
 url: '{{baseUrl}}/api/users/me'
 order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
