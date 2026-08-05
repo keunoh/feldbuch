@@ -1,34 +1,36 @@
-# 📑 Feldbuch API 문서
+# Feldbuch API
 
-> **Base URL:** `http://localhost:8080`
+> Base URL: `http://localhost:8080`
 >
-> **인증 방식:** Bearer Token (`Authorization: Bearer <accessToken>`)
->
-> 🔒 표시된 엔드포인트는 JWT 인증이 필요합니다.
+> 인증 방식: `Authorization: Bearer <accessToken>`
 
----
+Postman 환경은 `postman/environments/Feldbuch Local.yaml`을 기준으로 합니다.
 
-## 목차
+| 변수 | 기본값 | 설명 |
+| --- | --- | --- |
+| `baseUrl` | `http://localhost:8080` | 로컬 API 서버 |
+| `accessToken` | secret | 로그인 후 발급받은 JWT |
+| `noteId` | `1` | Note 요청용 Path Variable |
+| `conversationId` | `1` | Conversation 요청용 Path Variable |
+| `jobId` | `1` | AI Job 요청용 Path Variable |
 
-- [Auth](#-auth)
-- [User](#-user)
-- [Note](#-note)
-- [AI](#-ai)
-- [Conversation](#-conversation)
-- [공통 응답 형식](#-공통-응답-형식)
-- [Enum 타입](#-enum-타입)
+일반 응답은 `ApiResponse<T>` 형식입니다. SSE 스트리밍 응답은 `ApiResponse<T>`로 감싸지 않습니다.
 
----
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
 
-## 🔐 Auth
+## Auth
 
 ### 로그인
 
-```
+```http
 POST /api/auth/login
+Content-Type: application/json
 ```
-
-**Request Body**
 
 ```json
 {
@@ -37,35 +39,27 @@ POST /api/auth/login
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| email | String | ✅ | 이메일 형식 |
-| password | String | ✅ | 비밀번호 |
-
-**Response `200 OK`**
+응답:
 
 ```json
 {
   "success": true,
   "data": {
     "userId": 1,
-    "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "accessToken": "jwt-token",
     "tokenType": "Bearer"
   }
 }
 ```
 
----
-
-## 👤 User
+## User
 
 ### 회원가입
 
-```
+```http
 POST /api/users/signup
+Content-Type: application/json
 ```
-
-**Request Body**
 
 ```json
 {
@@ -75,13 +69,7 @@ POST /api/users/signup
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| email | String | ✅ | 이메일 형식 |
-| password | String | ✅ | 8~20자 |
-| nickname | String | ✅ | 2~20자 |
-
-**Response `201 Created`**
+응답:
 
 ```json
 {
@@ -94,21 +82,14 @@ POST /api/users/signup
 }
 ```
 
----
+### 내 정보 조회
 
-### 내 정보 조회 🔒
-
-```
+```http
 GET /api/users/me
-```
-
-**Headers**
-
-```
 Authorization: Bearer <accessToken>
 ```
 
-**Response `200 OK`**
+응답:
 
 ```json
 {
@@ -122,27 +103,17 @@ Authorization: Bearer <accessToken>
 }
 ```
 
----
+## Note
 
-## 📒 Note
+모든 Note API는 JWT 인증이 필요합니다.
 
-> 모든 Note API는 JWT 인증이 필요합니다.
+### 노트 생성
 
-**Headers (공통)**
-
-```
-Authorization: Bearer <accessToken>
-```
-
----
-
-### 노트 생성 🔒
-
-```
+```http
 POST /api/notes
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 ```
-
-**Request Body**
 
 ```json
 {
@@ -152,13 +123,7 @@ POST /api/notes
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| title | String | ✅ | 노트 제목 |
-| content | String | ✅ | 노트 내용 |
-| category | NoteCategory | ✅ | 카테고리 ([Enum 참고](#-enum-타입)) |
-
-**Response `200 OK`**
+응답:
 
 ```json
 {
@@ -175,100 +140,35 @@ POST /api/notes
 }
 ```
 
----
+### 노트 검색
 
-### 노트 목록 검색 🔒
-
-```
-GET /api/notes
-```
-
-**Query Parameters**
-
-| 파라미터 | 타입 | 필수 | 설명 |
-|----------|------|------|------|
-| keyword | String | ❌ | 검색 키워드 (제목/내용) |
-| page | int | ❌ | 페이지 번호 (기본값: 0) |
-| size | int | ❌ | 페이지 크기 (기본값: 20) |
-
-**Example**
-
-```
+```http
 GET /api/notes?keyword=Spring&page=0&size=20
+Authorization: Bearer <accessToken>
 ```
 
-**Response `200 OK`**
+Query Parameters:
 
-```json
-{
-  "success": true,
-  "data": {
-    "content": [
-      {
-        "id": 1,
-        "title": "Spring Boot 학습 노트",
-        "summary": "AI 요약 내용",
-        "category": "STUDY",
-        "pinned": false,
-        "studyStatus": "TODO"
-      }
-    ],
-    "page": 0,
-    "size": 20,
-    "totalElements": 1,
-    "totalPages": 1,
-    "first": true,
-    "last": true
-  }
-}
-```
+| 이름 | 필수 | 설명 |
+| --- | --- | --- |
+| `keyword` | 아니오 | 제목/내용 검색어 |
+| `page` | 아니오 | 페이지 번호, 기본 `0` |
+| `size` | 아니오 | 페이지 크기, 기본 `20` |
 
----
+### 노트 단건 조회
 
-### 노트 단건 조회 🔒
-
-```
+```http
 GET /api/notes/{noteId}
+Authorization: Bearer <accessToken>
 ```
 
-**Path Variables**
+### 노트 수정
 
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
-| noteId | Long | 노트 ID |
-
-**Response `200 OK`**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "Spring Boot 학습 노트",
-    "content": "Spring Boot 3.x 기반 백엔드 개발 내용 정리",
-    "summary": "AI 요약 내용",
-    "category": "STUDY",
-    "pinned": false,
-    "studyStatus": "TODO"
-  }
-}
-```
-
----
-
-### 노트 수정 🔒
-
-```
+```http
 PATCH /api/notes/{noteId}
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 ```
-
-**Path Variables**
-
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
-| noteId | Long | 노트 ID |
-
-**Request Body**
 
 ```json
 {
@@ -278,44 +178,14 @@ PATCH /api/notes/{noteId}
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| title | String | ✅ | 노트 제목 |
-| content | String | ✅ | 노트 내용 |
-| category | NoteCategory | ✅ | 카테고리 ([Enum 참고](#-enum-타입)) |
+### 노트 삭제
 
-**Response `200 OK`**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "Spring Boot 학습 노트",
-    "content": "Spring Boot 3.x 기반 백엔드 개발 내용 정리",
-    "summary": "AI 요약 내용",
-    "category": "STUDY",
-    "pinned": false,
-    "studyStatus": "TODO"
-  }
-}
-```
-
----
-
-### 노트 삭제 🔒
-
-```
+```http
 DELETE /api/notes/{noteId}
+Authorization: Bearer <accessToken>
 ```
 
-**Path Variables**
-
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
-| noteId | Long | 노트 ID |
-
-**Response `200 OK`**
+응답:
 
 ```json
 {
@@ -324,21 +194,13 @@ DELETE /api/notes/{noteId}
 }
 ```
 
----
+### 핀 상태 변경
 
-### 핀 상태 변경 🔒
-
-```
+```http
 PATCH /api/notes/{noteId}/pin
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 ```
-
-**Path Variables**
-
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
-| noteId | Long | 노트 ID |
-
-**Request Body**
 
 ```json
 {
@@ -346,34 +208,13 @@ PATCH /api/notes/{noteId}/pin
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| pinned | boolean | ✅ | 핀 여부 |
+### 학습 상태 변경
 
-**Response `200 OK`**
-
-```json
-{
-  "success": true,
-  "data": null
-}
-```
-
----
-
-### 학습 상태 변경 🔒
-
-```
+```http
 PATCH /api/notes/{noteId}/study-status
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 ```
-
-**Path Variables**
-
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
-| noteId | Long | 노트 ID |
-
-**Request Body**
 
 ```json
 {
@@ -381,44 +222,16 @@ PATCH /api/notes/{noteId}/study-status
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| studyStatus | StudyStatus | ✅ | 학습 상태 ([Enum 참고](#-enum-타입)) |
+## AI
 
-**Response `200 OK`**
+### 노트 AI 요약 요청
 
-```json
-{
-  "success": true,
-  "data": null
-}
-```
-
----
-
-## 🤖 AI
-
-### 노트 AI 요약 요청 🔒
-
-```
+```http
 POST /api/ai/notes/{noteId}/summary
-```
-
-비동기로 처리됩니다. 요청 즉시 `jobId`를 반환하며, AI 요약은 백그라운드에서 처리됩니다.
-
-**Headers**
-
-```
 Authorization: Bearer <accessToken>
 ```
 
-**Path Variables**
-
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
-| noteId | Long | 요약할 노트 ID |
-
-**Response `200 OK`**
+비동기 AI 요약 Job을 만들고 `jobId`를 반환합니다.
 
 ```json
 {
@@ -427,29 +240,14 @@ Authorization: Bearer <accessToken>
 }
 ```
 
-> 반환된 `jobId`로 `GET /api/ai/jobs/{jobId}`를 호출해 처리 상태를 확인할 수 있습니다. 요약 완료 후 `GET /api/notes/{noteId}`로 조회하면 `summary` 필드에 결과가 반영됩니다.
+### AI Job 상태 조회
 
----
-
-### AI Job 상태 조회 🔒
-
-```
+```http
 GET /api/ai/jobs/{jobId}
-```
-
-**Headers**
-
-```
 Authorization: Bearer <accessToken>
 ```
 
-**Path Variables**
-
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
-| jobId | Long | AI Job ID |
-
-**Response `200 OK`**
+응답:
 
 ```json
 {
@@ -459,47 +257,33 @@ Authorization: Bearer <accessToken>
     "noteId": 10,
     "type": "SUMMARY",
     "status": "COMPLETED",
-    "requestedAt": "2026-07-14T10:00:00",
-    "startedAt": "2026-07-14T10:00:01",
-    "completedAt": "2026-07-14T10:00:05",
+    "requestedAt": "2026-08-05T10:00:00",
+    "startedAt": "2026-08-05T10:00:01",
+    "completedAt": "2026-08-05T10:00:05",
     "errorMessage": null
   }
 }
 ```
 
----
+## Conversation
 
-## 💬 Conversation
+모든 Conversation API는 JWT 인증이 필요합니다.
 
-> 모든 Conversation API는 JWT 인증이 필요합니다.
+### 대화 생성
 
-**Headers (공통)**
-
-```
-Authorization: Bearer <accessToken>
-```
-
----
-
-### 대화 생성 🔒
-
-```
+```http
 POST /api/conversations
+Authorization: Bearer <accessToken>
+Content-Type: application/json
 ```
-
-**Request Body**
 
 ```json
 {
-  "title": "Spring Security 질문 정리"
+  "title": "새 대화"
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| title | String | ✅ | 대화 제목, 최대 100자 |
-
-**Response `200 OK`**
+응답:
 
 ```json
 {
@@ -508,103 +292,265 @@ POST /api/conversations
 }
 ```
 
----
+### 대화 목록 조회
 
-### 대화 단건 조회 🔒
-
+```http
+GET /api/conversations
+Authorization: Bearer <accessToken>
 ```
+
+응답:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "새 대화",
+      "status": "ACTIVE",
+      "createdAt": "2026-08-05T10:00:00"
+    }
+  ]
+}
+```
+
+### 대화 상세 조회
+
+```http
 GET /api/conversations/{conversationId}
+Authorization: Bearer <accessToken>
 ```
 
-**Path Variables**
-
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
-| conversationId | Long | 대화 ID |
-
-**Response `200 OK`**
+응답:
 
 ```json
 {
   "success": true,
   "data": {
     "id": 1,
-    "title": "Spring Security 질문 정리",
+    "title": "새 대화",
     "status": "ACTIVE",
-    "createdAt": "2026-07-14T10:00:00"
+    "createdAt": "2026-08-05T10:00:00",
+    "updatedAt": "2026-08-05T10:05:00",
+    "messages": [
+      {
+        "id": 1,
+        "role": "USER",
+        "content": "Spring Boot에 대해 설명해주세요.",
+        "createdAt": "2026-08-05T10:01:00"
+      }
+    ],
+    "messageCount": 1
   }
 }
 ```
 
----
+### 대화 제목 수정
 
-## 📦 공통 응답 형식
+```http
+PATCH /api/conversations/{conversationId}
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+```
 
-모든 API는 `ApiResponse<T>` 형식으로 응답합니다.
+```json
+{
+  "title": "수정된 대화 제목"
+}
+```
+
+### 대화 삭제
+
+```http
+DELETE /api/conversations/{conversationId}
+Authorization: Bearer <accessToken>
+```
+
+### 대화 메시지 생성
+
+```http
+POST /api/conversations/{conversationId}/messages
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+```
+
+```json
+{
+  "content": "안녕하세요, 질문이 있습니다."
+}
+```
+
+응답 `data`는 생성된 메시지 ID입니다.
+
+### 대화 메시지 목록 조회
+
+```http
+GET /api/conversations/{conversationId}/messages
+Authorization: Bearer <accessToken>
+```
+
+### 대화형 AI 요청
+
+```http
+POST /api/conversations/{conversationId}/chat
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+```
+
+```json
+{
+  "message": "Spring Boot에 대해 설명해주세요."
+}
+```
+
+일반 채팅 요청은 사용자 메시지와 Assistant 응답을 저장한 뒤 응답 본문을 반환합니다.
+
+응답:
 
 ```json
 {
   "success": true,
-  "data": { ... }
-}
-```
-
-### 에러 응답
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "에러 메시지"
+  "data": {
+    "content": "Spring Boot는 Spring 기반 애플리케이션을 빠르게 만들기 위한 프레임워크입니다."
   }
 }
 ```
 
----
+### 대화형 AI SSE 스트리밍
 
-## 🏷️ Enum 타입
+```http
+POST /api/conversations/{conversationId}/chat/stream
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+Accept: text/event-stream
+```
 
-### NoteCategory
+```json
+{
+  "message": "Spring Boot에 대해 설명해주세요."
+}
+```
 
-| 값 | 설명 |
-|----|------|
-| `STUDY` | 학습 내용 |
-| `ERROR` | 트러블슈팅 |
-| `ENVIRONMENT` | 환경 설정 |
-| `AI` | AI 관련 |
-| `MEMO` | 메모 |
+SSE 이벤트:
 
-### StudyStatus
+```json
+{"type":"TOKEN","content":"Spring"}
+{"type":"COMPLETE","content":null}
+{"type":"ERROR","content":"오류 메시지"}
+```
 
-| 값 | 설명 |
-|----|------|
-| `TODO` | 학습 예정 |
-| `IN_PROGRESS` | 학습 중 |
-| `DONE` | 학습 완료 |
+## Knowledge
 
-### AiJobType
+모든 Knowledge API는 JWT 인증이 필요합니다. Postman에는 아직 Knowledge 요청 파일이 완성되지 않았지만, 서버에는 아래 조회 API가 구현되어 있습니다.
 
-| 값 | 설명 |
-|----|------|
-| `SUMMARY` | 노트 요약 |
-| `TAG` | 태그 생성 |
-| `QUIZ` | 퀴즈 생성 |
-| `REVIEW` | 코드 리뷰 |
-| `ROADMAP` | 학습 로드맵 |
+### Knowledge 폴더 트리 조회
 
-### AiJobStatus
+```http
+GET /api/knowledge/tree
+Authorization: Bearer <accessToken>
+```
 
-| 값 | 설명 |
-|----|------|
-| `REQUESTED` | 요청 생성 |
-| `PROCESSING` | 처리 중 |
-| `COMPLETED` | 처리 완료 |
-| `FAILED` | 처리 실패 |
+응답:
 
-### ConversationStatus
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "WEB_DEVELOPMENT",
+      "children": [
+        {
+          "id": 2,
+          "name": "Spring Boot",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+```
 
-| 값 | 설명 |
-|----|------|
-| `ACTIVE` | 진행 중 |
-| `COMPLETED` | 완료 |
+### Knowledge 폴더별 노트 목록 조회
+
+```http
+GET /api/knowledge/{knowledgeId}/notes
+Authorization: Bearer <accessToken>
+```
+
+응답:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 10,
+      "title": "Spring Boot 자동 설정",
+      "summary": "자동 설정의 조건과 적용 순서를 정리합니다.",
+      "createdAt": "2026-08-05T10:30:00"
+    }
+  ]
+}
+```
+
+### Knowledge 노트 상세 조회
+
+```http
+GET /api/knowledge/notes/{noteId}
+Authorization: Bearer <accessToken>
+```
+
+응답:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 10,
+    "title": "Spring Boot 자동 설정",
+    "description": "자동 설정이 적용되는 흐름을 요약한 노트",
+    "summary": "AutoConfiguration은 조건부 Bean 등록을 통해 기본 구성을 제공합니다.",
+    "keywords": ["Spring Boot", "AutoConfiguration"]
+  }
+}
+```
+
+### Conversation 통합 Knowledge 노트 조회
+
+```http
+GET /api/knowledge/conversations/{conversationId}/consolidated-note
+Authorization: Bearer <accessToken>
+```
+
+같은 Conversation에서 누적 병합된 `CONSOLIDATED` KnowledgeNote를 조회합니다.
+
+## Postman Collection
+
+현재 Postman 컬렉션에 포함된 요청:
+
+| 그룹 | 요청 |
+| --- | --- |
+| Auth | Login |
+| User | Signup, Get My Info |
+| Note | Create, Search, Get, Update, Delete, Update Pin, Update Study Status |
+| AI | Summarize Note, Summarize Job Status |
+| Conversation | Create, Get, Get All, Update, Delete, Create Message, Get Messages, Create Chat, Chat Stream |
+| Knowledge | `Get Merged Knowledge` 파일은 존재하지만 URL이 비어 있어 아직 실행 가능한 요청이 아닙니다. |
+
+## Enum
+
+| Enum | 값 |
+| --- | --- |
+| `NoteCategory` | `STUDY`, `ERROR`, `ENVIRONMENT`, `AI`, `MEMO` |
+| `StudyStatus` | `TODO`, `IN_PROGRESS`, `DONE` |
+| `AiSummaryStatus` | `NONE`, `PENDING`, `COMPLETED`, `FAILED` |
+| `AiJobType` | `SUMMARY`, `TAG`, `QUIZ`, `REVIEW`, `ROADMAP` |
+| `AiJobStatus` | `REQUESTED`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| `ConversationStatus` | `ACTIVE`, `COMPLETED` |
+| `ConversationRole` | `USER`, `ASSISTANT` |
+| `StreamType` | `TOKEN`, `COMPLETE`, `ERROR` |
+| `KnowledgeExtractStatus` | `NONE`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| `KnowledgeNoteType` | `INCREMENTAL`, `CONSOLIDATED` |
+| `KnowledgeRootCategory` | `COMPUTER_SCIENCE`, `PROGRAMMING_LANGUAGE`, `WEB_DEVELOPMENT`, `DATABASE`, `NETWORK`, `OPERATING_SYSTEM`, `CLOUD`, `DEVOPS`, `ARTIFICIAL_INTELLIGENCE`, `SECURITY`, `COMPUTER_USAGE`, `COMMUNICATION` |

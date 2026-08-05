@@ -26,7 +26,10 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 30분 기본 비활성 시간 이후 ACTIVE Conversation 자동 완료
 - 완료된 Conversation 기반 Knowledge 추출 대상 관리
 - 마지막 추출 메시지 ID 기반 증분 Knowledge 추출 체크포인트
+- Knowledge 대분류 고정 체계와 AI 기반 하위 폴더 재사용/생성
 - Knowledge 폴더 트리와 AI 추출 KnowledgeNote 저장
+- KnowledgeNote `INCREMENTAL`/`CONSOLIDATED` 타입 분리
+- 기존 통합 KnowledgeNote 자동 병합과 Conversation별 통합 노트 조회
 - Knowledge 추출 Batch Job/Step/Tasklet, 스케줄러, 실패 재시도 상태 관리
 - Vue Router Guard, Axios Interceptor, Fetch 기반 SSE 클라이언트
 - Markdown 렌더링, DOMPurify sanitize, highlight.js 코드 강조, 코드 복사 UX
@@ -86,7 +89,9 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Vue 메인 대화 화면은 `POST /api/conversations/{conversationId}/chat/stream` SSE 스트리밍을 사용해 AI 응답 토큰을 실시간으로 표시합니다.
 - SSE 응답은 `ApiResponse<T>`로 감싸지 않고 `StreamResponse` 이벤트(`TOKEN`, `COMPLETE`, `ERROR`)를 순차 전송합니다.
 - Knowledge 화면은 `GET /api/knowledge/tree`, `GET /api/knowledge/{knowledgeId}/notes`, `GET /api/knowledge/notes/{noteId}`를 사용합니다.
+- Conversation별 통합 Knowledge 노트는 `GET /api/knowledge/conversations/{conversationId}/consolidated-note`로 조회합니다.
 - 서버는 모든 요청에 UUID 기반 `requestId`를 생성하고 `X-Request-Id` 응답 헤더로 내려줍니다.
+- Postman 컬렉션은 JWT Bearer 인증과 `noteId`, `conversationId`, `jobId` 환경 변수를 기준으로 정리되어 있습니다.
 
 ## Architecture Summary
 
@@ -125,6 +130,9 @@ flowchart TD
     KnowledgeExtractionJob --> KnowledgeExtractionTasklet
     KnowledgeExtractionTasklet --> KnowledgeExtractionService
     KnowledgeExtractionService --> OpenAiKnowledgeSummaryService
+    KnowledgeExtractionService --> OpenAiKnowledgeMergeService
+    KnowledgeExtractionService --> KnowledgePathResolver
+    KnowledgePathResolver --> KnowledgeFolderSelectionService
     KnowledgeExtractionService --> KnowledgeNoteCommandService
 ```
 
@@ -138,7 +146,7 @@ src/main/java/io.github.kaltz.feldbuch
 ├── common           # 공통 응답, 예외, requestId 로깅
 ├── config           # Security, Redis, OpenAI, Batch 설정
 ├── conversation     # 대화, 메시지, 대화형 AI, 비활성 대화 자동 완료
-├── knowledge        # 지식 폴더, AI 추출 학습 노트
+├── knowledge        # 지식 폴더, 대분류, AI 폴더 선택, 추출/통합 학습 노트
 ├── note             # 개발 노트 CRUD/Search
 ├── redis            # Redis 유틸리티
 └── user             # 회원, 사용자 조회
@@ -166,6 +174,7 @@ frontend/src
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
+- Postman Knowledge 요청 파일 보강
 - AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
 - Docker Compose 운영 구성 정리
 - 테스트 커버리지와 모니터링 확장
