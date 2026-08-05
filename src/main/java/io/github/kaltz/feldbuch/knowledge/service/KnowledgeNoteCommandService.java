@@ -28,6 +28,7 @@ public class KnowledgeNoteCommandService {
         Knowledge knowledge =
                 knowledgePathResolver.resolve(
                         user,
+                        response.rootCategory(),
                         response.knowledgePath()
                 );
 

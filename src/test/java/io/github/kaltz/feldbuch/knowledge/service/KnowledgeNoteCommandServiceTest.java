@@ -71,7 +71,12 @@ class KnowledgeNoteCommandServiceTest {
     void AI_요약용_KnowledgeNote로_저장한다() {
 
         // given
-        when(knowledgePathResolver.resolve(user, response.knowledgePath()))
+        when(knowledgePathResolver.resolve(
+                        user,
+                        response.rootCategory(),
+                        response.knowledgePath()
+                )
+        )
                 .thenReturn(knowledge);
 
         when(knowledgeNoteRepository.save(any(KnowledgeNote.class)))
@@ -90,7 +95,11 @@ class KnowledgeNoteCommandServiceTest {
                 ArgumentCaptor.forClass(KnowledgeNote.class);
 
         verify(knowledgePathResolver)
-                .resolve(user, response.knowledgePath());
+                .resolve(
+                        user,
+                        response.rootCategory(),
+                        response.knowledgePath()
+                );
 
         verify(knowledgeNoteRepository)
                 .save(captor.capture());

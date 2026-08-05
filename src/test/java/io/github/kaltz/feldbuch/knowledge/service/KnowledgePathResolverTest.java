@@ -1,19 +1,24 @@
 package io.github.kaltz.feldbuch.knowledge.service;
 
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
+import io.github.kaltz.feldbuch.knowledge.folder.AiKnowledgeFolderSelectionResponse;
+import io.github.kaltz.feldbuch.knowledge.folder.AiKnowledgeFolderSelectionType;
+import io.github.kaltz.feldbuch.knowledge.folder.KnowledgeFolderCandidate;
+import io.github.kaltz.feldbuch.knowledge.folder.KnowledgeFolderSelectionService;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,233 +32,559 @@ class KnowledgePathResolverTest {
     private KnowledgeRepository knowledgeRepository;
 
     @Mock
+    private KnowledgeFolderSelectionService folderSelectionService;
+
+    private KnowledgePathResolver resolver;
+
     private User user;
-
-    private KnowledgePathResolver knowledgePathResolver;
-
-    private final AtomicLong idSequence = new AtomicLong(1L);
 
     @BeforeEach
     void setUp() {
-        knowledgePathResolver =
-                new KnowledgePathResolver(knowledgeRepository);
+        resolver =
+                new KnowledgePathResolver(
+                        knowledgeRepository,
+                        folderSelectionService
+                );
 
-        when(user.getId()).thenReturn(1L);
+        user =
+                User.builder()
+                        .email("test@test.com")
+                        .password("password")
+                        .nickname("tester")
+                        .build();
 
-        /**
-         * 실제 JPA에서는 save() 후 ID가 자동 생성된다.
-         *
-         * 단위 테스트에서는 JPA가 동작하지 않으므로
-         * ReflectionTestUtils를 이용해 가짜 ID를 부여한다.
-         */
-        lenient()
-                .when(knowledgeRepository.save(any(Knowledge.class)))
-                .thenAnswer(invocation -> {
-                    Knowledge knowledge = invocation.getArgument(0);
-
-                    if (knowledge.getId() == null) {
-                        ReflectionTestUtils.setField(
-                                knowledge,
-                                "id",
-                                idSequence.getAndIncrement()
-                        );
-                    }
-
-                    return knowledge;
-                });
+        ReflectionTestUtils.setField(
+                user,
+                "id",
+                1L
+        );
     }
 
     @Test
-    @DisplayName("Knowledge 경로가 존재하지 않으면 순서대로 생성한다")
-    void resolve_createsMissingKnowledgePath() {
+    void 고정_대분류와_하위_경로를_순서대로_생성한다() {
         // given
+        Knowledge root =
+                createRootKnowledge(
+                        10L,
+                        "웹 개발"
+                );
+
+        Knowledge spring =
+                createChildKnowledge(
+                        11L,
+                        root,
+                        "Spring Framework"
+                );
+
+        Knowledge webFlux =
+                createChildKnowledge(
+                        12L,
+                        spring,
+                        "WebFlux"
+                );
+
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIsNullAndName(
                                 1L,
-                                "개발"
+                                "웹 개발"
                         )
-        ).thenReturn(Optional.empty());
+        ).thenReturn(
+                Optional.of(root)
+        );
 
         when(
-                knowledgeRepository.findByUserIdAndParentIdAndName(
-                        1L,
-                        1L,
-                        "Spring"
-                )
-        ).thenReturn(Optional.empty());
+                knowledgeRepository
+                        .findByUserIdAndParentIdAndName(
+                                1L,
+                                10L,
+                                "Spring Framework"
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
 
         when(
-                knowledgeRepository.findByUserIdAndParentIdAndName(
-                        1L,
-                        2L,
-                        "JPA"
-                )
-        ).thenReturn(Optional.empty());
+                knowledgeRepository
+                        .findAllByUserIdAndParentIdOrderByNameAsc(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(
+                List.of()
+        );
 
-        // when
-        Knowledge result = knowledgePathResolver.resolve(
-                user,
-                List.of(
-                        "개발",
-                        "Spring",
-                        "JPA"
+        when(
+                folderSelectionService.select(
+                        "웹 개발",
+                        "웹 개발",
+                        "Spring Framework",
+                        List.of()
+                )
+        ).thenReturn(
+                new AiKnowledgeFolderSelectionResponse(
+                        AiKnowledgeFolderSelectionType.CREATE,
+                        null
                 )
         );
 
+        when(knowledgeRepository.save(any(Knowledge.class)))
+                .thenReturn(spring, webFlux);
+
+        when(
+                knowledgeRepository
+                        .findByUserIdAndParentIdAndName(
+                                1L,
+                                11L,
+                                "WebFlux"
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        when(
+                knowledgeRepository
+                        .findAllByUserIdAndParentIdOrderByNameAsc(
+                                1L,
+                                11L
+                        )
+        ).thenReturn(
+                List.of()
+        );
+
+        when(
+                folderSelectionService.select(
+                        "웹 개발",
+                        "Spring Framework",
+                        "WebFlux",
+                        List.of()
+                )
+        ).thenReturn(
+                new AiKnowledgeFolderSelectionResponse(
+                        AiKnowledgeFolderSelectionType.CREATE,
+                        null
+                )
+        );
+
+        // when
+        Knowledge result =
+                resolver.resolve(
+                        user,
+                        KnowledgeRootCategory.WEB_DEVELOPMENT,
+                        List.of(
+                                "Spring Framework",
+                                "WebFlux"
+                        )
+                );
+
         // then
-        assertThat(result.getName()).isEqualTo("JPA");
-        assertThat(result.getId()).isEqualTo(3L);
+        assertThat(result)
+                .isSameAs(webFlux);
 
-        assertThat(result.getParent())
-                .isNotNull()
-                .extracting(Knowledge::getName)
-                .isEqualTo("Spring");
+        InOrder inOrder =
+                inOrder(
+                        knowledgeRepository,
+                        folderSelectionService
+                );
 
-        assertThat(result.getParent().getParent())
-                .isNotNull()
-                .extracting(Knowledge::getName)
-                .isEqualTo("개발");
+        inOrder.verify(knowledgeRepository)
+                .findByUserIdAndParentIsNullAndName(
+                        1L,
+                        "웹 개발"
+                );
 
-        verify(knowledgeRepository, times(3))
+        inOrder.verify(knowledgeRepository)
+                .findByUserIdAndParentIdAndName(
+                        1L,
+                        10L,
+                        "Spring Framework"
+                );
+
+        inOrder.verify(knowledgeRepository)
+                .findAllByUserIdAndParentIdOrderByNameAsc(
+                        1L,
+                        10L
+                );
+
+        inOrder.verify(folderSelectionService)
+                .select(
+                        "웹 개발",
+                        "웹 개발",
+                        "Spring Framework",
+                        List.of()
+                );
+
+        inOrder.verify(knowledgeRepository)
+                .save(any(Knowledge.class));
+
+        inOrder.verify(knowledgeRepository)
+                .findByUserIdAndParentIdAndName(
+                        1L,
+                        11L,
+                        "WebFlux"
+                );
+
+        inOrder.verify(knowledgeRepository)
+                .findAllByUserIdAndParentIdOrderByNameAsc(
+                        1L,
+                        11L
+                );
+
+        inOrder.verify(folderSelectionService)
+                .select(
+                        "웹 개발",
+                        "Spring Framework",
+                        "WebFlux",
+                        List.of()
+                );
+
+        inOrder.verify(knowledgeRepository)
                 .save(any(Knowledge.class));
     }
 
     @Test
-    @DisplayName("이미 존재하는 Knowledge 경로는 새로 생성하지 않고 재사용한다")
-    void resolve_reusesExistingKnowledgePath() {
+    void 동일한_이름의_폴더가_있으면_AI를_호출하지_않고_재사용한다() {
         // given
-        Knowledge development = Knowledge.createRoot(
-                user,
-                "개발"
-        );
+        Knowledge root =
+                createRootKnowledge(
+                        10L,
+                        "웹 개발"
+                );
 
-        ReflectionTestUtils.setField(
-                development,
-                "id",
-                10L
-        );
-
-        Knowledge spring = Knowledge.createChild(
-                user,
-                development,
-                "Spring"
-        );
-
-        ReflectionTestUtils.setField(
-                spring,
-                "id",
-                20L
-        );
+        Knowledge spring =
+                createChildKnowledge(
+                        11L,
+                        root,
+                        "Spring"
+                );
 
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIsNullAndName(
                                 1L,
-                                "개발"
+                                "웹 개발"
                         )
-        ).thenReturn(Optional.of(development));
-
-        when(
-                knowledgeRepository.findByUserIdAndParentIdAndName(
-                        1L,
-                        10L,
-                        "Spring"
-                )
-        ).thenReturn(Optional.of(spring));
-
-        // when
-        Knowledge result = knowledgePathResolver.resolve(
-                user,
-                List.of(
-                        "개발",
-                        "Spring"
-                )
+        ).thenReturn(
+                Optional.of(root)
         );
 
+        when(
+                knowledgeRepository
+                        .findByUserIdAndParentIdAndName(
+                                1L,
+                                10L,
+                                "Spring"
+                        )
+        ).thenReturn(
+                Optional.of(spring)
+        );
+
+        // when
+        Knowledge result =
+                resolver.resolve(
+                        user,
+                        KnowledgeRootCategory.WEB_DEVELOPMENT,
+                        List.of("Spring")
+                );
+
         // then
-        assertThat(result).isSameAs(spring);
-        assertThat(result.getId()).isEqualTo(20L);
-        assertThat(result.getName()).isEqualTo("Spring");
+        assertThat(result)
+                .isSameAs(spring);
+
+        verify(folderSelectionService, never())
+                .select(
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
 
         verify(knowledgeRepository, never())
                 .save(any(Knowledge.class));
     }
 
     @Test
-    @DisplayName("Knowledge 경로의 앞뒤 공백과 빈 항목을 정리한다")
-    void resolve_normalizesKnowledgePath() {
+    void AI가_기존_폴더를_선택하면_해당_폴더를_재사용한다() {
         // given
+        Knowledge root =
+                createRootKnowledge(
+                        10L,
+                        "웹 개발"
+                );
+
+        Knowledge spring =
+                createChildKnowledge(
+                        11L,
+                        root,
+                        "Spring"
+                );
+
         when(
                 knowledgeRepository
                         .findByUserIdAndParentIsNullAndName(
                                 1L,
-                                "개발"
+                                "웹 개발"
                         )
-        ).thenReturn(Optional.empty());
+        ).thenReturn(
+                Optional.of(root)
+        );
 
         when(
-                knowledgeRepository.findByUserIdAndParentIdAndName(
-                        1L,
-                        1L,
-                        "Spring"
+                knowledgeRepository
+                        .findByUserIdAndParentIdAndName(
+                                1L,
+                                10L,
+                                "Spring Framework"
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        when(
+                knowledgeRepository
+                        .findAllByUserIdAndParentIdOrderByNameAsc(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(
+                List.of(spring)
+        );
+
+        when(
+                folderSelectionService.select(
+                        "웹 개발",
+                        "웹 개발",
+                        "Spring Framework",
+                        List.of(
+                                KnowledgeFolderCandidate.from(
+                                        spring
+                                )
+                        )
                 )
-        ).thenReturn(Optional.empty());
+        ).thenReturn(
+                new AiKnowledgeFolderSelectionResponse(
+                        AiKnowledgeFolderSelectionType.EXISTING,
+                        11L
+                )
+        );
+
+        when(
+                knowledgeRepository
+                        .findByIdAndUserId(
+                                11L,
+                                1L
+                        )
+        ).thenReturn(
+                Optional.of(spring)
+        );
 
         // when
-        Knowledge result = knowledgePathResolver.resolve(
-                user,
-                List.of(
-                        "  개발  ",
-                        "",
-                        "  Spring  "
-                )
-        );
-
-        // then
-        assertThat(result.getName()).isEqualTo("Spring");
-        assertThat(result.getParent().getName()).isEqualTo("개발");
-
-        verify(knowledgeRepository).findByUserIdAndParentIdAndName(
-                1L,
-                1L,
-                "Spring"
-        );
-    }
-
-    @Test
-    @DisplayName("Knowledge 경로가 비어 있으면 예외가 발생한다")
-    void resolve_rejectsEmptyPath() {
-        assertThatThrownBy(
-                () -> knowledgePathResolver.resolve(
+        Knowledge result =
+                resolver.resolve(
                         user,
-                        List.of()
-                )
-        )
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Knowledge 경로는 필수입니다.");
-
-        verifyNoInteractions(knowledgeRepository);
-    }
-
-    @Test
-    @DisplayName("저장되지 않은 사용자는 Knowledge 경로를 만들 수 없다")
-    void resolve_rejectsUnsavedUser() {
-        // given
-        when(user.getId()).thenReturn(null);
-
-        // when, then
-        assertThatThrownBy(
-                () -> knowledgePathResolver.resolve(
-                        user,
-                        List.of("개발")
-                )
-        )
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage(
-                        "저장되지 않은 사용자는 Knowledge 경로를 생성할 수 없습니다."
+                        KnowledgeRootCategory.WEB_DEVELOPMENT,
+                        List.of(
+                                "Spring Framework"
+                        )
                 );
 
-        verifyNoInteractions(knowledgeRepository);
+        // then
+        assertThat(result)
+                .isSameAs(spring);
+
+        verify(knowledgeRepository, never())
+                .save(any(Knowledge.class));
+    }
+
+    @Test
+    void AI가_CREATE를_선택하면_새_폴더를_생성한다() {
+        // given
+        Knowledge root =
+                createRootKnowledge(
+                        10L,
+                        "웹 개발"
+                );
+
+        Knowledge react =
+                createChildKnowledge(
+                        11L,
+                        root,
+                        "React"
+                );
+
+        Knowledge newFolder =
+                createChildKnowledge(
+                        12L,
+                        root,
+                        "Spring Framework"
+                );
+
+        when(
+                knowledgeRepository
+                        .findByUserIdAndParentIsNullAndName(
+                                1L,
+                                "웹 개발"
+                        )
+        ).thenReturn(
+                Optional.of(root)
+        );
+
+        when(
+                knowledgeRepository
+                        .findByUserIdAndParentIdAndName(
+                                1L,
+                                10L,
+                                "Spring Framework"
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        when(
+                knowledgeRepository
+                        .findAllByUserIdAndParentIdOrderByNameAsc(
+                                1L,
+                                10L
+                        )
+        ).thenReturn(
+                List.of(react)
+        );
+
+        when(
+                folderSelectionService.select(
+                        "웹 개발",
+                        "웹 개발",
+                        "Spring Framework",
+                        List.of(
+                                KnowledgeFolderCandidate.from(
+                                        react
+                                )
+                        )
+                )
+        ).thenReturn(
+                new AiKnowledgeFolderSelectionResponse(
+                        AiKnowledgeFolderSelectionType.CREATE,
+                        null
+                )
+        );
+
+        when(
+                knowledgeRepository.save(
+                        any(Knowledge.class)
+                )
+        ).thenReturn(
+                newFolder
+        );
+
+        // when
+        Knowledge result =
+                resolver.resolve(
+                        user,
+                        KnowledgeRootCategory.WEB_DEVELOPMENT,
+                        List.of(
+                                "Spring Framework"
+                        )
+                );
+
+        // then
+        assertThat(result)
+                .isSameAs(newFolder);
+
+        ArgumentCaptor<Knowledge> captor =
+                ArgumentCaptor.forClass(
+                        Knowledge.class
+                );
+
+        verify(knowledgeRepository)
+                .save(captor.capture());
+
+        Knowledge saved =
+                captor.getValue();
+
+        assertThat(saved.getName())
+                .isEqualTo(
+                        "Spring Framework"
+                );
+
+        assertThat(saved.getParent())
+                .isSameAs(root);
+    }
+
+    @Test
+    void 하위_경로가_2단계를_초과하면_실패한다() {
+        assertThatThrownBy(() ->
+                resolver.resolve(
+                        user,
+                        KnowledgeRootCategory.WEB_DEVELOPMENT,
+                        List.of(
+                                "Spring",
+                                "WebFlux",
+                                "Reactive Streams"
+                        )
+                )
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "Knowledge 하위 경로는 최대 2단계까지 허용됩니다."
+                );
+    }
+
+    @Test
+    void 대분류가_null이면_실패한다() {
+        assertThatThrownBy(() ->
+                resolver.resolve(
+                        user,
+                        null,
+                        List.of("Spring")
+                )
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "Knowledge 대분류는 필수입니다."
+                );
+    }
+
+    private Knowledge createRootKnowledge(
+            Long id,
+            String name
+    ) {
+        Knowledge knowledge =
+                Knowledge.createRoot(
+                        user,
+                        name
+                );
+
+        ReflectionTestUtils.setField(
+                knowledge,
+                "id",
+                id
+        );
+
+        return knowledge;
+    }
+
+    private Knowledge createChildKnowledge(
+            Long id,
+            Knowledge parent,
+            String name
+    ) {
+        Knowledge knowledge =
+                Knowledge.createChild(
+                        user,
+                        parent,
+                        name
+                );
+
+        ReflectionTestUtils.setField(
+                knowledge,
+                "id",
+                id
+        );
+
+        return knowledge;
     }
 }

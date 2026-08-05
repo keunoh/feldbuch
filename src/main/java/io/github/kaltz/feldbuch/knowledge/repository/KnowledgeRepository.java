@@ -30,6 +30,14 @@ public interface KnowledgeRepository extends JpaRepository<Knowledge, Long> {
 
     List<Knowledge> findAllByUserIdOrderByCreatedAtAsc(Long userId);
 
+    /**
+     * 특정 사용자의 Knowledge를 ID로 조회한다.
+     */
+    Optional<Knowledge> findByIdAndUserId(
+            Long knowledgeId,
+            Long userId
+    );
+
     boolean existsByUserIdAndParentIsNullAndName(Long userId, String name);
 
     boolean existsByUserIdAndParentIdAndName(Long userId, Long parentId, String name);
