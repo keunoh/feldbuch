@@ -1,12 +1,15 @@
 package io.github.kaltz.feldbuch.knowledge.service;
 
+import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeMergeResponse;
 import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeSummaryResponse;
+import io.github.kaltz.feldbuch.ai.service.AiKnowledgeMergeService;
 import io.github.kaltz.feldbuch.ai.service.AiKnowledgeSummaryService;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContext;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContextBuilder;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.reader.UserReader;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +34,14 @@ public class KnowledgeExtractionService {
     private final AiKnowledgeSummaryService
             aiKnowledgeSummaryService;
 
+    private final AiKnowledgeMergeService
+            aiKnowledgeMergeService;
+
     private final KnowledgeNoteCommandService
             knowledgeNoteCommandService;
+
+    private final KnowledgeNoteRepository
+            knowledgeNoteRepository;
 
 
     @Transactional
@@ -68,17 +77,25 @@ public class KnowledgeExtractionService {
                 context.messageCount()
         );
 
-        AiKnowledgeSummaryResponse response =
-                aiKnowledgeSummaryService.summarize(
-                        context.content()
-                );
-
         KnowledgeNote note =
-                knowledgeNoteCommandService
-                        .saveAiSummary(
-                                user,
-                                conversation,
-                                response
+                knowledgeNoteRepository
+                        .findFirstByUserIdAndConversationIdOrderByCreatedAtAsc(
+                                userId,
+                                conversationId
+                        )
+                        .map(existingNote ->
+                                mergeExistingNote(
+                                        user,
+                                        existingNote,
+                                        context.content()
+                                )
+                        )
+                        .orElseGet(() ->
+                                createNewNote(
+                                        user,
+                                        conversation,
+                                        context.content()
+                                )
                         );
 
         conversation.completeKnowledgeExtraction(
@@ -93,6 +110,44 @@ public class KnowledgeExtractionService {
         );
 
         return note;
+    }
+
+
+    private KnowledgeNote createNewNote(
+            User user,
+            Conversation conversation,
+            String conversationContent
+    ) {
+        AiKnowledgeSummaryResponse response =
+                aiKnowledgeSummaryService.summarize(
+                        conversationContent
+                );
+
+        return knowledgeNoteCommandService
+                .saveAiSummary(
+                        user,
+                        conversation,
+                        response
+                );
+    }
+
+    private KnowledgeNote mergeExistingNote(
+            User user,
+            KnowledgeNote existingNote,
+            String newConversationContent
+    ) {
+        AiKnowledgeMergeResponse response =
+                aiKnowledgeMergeService.merge(
+                        existingNote,
+                        newConversationContent
+                );
+
+        return knowledgeNoteCommandService
+                .updateAiSummary(
+                        user,
+                        existingNote,
+                        response
+                );
     }
 
     private void validateContext(
@@ -111,7 +166,10 @@ public class KnowledgeExtractionService {
             );
         }
 
-        if (context.content().isBlank()) {
+        if (
+                context.content() == null
+                        || context.content().isBlank()
+        ) {
             throw new IllegalStateException(
                     "지식으로 추출할 대화 내용이 없습니다."
             );
@@ -127,8 +185,7 @@ public class KnowledgeExtractionService {
         }
 
         Long previousCheckpoint =
-                conversation
-                        .getLastExtractedMessageId();
+                conversation.getLastExtractedMessageId();
 
         if (
                 previousCheckpoint != null

@@ -162,11 +162,14 @@ public class KnowledgeNote extends BaseEntity {
         validateDescription(description);
         validateSummary(summary);
 
-        this.title = title;
+        this.title = title.trim();
         this.description = description.trim();
-        this.summary = summary;
+        this.summary = summary.trim();
+
         this.keywords.clear();
-        this.keywords.addAll(normalizeKeywords(keywords));
+        this.keywords.addAll(
+                normalizeKeywords(keywords)
+        );
     }
 
     public void moveTo(Knowledge knowledge) {

@@ -1,0 +1,115 @@
+package io.github.kaltz.feldbuch.ai.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.kaltz.feldbuch.ai.client.AiClient;
+import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeMergeResponse;
+import io.github.kaltz.feldbuch.ai.dto.openai.ChatCompletionRequest;
+import io.github.kaltz.feldbuch.ai.dto.openai.ChatCompletionResponse;
+import io.github.kaltz.feldbuch.ai.dto.openai.Message;
+import io.github.kaltz.feldbuch.ai.prompt.KnowledgeMergePrompt;
+import io.github.kaltz.feldbuch.common.exception.CustomException;
+import io.github.kaltz.feldbuch.common.exception.ErrorCode;
+import io.github.kaltz.feldbuch.config.OpenAiProperties;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class OpenAiKnowledgeMergeService
+        implements AiKnowledgeMergeService {
+
+    private static final String MERGE_LOG =
+            "[AI_KNOWLEDGE_MERGE]";
+
+    private final AiClient aiClient;
+    private final OpenAiProperties properties;
+    private final ObjectMapper objectMapper;
+
+    @Override
+    public AiKnowledgeMergeResponse merge(
+            KnowledgeNote existingNote,
+            String newConversationContext
+    ) {
+        ChatCompletionRequest request =
+                new ChatCompletionRequest(
+                        properties.getModel(),
+                        List.of(
+                                new Message(
+                                        "system",
+                                        KnowledgeMergePrompt
+                                                .systemPrompt()
+                                ),
+                                new Message(
+                                        "user",
+                                        KnowledgeMergePrompt
+                                                .userPrompt(
+                                                        existingNote,
+                                                        newConversationContext
+                                                )
+                                )
+                        )
+                );
+
+        ChatCompletionResponse response =
+                aiClient.chat(request);
+
+        String json =
+                extractContent(response);
+
+        try {
+            return objectMapper.readValue(
+                    json,
+                    AiKnowledgeMergeResponse.class
+            );
+        } catch (JsonProcessingException exception) {
+            log.error(
+                    "{} Failed to parse response. response={}",
+                    MERGE_LOG,
+                    json,
+                    exception
+            );
+
+            throw new CustomException(
+                    ErrorCode.OPENAI_SERVER_ERROR
+            );
+        }
+    }
+
+    private String extractContent(
+            ChatCompletionResponse response
+    ) {
+        if (
+                response == null
+                        || response.choices() == null
+                        || response.choices().isEmpty()
+        ) {
+            throw new CustomException(
+                    ErrorCode.OPENAI_SERVER_ERROR
+            );
+        }
+
+        String content =
+                response
+                        .choices()
+                        .getFirst()
+                        .message()
+                        .content();
+
+        if (
+                content == null
+                        || content.isBlank()
+        ) {
+            throw new CustomException(
+                    ErrorCode.OPENAI_SERVER_ERROR
+            );
+        }
+
+        return content.trim();
+    }
+}

@@ -62,3 +62,8 @@ src/test/resources/application-test.yml
 # ==========================
 frontend/node_modules/
 frontend/dist/
+
+# ==========================
+# JPA
+# ==========================
+spy.log
