@@ -4,6 +4,7 @@ import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeSummaryResponse;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.entity.UserRole;
@@ -57,6 +58,7 @@ class KnowledgeNoteCommandServiceTest {
         knowledge = Knowledge.createRoot(user, "Spring");
 
         response = new AiKnowledgeSummaryResponse(
+                KnowledgeRootCategory.WEB_DEVELOPMENT,
                 List.of("Backend", "Spring"),
                 "Spring",
                 "JPA",

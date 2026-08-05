@@ -8,6 +8,7 @@ import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContext;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContextBuilder;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.reader.UserReader;
 import org.junit.jupiter.api.Test;
@@ -84,6 +85,7 @@ class KnowledgeExtractionServiceTest {
 
         AiKnowledgeSummaryResponse response =
                 new AiKnowledgeSummaryResponse(
+                        KnowledgeRootCategory.WEB_DEVELOPMENT,
                         List.of(
                                 "개발",
                                 "Spring",
