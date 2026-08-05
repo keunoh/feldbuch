@@ -60,4 +60,21 @@ public class KnowledgeController {
                 )
         );
     }
+
+    @GetMapping("/conversations/{conversationId}/consolidated-note")
+    public ApiResponse<KnowledgeNoteDetailResponse> findConsolidatedNote(
+            @AuthenticationPrincipal
+            CustomUserDetails user,
+
+            @PathVariable
+            Long conversationId
+    ) {
+
+        return ApiResponse.success(
+                queryService.findConsolidatedNote(
+                        user.getUserId(),
+                        conversationId
+                )
+        );
+    }
 }

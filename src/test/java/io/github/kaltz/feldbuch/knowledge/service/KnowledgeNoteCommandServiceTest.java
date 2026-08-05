@@ -5,6 +5,7 @@ import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeSummaryResponse;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -21,6 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -33,23 +34,25 @@ class KnowledgeNoteCommandServiceTest {
     @Mock
     private KnowledgeNoteRepository knowledgeNoteRepository;
 
-    @InjectMocks
-    private KnowledgeNoteCommandService knowledgeNoteCommandService;
+    private KnowledgeNoteCommandService service;
 
     private User user;
-
     private Conversation conversation;
 
     private Knowledge currentKnowledge;
-
     private Knowledge resolvedKnowledge;
 
     private AiKnowledgeSummaryResponse summaryResponse;
-
     private AiKnowledgeMergeResponse mergeResponse;
 
     @BeforeEach
     void setUp() {
+        service =
+                new KnowledgeNoteCommandService(
+                        knowledgePathResolver,
+                        knowledgeNoteRepository
+                );
+
         user =
                 User.builder()
                         .email("test@test.com")
@@ -109,7 +112,7 @@ class KnowledgeNoteCommandServiceTest {
                                 "Spring Batch"
                         ),
                         "Spring Batch 기본 구조",
-                        "Job과 Step을 중심으로 실행 구조를 정리한 노트",
+                        "Job과 Step 중심의 실행 구조를 정리한 노트",
                         "Spring Batch는 Job과 Step을 중심으로 대용량 일괄 처리를 구성합니다.",
                         List.of(
                                 "Spring Batch",
@@ -126,8 +129,8 @@ class KnowledgeNoteCommandServiceTest {
                                 "Spring Batch"
                         ),
                         "Spring Batch 처리 방식",
-                        "Tasklet과 Chunk 방식까지 반영한 Spring Batch 학습 노트",
-                        "Spring Batch는 Job과 Step으로 구성되며 Step에서는 Tasklet 또는 Chunk 기반 처리를 사용할 수 있습니다.",
+                        "Tasklet과 Chunk 방식까지 반영한 통합 노트",
+                        "Spring Batch는 Job과 Step으로 구성되며 Tasklet 또는 Chunk 방식으로 작업을 처리할 수 있습니다.",
                         List.of(
                                 "Spring Batch",
                                 "Tasklet",
@@ -137,17 +140,9 @@ class KnowledgeNoteCommandServiceTest {
     }
 
     @Test
-    void AI_요약으로_새_KnowledgeNote를_저장한다() {
+    void AI_요약으로_Incremental_노트를_저장한다() {
         // given
-        when(
-                knowledgePathResolver.resolve(
-                        user,
-                        summaryResponse.rootCategory(),
-                        summaryResponse.knowledgePath()
-                )
-        ).thenReturn(
-                resolvedKnowledge
-        );
+        mockResolvedKnowledge();
 
         when(
                 knowledgeNoteRepository.save(
@@ -160,7 +155,7 @@ class KnowledgeNoteCommandServiceTest {
 
         // when
         KnowledgeNote result =
-                knowledgeNoteCommandService.saveAiSummary(
+                service.saveIncremental(
                         user,
                         conversation,
                         summaryResponse
@@ -187,59 +182,82 @@ class KnowledgeNoteCommandServiceTest {
         KnowledgeNote saved =
                 captor.getValue();
 
-        assertThat(saved.getUser())
-                .isSameAs(user);
+        assertSummaryNote(
+                saved,
+                KnowledgeNoteType.INCREMENTAL
+        );
 
-        assertThat(saved.getConversation())
-                .isSameAs(conversation);
+        assertThat(saved.isIncremental())
+                .isTrue();
 
-        assertThat(saved.getKnowledge())
-                .isSameAs(resolvedKnowledge);
-
-        assertThat(saved.getTitle())
-                .isEqualTo(
-                        summaryResponse.title()
-                );
-
-        assertThat(saved.getDescription())
-                .isEqualTo(
-                        summaryResponse.description()
-                );
-
-        assertThat(saved.getSummary())
-                .isEqualTo(
-                        summaryResponse.summary()
-                );
-
-        assertThat(saved.getKeywords())
-                .containsExactlyElementsOf(
-                        summaryResponse.keywords()
-                );
+        assertThat(saved.isConsolidated())
+                .isFalse();
 
         assertThat(result)
                 .isSameAs(saved);
     }
 
     @Test
-    void AI_병합_결과로_기존_KnowledgeNote를_갱신한다() {
+    void AI_요약으로_Consolidated_노트를_저장한다() {
         // given
-        KnowledgeNote existingNote =
-                KnowledgeNote.create(
+        mockResolvedKnowledge();
+
+        when(
+                knowledgeNoteRepository.save(
+                        any(KnowledgeNote.class)
+                )
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        // when
+        KnowledgeNote result =
+                service.saveConsolidated(
                         user,
                         conversation,
-                        currentKnowledge,
-                        "기존 제목",
-                        "기존 설명",
-                        "기존 요약",
-                        List.of(
-                                "Spring Batch",
-                                "Job",
-                                "Step"
-                        )
+                        summaryResponse
+                );
+
+        // then
+        ArgumentCaptor<KnowledgeNote> captor =
+                ArgumentCaptor.forClass(
+                        KnowledgeNote.class
+                );
+
+        verify(knowledgeNoteRepository)
+                .save(
+                        captor.capture()
+                );
+
+        KnowledgeNote saved =
+                captor.getValue();
+
+        assertSummaryNote(
+                saved,
+                KnowledgeNoteType.CONSOLIDATED
+        );
+
+        assertThat(saved.isConsolidated())
+                .isTrue();
+
+        assertThat(saved.isIncremental())
+                .isFalse();
+
+        assertThat(result)
+                .isSameAs(saved);
+    }
+
+    @Test
+    void AI_병합_결과로_Consolidated_노트의_내용과_경로를_갱신한다() {
+        // given
+        KnowledgeNote consolidatedNote =
+                createConsolidatedNote(
+                        currentKnowledge
                 );
 
         ReflectionTestUtils.setField(
-                existingNote,
+                consolidatedNote,
                 "id",
                 200L
         );
@@ -256,9 +274,9 @@ class KnowledgeNoteCommandServiceTest {
 
         // when
         KnowledgeNote result =
-                knowledgeNoteCommandService.updateAiSummary(
+                service.updateConsolidated(
                         user,
-                        existingNote,
+                        consolidatedNote,
                         mergeResponse
                 );
 
@@ -276,48 +294,27 @@ class KnowledgeNoteCommandServiceTest {
                 );
 
         assertThat(result)
-                .isSameAs(existingNote);
+                .isSameAs(consolidatedNote);
 
-        assertThat(existingNote.getKnowledge())
+        assertThat(consolidatedNote.getType())
+                .isEqualTo(
+                        KnowledgeNoteType.CONSOLIDATED
+                );
+
+        assertThat(consolidatedNote.getKnowledge())
                 .isSameAs(resolvedKnowledge);
 
-        assertThat(existingNote.getTitle())
-                .isEqualTo(
-                        mergeResponse.title()
-                );
-
-        assertThat(existingNote.getDescription())
-                .isEqualTo(
-                        mergeResponse.description()
-                );
-
-        assertThat(existingNote.getSummary())
-                .isEqualTo(
-                        mergeResponse.summary()
-                );
-
-        assertThat(existingNote.getKeywords())
-                .containsExactlyElementsOf(
-                        mergeResponse.keywords()
-                );
+        assertMergeContent(
+                consolidatedNote
+        );
     }
 
     @Test
-    void 병합_결과의_Knowledge가_기존과_같으면_이동하지_않고_내용만_갱신한다() {
+    void 병합된_경로가_기존과_같으면_내용만_갱신한다() {
         // given
-        KnowledgeNote existingNote =
-                KnowledgeNote.create(
-                        user,
-                        conversation,
-                        resolvedKnowledge,
-                        "기존 제목",
-                        "기존 설명",
-                        "기존 요약",
-                        List.of(
-                                "Spring Batch",
-                                "Job",
-                                "Step"
-                        )
+        KnowledgeNote consolidatedNote =
+                createConsolidatedNote(
+                        resolvedKnowledge
                 );
 
         when(
@@ -332,35 +329,151 @@ class KnowledgeNoteCommandServiceTest {
 
         // when
         KnowledgeNote result =
-                knowledgeNoteCommandService.updateAiSummary(
+                service.updateConsolidated(
                         user,
-                        existingNote,
+                        consolidatedNote,
                         mergeResponse
                 );
 
         // then
         assertThat(result)
-                .isSameAs(existingNote);
+                .isSameAs(consolidatedNote);
 
-        assertThat(existingNote.getKnowledge())
+        assertThat(consolidatedNote.getKnowledge())
                 .isSameAs(resolvedKnowledge);
 
-        assertThat(existingNote.getTitle())
+        assertMergeContent(
+                consolidatedNote
+        );
+    }
+
+    @Test
+    void Incremental_노트는_통합_노트로_갱신할_수_없다() {
+        // given
+        KnowledgeNote incrementalNote =
+                KnowledgeNote.createIncremental(
+                        user,
+                        conversation,
+                        currentKnowledge,
+                        "증분 제목",
+                        "증분 설명",
+                        "증분 요약",
+                        List.of(
+                                "Spring",
+                                "Batch",
+                                "Job"
+                        )
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.updateConsolidated(
+                        user,
+                        incrementalNote,
+                        mergeResponse
+                )
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "통합 노트만 갱신할 수 있습니다."
+                );
+
+        verify(knowledgePathResolver, never())
+                .resolve(
+                        any(),
+                        any(),
+                        any()
+                );
+    }
+
+    private void mockResolvedKnowledge() {
+        when(
+                knowledgePathResolver.resolve(
+                        user,
+                        summaryResponse.rootCategory(),
+                        summaryResponse.knowledgePath()
+                )
+        ).thenReturn(
+                resolvedKnowledge
+        );
+    }
+
+    private KnowledgeNote createConsolidatedNote(
+            Knowledge knowledge
+    ) {
+        return KnowledgeNote.createConsolidated(
+                user,
+                conversation,
+                knowledge,
+                "기존 제목",
+                "기존 설명",
+                "기존 요약",
+                List.of(
+                        "Spring Batch",
+                        "Job",
+                        "Step"
+                )
+        );
+    }
+
+    private void assertSummaryNote(
+            KnowledgeNote note,
+            KnowledgeNoteType expectedType
+    ) {
+        assertThat(note.getType())
+                .isEqualTo(expectedType);
+
+        assertThat(note.getUser())
+                .isSameAs(user);
+
+        assertThat(note.getConversation())
+                .isSameAs(conversation);
+
+        assertThat(note.getKnowledge())
+                .isSameAs(resolvedKnowledge);
+
+        assertThat(note.getTitle())
+                .isEqualTo(
+                        summaryResponse.title()
+                );
+
+        assertThat(note.getDescription())
+                .isEqualTo(
+                        summaryResponse.description()
+                );
+
+        assertThat(note.getSummary())
+                .isEqualTo(
+                        summaryResponse.summary()
+                );
+
+        assertThat(note.getKeywords())
+                .containsExactlyElementsOf(
+                        summaryResponse.keywords()
+                );
+    }
+
+    private void assertMergeContent(
+            KnowledgeNote note
+    ) {
+        assertThat(note.getTitle())
                 .isEqualTo(
                         mergeResponse.title()
                 );
 
-        assertThat(existingNote.getDescription())
+        assertThat(note.getDescription())
                 .isEqualTo(
                         mergeResponse.description()
                 );
 
-        assertThat(existingNote.getSummary())
+        assertThat(note.getSummary())
                 .isEqualTo(
                         mergeResponse.summary()
                 );
 
-        assertThat(existingNote.getKeywords())
+        assertThat(note.getKeywords())
                 .containsExactlyElementsOf(
                         mergeResponse.keywords()
                 );

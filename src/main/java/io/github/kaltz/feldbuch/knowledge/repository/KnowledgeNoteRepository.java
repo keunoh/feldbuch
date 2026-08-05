@@ -1,6 +1,7 @@
 package io.github.kaltz.feldbuch.knowledge.repository;
 
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,31 +15,28 @@ public interface KnowledgeNoteRepository extends JpaRepository<KnowledgeNote, Lo
             Long knowledgeId
     );
 
-    List<KnowledgeNote>
-    findAllByUserIdAndConversationIdOrderByCreatedAtAsc(
-            Long userId,
-            Long conversationId
-    );
-
-    List<KnowledgeNote>
-    findAllByUserIdOrderByCreatedAtDesc(
-            Long userId
-    );
-
     Optional<KnowledgeNote>
     findByIdAndUserId(
             Long noteId,
             Long userId
     );
 
-    Optional<KnowledgeNote>
-    findFirstByUserIdAndConversationIdOrderByCreatedAtAsc(
+    /**
+     * 같은 Conversation의 통합 노트를 조회한다.
+     */
+    Optional<KnowledgeNote> findFirstByUserIdAndConversationIdAndType(
             Long userId,
-            Long conversationId
+            Long conversationId,
+            KnowledgeNoteType type
     );
 
-    boolean existsByUserIdAndConversationId(
+    /**
+     * 특정 Knowledge 아래의 Incremental 노트 목록 조회
+     */
+    List<KnowledgeNote>
+    findAllByUserIdAndKnowledgeIdAndTypeOrderByCreatedAtDesc(
             Long userId,
-            Long conversationId
+            Long knowledgeId,
+            KnowledgeNoteType type
     );
 }

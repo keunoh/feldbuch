@@ -9,6 +9,7 @@ import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContext;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContextBuilder;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.reader.UserReader;
@@ -31,18 +32,13 @@ public class KnowledgeExtractionService {
 
     private final ConversationAiContextBuilder contextBuilder;
 
-    private final AiKnowledgeSummaryService
-            aiKnowledgeSummaryService;
+    private final AiKnowledgeSummaryService aiKnowledgeSummaryService;
 
-    private final AiKnowledgeMergeService
-            aiKnowledgeMergeService;
+    private final AiKnowledgeMergeService aiKnowledgeMergeService;
 
-    private final KnowledgeNoteCommandService
-            knowledgeNoteCommandService;
+    private final KnowledgeNoteCommandService knowledgeNoteCommandService;
 
-    private final KnowledgeNoteRepository
-            knowledgeNoteRepository;
-
+    private final KnowledgeNoteRepository knowledgeNoteRepository;
 
     @Transactional
     public KnowledgeNote extract(
@@ -77,25 +73,51 @@ public class KnowledgeExtractionService {
                 context.messageCount()
         );
 
-        KnowledgeNote note =
+        /*
+         * 새롭게 추가된 메시지 범위를 먼저 요약한다.
+         * 이 응답은 Incremental 노트 생성과
+         * 최초 Consolidated 노트 생성에 함께 사용한다.
+         */
+        AiKnowledgeSummaryResponse summaryResponse =
+                aiKnowledgeSummaryService.summarize(
+                        context.content()
+                );
+
+        /*
+         * 배치가 실행될 때마다 새로운 Incremental 노트를 생성한다.
+         */
+        KnowledgeNote incrementalNote =
+                knowledgeNoteCommandService.saveIncremental(
+                        user,
+                        conversation,
+                        summaryResponse
+                );
+
+        /*
+         * 같은 대화의 Consolidated 노트가 있으면 갱신하고,
+         * 없다면 이번 요약 결과로 최초 생성한다.
+         */
+        KnowledgeNote consolidatedNote =
                 knowledgeNoteRepository
-                        .findFirstByUserIdAndConversationIdOrderByCreatedAtAsc(
+                        .findFirstByUserIdAndConversationIdAndType(
                                 userId,
-                                conversationId
+                                conversationId,
+                                KnowledgeNoteType.CONSOLIDATED
                         )
                         .map(existingNote ->
-                                mergeExistingNote(
+                                mergeConsolidatedNote(
                                         user,
                                         existingNote,
-                                        context.content()
+                                        incrementalNote
                                 )
                         )
                         .orElseGet(() ->
-                                createNewNote(
-                                        user,
-                                        conversation,
-                                        context.content()
-                                )
+                                knowledgeNoteCommandService
+                                        .saveConsolidated(
+                                                user,
+                                                conversation,
+                                                summaryResponse
+                                        )
                         );
 
         conversation.completeKnowledgeExtraction(
@@ -103,50 +125,36 @@ public class KnowledgeExtractionService {
         );
 
         log.info(
-                "{} Completed. conversationId={} checkpointMessageId={}",
+                "{} Completed. conversationId={} incrementalNoteId={} consolidatedNoteId={} checkpointMessageId={}",
                 EXTRACTION_LOG,
                 conversationId,
+                incrementalNote.getId(),
+                consolidatedNote.getId(),
                 context.lastMessageId()
         );
 
-        return note;
+        /*
+         * 배치의 대표 결과로는 통합 노트를 반환한다.
+         */
+        return consolidatedNote;
     }
 
-
-    private KnowledgeNote createNewNote(
+    private KnowledgeNote mergeConsolidatedNote(
             User user,
-            Conversation conversation,
-            String conversationContent
+            KnowledgeNote consolidatedNote,
+            KnowledgeNote incrementalNote
     ) {
-        AiKnowledgeSummaryResponse response =
-                aiKnowledgeSummaryService.summarize(
-                        conversationContent
-                );
-
-        return knowledgeNoteCommandService
-                .saveAiSummary(
-                        user,
-                        conversation,
-                        response
-                );
-    }
-
-    private KnowledgeNote mergeExistingNote(
-            User user,
-            KnowledgeNote existingNote,
-            String newConversationContent
-    ) {
-        AiKnowledgeMergeResponse response =
+        AiKnowledgeMergeResponse mergeResponse =
                 aiKnowledgeMergeService.merge(
-                        existingNote,
-                        newConversationContent
+                        consolidatedNote,
+                        incrementalNote
                 );
 
         return knowledgeNoteCommandService
-                .updateAiSummary(
+                .updateConsolidated(
                         user,
-                        existingNote,
-                        response
+                        consolidatedNote,
+                        mergeResponse
                 );
     }
 

@@ -24,17 +24,18 @@ import java.util.List;
 public class OpenAiKnowledgeMergeService
         implements AiKnowledgeMergeService {
 
-    private static final String MERGE_LOG =
-            "[AI_KNOWLEDGE_MERGE]";
+    private static final String MERGE_LOG = "[AI_KNOWLEDGE_MERGE]";
 
     private final AiClient aiClient;
+
     private final OpenAiProperties properties;
+
     private final ObjectMapper objectMapper;
 
     @Override
     public AiKnowledgeMergeResponse merge(
-            KnowledgeNote existingNote,
-            String newConversationContext
+            KnowledgeNote consolidatedNote,
+            KnowledgeNote incrementalNote
     ) {
         ChatCompletionRequest request =
                 new ChatCompletionRequest(
@@ -49,19 +50,31 @@ public class OpenAiKnowledgeMergeService
                                         "user",
                                         KnowledgeMergePrompt
                                                 .userPrompt(
-                                                        existingNote,
-                                                        newConversationContext
+                                                        consolidatedNote,
+                                                        incrementalNote
                                                 )
                                 )
                         )
                 );
 
         ChatCompletionResponse response =
-                aiClient.chat(request);
+                aiClient.chat(
+                        request
+                );
 
         String json =
-                extractContent(response);
+                extractContent(
+                        response
+                );
 
+        return parseResponse(
+                json
+        );
+    }
+
+    private AiKnowledgeMergeResponse parseResponse(
+            String json
+    ) {
         try {
             return objectMapper.readValue(
                     json,

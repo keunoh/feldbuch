@@ -25,6 +25,10 @@ import java.util.List;
                 @Index(
                         name = "idx_knowledge_note_conversation",
                         columnList = "conversation_id"
+                ),
+                @Index(
+                        name = "idx_knowledge_note_conversation_type",
+                        columnList = "conversation_id, note_type"
                 )
         }
 )
@@ -39,6 +43,25 @@ public class KnowledgeNote extends BaseEntity {
     private Long id;
 
     /**
+     * 노트의 역할
+     * <p>
+     * INCREMENTAL:
+     * 새롭게 추출된 대화 범위마다 생성되는 개별 노트
+     * <p>
+     * CONSOLIDATED:
+     * 같은 대화의 내용을 누적해서 관리하는 통합 노트
+     */
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "note_type",
+            nullable = false,
+            length = 20
+    )
+    private KnowledgeNoteType type =
+            KnowledgeNoteType.INCREMENTAL;
+
+    /**
      * AI가 생성한 학습 노트 제목
      */
     @Column(nullable = false, length = 200)
@@ -51,7 +74,7 @@ public class KnowledgeNote extends BaseEntity {
     private String description;
 
     /**
-     * 대화에서 추출한 짧은 학습 요약
+     * 대화에서 추출한 학습 요약
      */
     @Lob
     @Column(nullable = false, columnDefinition = "LONGTEXT")
@@ -59,23 +82,19 @@ public class KnowledgeNote extends BaseEntity {
 
     /**
      * 노트 소유자
-     * <p>
-     * Conversation과 Knowledge를 통해서도 사용자를 알 수 있지만,
-     * 사용자별 조회를 단순하고 빠르게 만들기 위해 직접 연결한다.
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_knowledge_note_user")
+            foreignKey = @ForeignKey(
+                    name = "fk_knowledge_note_user"
+            )
     )
     private User user;
 
     /**
      * 이 노트가 생성된 원본 대화
-     * <p>
-     * 한 대화에서 주제가 여러 개 발견되면
-     * 여러 KnowledgeNote가 만들어질 수 있으므로 ManyToOne이다.
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -102,8 +121,6 @@ public class KnowledgeNote extends BaseEntity {
 
     /**
      * AI가 추출한 검색 및 복습용 키워드
-     * <p>
-     * 별도 테이블 Knowledge_note_keywords로 저장된다.
      */
     @ElementCollection
     @CollectionTable(
@@ -115,11 +132,19 @@ public class KnowledgeNote extends BaseEntity {
                     )
             )
     )
-    @Column(name = "keyword", nullable = false, length = 100)
+    @Column(
+            name = "keyword",
+            nullable = false,
+            length = 100
+    )
     @Builder.Default
-    private List<String> keywords = new ArrayList<>();
+    private List<String> keywords =
+            new ArrayList<>();
 
-    public static KnowledgeNote create(
+    /**
+     * 새롭게 추출된 대화 범위의 개별 노트를 생성한다.
+     */
+    public static KnowledgeNote createIncremental(
             User user,
             Conversation conversation,
             Knowledge knowledge,
@@ -128,6 +153,53 @@ public class KnowledgeNote extends BaseEntity {
             String summary,
             List<String> keywords
     ) {
+        return create(
+                KnowledgeNoteType.INCREMENTAL,
+                user,
+                conversation,
+                knowledge,
+                title,
+                description,
+                summary,
+                keywords
+        );
+    }
+
+    /**
+     * 같은 대화의 내용을 누적 관리하는 통합 노트를 생성한다.
+     */
+    public static KnowledgeNote createConsolidated(
+            User user,
+            Conversation conversation,
+            Knowledge knowledge,
+            String title,
+            String description,
+            String summary,
+            List<String> keywords
+    ) {
+        return create(
+                KnowledgeNoteType.CONSOLIDATED,
+                user,
+                conversation,
+                knowledge,
+                title,
+                description,
+                summary,
+                keywords
+        );
+    }
+
+    private static KnowledgeNote create(
+            KnowledgeNoteType type,
+            User user,
+            Conversation conversation,
+            Knowledge knowledge,
+            String title,
+            String description,
+            String summary,
+            List<String> keywords
+    ) {
+        validateType(type);
         validateUser(user);
         validateConversation(conversation);
         validateKnowledge(knowledge);
@@ -142,16 +214,24 @@ public class KnowledgeNote extends BaseEntity {
         }
 
         return KnowledgeNote.builder()
+                .type(type)
                 .user(user)
                 .conversation(conversation)
                 .knowledge(knowledge)
                 .title(title.trim())
                 .description(description.trim())
                 .summary(summary.trim())
-                .keywords(normalizeKeywords(keywords))
+                .keywords(
+                        normalizeKeywords(
+                                keywords
+                        )
+                )
                 .build();
     }
 
+    /**
+     * 통합 노트의 내용을 갱신한다.
+     */
     public void updateContent(
             String title,
             String description,
@@ -168,11 +248,15 @@ public class KnowledgeNote extends BaseEntity {
 
         this.keywords.clear();
         this.keywords.addAll(
-                normalizeKeywords(keywords)
+                normalizeKeywords(
+                        keywords
+                )
         );
     }
 
-    public void moveTo(Knowledge knowledge) {
+    public void moveTo(
+            Knowledge knowledge
+    ) {
         validateKnowledge(knowledge);
 
         if (!knowledge.belongsTo(this.user)) {
@@ -184,32 +268,66 @@ public class KnowledgeNote extends BaseEntity {
         this.knowledge = knowledge;
     }
 
-    /**
-     * 외부에서 컬렉션을 직접 수정하지 못하도록 읽기 전용으로 반환한다.
-     */
-    public List<String> getKeywords() {
-        return Collections.unmodifiableList(keywords);
+    public boolean isIncremental() {
+        return type == KnowledgeNoteType.INCREMENTAL;
     }
 
-    private static List<String> normalizeKeywords(List<String> keywords) {
-        if (keywords == null || keywords.isEmpty()) {
+    public boolean isConsolidated() {
+        return type == KnowledgeNoteType.CONSOLIDATED;
+    }
+
+    /**
+     * 외부에서 컬렉션을 직접 수정하지 못하도록
+     * 읽기 전용 목록으로 반환한다.
+     */
+    public List<String> getKeywords() {
+        return Collections.unmodifiableList(
+                keywords
+        );
+    }
+
+    private static List<String> normalizeKeywords(
+            List<String> keywords
+    ) {
+        if (
+                keywords == null
+                        || keywords.isEmpty()
+        ) {
             return new ArrayList<>();
         }
 
         return keywords.stream()
-                .filter(keyword -> keyword != null && !keyword.isBlank())
+                .filter(keyword ->
+                        keyword != null
+                                && !keyword.isBlank()
+                )
                 .map(String::trim)
-                .filter(keyword -> keyword.length() <= 100)
+                .filter(keyword ->
+                        keyword.length() <= 100
+                )
                 .distinct()
                 .limit(10)
                 .collect(
-                        java.util.stream.Collectors.toCollection(
-                                ArrayList::new
-                        )
+                        java.util.stream.Collectors
+                                .toCollection(
+                                        ArrayList::new
+                                )
                 );
     }
 
-    private static void validateUser(User user) {
+    private static void validateType(
+            KnowledgeNoteType type
+    ) {
+        if (type == null) {
+            throw new IllegalArgumentException(
+                    "KnowledgeNote 유형은 필수입니다."
+            );
+        }
+    }
+
+    private static void validateUser(
+            User user
+    ) {
         if (user == null) {
             throw new IllegalArgumentException(
                     "사용자는 필수입니다."
@@ -217,7 +335,9 @@ public class KnowledgeNote extends BaseEntity {
         }
     }
 
-    private static void validateConversation(Conversation conversation) {
+    private static void validateConversation(
+            Conversation conversation
+    ) {
         if (conversation == null) {
             throw new IllegalArgumentException(
                     "원본 대화는 필수입니다."
@@ -225,7 +345,9 @@ public class KnowledgeNote extends BaseEntity {
         }
     }
 
-    private static void validateKnowledge(Knowledge knowledge) {
+    private static void validateKnowledge(
+            Knowledge knowledge
+    ) {
         if (knowledge == null) {
             throw new IllegalArgumentException(
                     "Knowledge는 필수입니다."
@@ -233,8 +355,13 @@ public class KnowledgeNote extends BaseEntity {
         }
     }
 
-    private static void validateTitle(String title) {
-        if (title == null || title.isBlank()) {
+    private static void validateTitle(
+            String title
+    ) {
+        if (
+                title == null
+                        || title.isBlank()
+        ) {
             throw new IllegalArgumentException(
                     "KnowledgeNote 제목은 필수입니다."
             );
@@ -247,8 +374,13 @@ public class KnowledgeNote extends BaseEntity {
         }
     }
 
-    private static void validateDescription(String description) {
-        if (description == null || description.isBlank()) {
+    private static void validateDescription(
+            String description
+    ) {
+        if (
+                description == null
+                        || description.isBlank()
+        ) {
             throw new IllegalArgumentException(
                     "KnowledgeNote 설명은 필수입니다."
             );
@@ -261,12 +393,16 @@ public class KnowledgeNote extends BaseEntity {
         }
     }
 
-    private static void validateSummary(String summary) {
-        if (summary == null || summary.isBlank()) {
+    private static void validateSummary(
+            String summary
+    ) {
+        if (
+                summary == null
+                        || summary.isBlank()
+        ) {
             throw new IllegalArgumentException(
                     "KnowledgeNote 요약은 필수입니다."
             );
         }
     }
-
 }

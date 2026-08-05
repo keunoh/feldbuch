@@ -7,6 +7,7 @@ import io.github.kaltz.feldbuch.knowledge.dto.response.KnowledgeNoteSummaryRespo
 import io.github.kaltz.feldbuch.knowledge.dto.response.KnowledgeTreeResponse;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeRepository;
 import org.junit.jupiter.api.Test;
@@ -203,60 +204,99 @@ class KnowledgeQueryServiceTest {
 
         when(firstNote.getId())
                 .thenReturn(100L);
+
         when(firstNote.getTitle())
-                .thenReturn("Spring Batch 기본 구조");
+                .thenReturn(
+                        "Spring Batch 기본 구조"
+                );
+
         when(firstNote.getSummary())
-                .thenReturn("Job과 Step을 중심으로 정리한 내용");
+                .thenReturn(
+                        "Job과 Step을 중심으로 정리한 내용"
+                );
+
         when(firstNote.getCreatedAt())
                 .thenReturn(firstCreatedAt);
 
         when(secondNote.getId())
                 .thenReturn(101L);
+
         when(secondNote.getTitle())
-                .thenReturn("Tasklet과 Chunk");
+                .thenReturn(
+                        "Tasklet과 Chunk"
+                );
+
         when(secondNote.getSummary())
-                .thenReturn("Tasklet과 Chunk 처리 방식을 비교한 내용");
+                .thenReturn(
+                        "Tasklet과 Chunk 처리 방식을 비교한 내용"
+                );
+
         when(secondNote.getCreatedAt())
                 .thenReturn(secondCreatedAt);
 
         when(
                 knowledgeNoteRepository
-                        .findAllByUserIdAndKnowledgeIdOrderByCreatedAtAsc(
+                        .findAllByUserIdAndKnowledgeIdAndTypeOrderByCreatedAtDesc(
                                 userId,
-                                knowledgeId
+                                knowledgeId,
+                                KnowledgeNoteType.INCREMENTAL
                         )
         ).thenReturn(
                 List.of(
-                        firstNote,
-                        secondNote
+                        secondNote,
+                        firstNote
                 )
         );
 
         // when
         List<KnowledgeNoteSummaryResponse> result =
-                knowledgeQueryService.findNotes(userId, knowledgeId);
+                knowledgeQueryService.findNotes(
+                        userId,
+                        knowledgeId
+                );
 
         // then
         assertThat(result)
                 .hasSize(2);
+
         assertThat(result.getFirst().id())
-                .isEqualTo(100L);
+                .isEqualTo(101L);
+
         assertThat(result.getFirst().title())
-                .isEqualTo("Spring Batch 기본 구조");
+                .isEqualTo(
+                        "Tasklet과 Chunk"
+                );
+
         assertThat(result.getFirst().summary())
-                .isEqualTo("Job과 Step을 중심으로 정리한 내용");
+                .isEqualTo(
+                        "Tasklet과 Chunk 처리 방식을 비교한 내용"
+                );
+
         assertThat(result.getFirst().createdAt())
-                .isEqualTo(firstCreatedAt);
+                .isEqualTo(secondCreatedAt);
 
         assertThat(result.get(1).id())
-                .isEqualTo(101L);
+                .isEqualTo(100L);
+
         assertThat(result.get(1).title())
-                .isEqualTo("Tasklet과 Chunk");
+                .isEqualTo(
+                        "Spring Batch 기본 구조"
+                );
+
+        assertThat(result.get(1).summary())
+                .isEqualTo(
+                        "Job과 Step을 중심으로 정리한 내용"
+                );
+
+        assertThat(result.get(1).createdAt())
+                .isEqualTo(firstCreatedAt);
 
         verify(knowledgeNoteRepository)
-                .findAllByUserIdAndKnowledgeIdOrderByCreatedAtAsc(
+                .findAllByUserIdAndKnowledgeIdAndTypeOrderByCreatedAtDesc(
                         userId,
-                        knowledgeId);
+                        knowledgeId,
+                        KnowledgeNoteType.INCREMENTAL
+                );
     }
 
     @Test
@@ -267,9 +307,11 @@ class KnowledgeQueryServiceTest {
 
         when(
                 knowledgeNoteRepository
-                        .findAllByUserIdAndKnowledgeIdOrderByCreatedAtAsc(
+                        .findAllByUserIdAndKnowledgeIdAndTypeOrderByCreatedAtDesc(
                                 userId,
-                                knowledgeId)
+                                knowledgeId,
+                                KnowledgeNoteType.INCREMENTAL
+                        )
         ).thenReturn(List.of());
 
         // when
@@ -280,9 +322,10 @@ class KnowledgeQueryServiceTest {
         assertThat(result).isEmpty();
 
         verify(knowledgeNoteRepository)
-                .findAllByUserIdAndKnowledgeIdOrderByCreatedAtAsc(
+                .findAllByUserIdAndKnowledgeIdAndTypeOrderByCreatedAtDesc(
                         userId,
-                        knowledgeId
+                        knowledgeId,
+                        KnowledgeNoteType.INCREMENTAL
                 );
     }
 

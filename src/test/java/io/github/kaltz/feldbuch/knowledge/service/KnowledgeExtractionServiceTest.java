@@ -10,6 +10,7 @@ import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContext;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContextBuilder;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeRootCategory;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
@@ -31,6 +32,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class KnowledgeExtractionServiceTest {
+
+    private static final Long USER_ID = 1L;
+    private static final Long CONVERSATION_ID = 1L;
 
     @Mock
     private UserReader userReader;
@@ -66,20 +70,17 @@ class KnowledgeExtractionServiceTest {
     private ConversationMessage assistantMessage;
 
     @Mock
-    private KnowledgeNote knowledgeNote;
+    private KnowledgeNote incrementalNote;
 
     @Mock
-    private KnowledgeNote existingNote;
+    private KnowledgeNote consolidatedNote;
 
     @InjectMocks
     private KnowledgeExtractionService knowledgeExtractionService;
 
     @Test
-    void 기존_노트가_없으면_AI_요약으로_새_KnowledgeNote를_생성한다() {
+    void 통합_노트가_없으면_증분_노트와_통합_노트를_새로_생성한다() {
         // given
-        Long userId = 1L;
-        Long conversationId = 1L;
-
         String conversationContent = """
                 USER:
                 Spring Batch가 무엇인지 설명해줘.
@@ -89,58 +90,17 @@ class KnowledgeExtractionServiceTest {
                 """.trim();
 
         ConversationAiContext context =
-                new ConversationAiContext(
-                        List.of(
-                                userMessage,
-                                assistantMessage
-                        ),
-                        conversationContent
+                createContext(
+                        conversationContent,
+                        10L,
+                        11L
                 );
 
         AiKnowledgeSummaryResponse summaryResponse =
-                new AiKnowledgeSummaryResponse(
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
-                        List.of(
-                                "Spring Framework",
-                                "Spring Batch"
-                        ),
-                        "Spring Batch 기본 구조",
-                        "Job과 Step을 중심으로 Spring Batch의 실행 구조를 정리한 노트",
-                        "Spring Batch는 대용량 일괄 처리를 지원하며 Job과 Step을 중심으로 작업을 구성합니다.",
-                        List.of(
-                                "Spring Batch",
-                                "Job",
-                                "Step"
-                        )
-                );
+                createSummaryResponse();
 
-        when(userMessage.getId())
-                .thenReturn(10L);
-
-        when(assistantMessage.getId())
-                .thenReturn(11L);
-
-        when(userReader.get(userId))
-                .thenReturn(user);
-
-        when(
-                conversationReader.get(
-                        userId,
-                        conversationId
-                )
-        ).thenReturn(conversation);
-
-        when(contextBuilder.build(conversation))
-                .thenReturn(context);
-
-        when(
-                knowledgeNoteRepository
-                        .findFirstByUserIdAndConversationIdOrderByCreatedAtAsc(
-                                userId,
-                                conversationId
-                        )
-        ).thenReturn(
-                Optional.empty()
+        mockCommonContext(
+                context
         );
 
         when(
@@ -152,54 +112,61 @@ class KnowledgeExtractionServiceTest {
         );
 
         when(
-                knowledgeNoteCommandService.saveAiSummary(
+                knowledgeNoteCommandService.saveIncremental(
                         user,
                         conversation,
                         summaryResponse
                 )
         ).thenReturn(
-                knowledgeNote
+                incrementalNote
+        );
+
+        when(
+                knowledgeNoteRepository
+                        .findFirstByUserIdAndConversationIdAndType(
+                                USER_ID,
+                                CONVERSATION_ID,
+                                KnowledgeNoteType.CONSOLIDATED
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        when(
+                knowledgeNoteCommandService.saveConsolidated(
+                        user,
+                        conversation,
+                        summaryResponse
+                )
+        ).thenReturn(
+                consolidatedNote
         );
 
         // when
         KnowledgeNote result =
                 knowledgeExtractionService.extract(
-                        userId,
-                        conversationId
+                        USER_ID,
+                        CONVERSATION_ID
                 );
 
         // then
         assertThat(result)
-                .isSameAs(knowledgeNote);
+                .isSameAs(consolidatedNote);
 
         InOrder inOrder =
                 Mockito.inOrder(
                         userReader,
                         conversationReader,
                         contextBuilder,
-                        knowledgeNoteRepository,
                         aiKnowledgeSummaryService,
                         knowledgeNoteCommandService,
+                        knowledgeNoteRepository,
                         conversation
                 );
 
-        inOrder.verify(userReader)
-                .get(userId);
-
-        inOrder.verify(conversationReader)
-                .get(
-                        userId,
-                        conversationId
-                );
-
-        inOrder.verify(contextBuilder)
-                .build(conversation);
-
-        inOrder.verify(knowledgeNoteRepository)
-                .findFirstByUserIdAndConversationIdOrderByCreatedAtAsc(
-                        userId,
-                        conversationId
-                );
+        verifyCommonStart(
+                inOrder
+        );
 
         inOrder.verify(aiKnowledgeSummaryService)
                 .summarize(
@@ -207,7 +174,21 @@ class KnowledgeExtractionServiceTest {
                 );
 
         inOrder.verify(knowledgeNoteCommandService)
-                .saveAiSummary(
+                .saveIncremental(
+                        user,
+                        conversation,
+                        summaryResponse
+                );
+
+        inOrder.verify(knowledgeNoteRepository)
+                .findFirstByUserIdAndConversationIdAndType(
+                        USER_ID,
+                        CONVERSATION_ID,
+                        KnowledgeNoteType.CONSOLIDATED
+                );
+
+        inOrder.verify(knowledgeNoteCommandService)
+                .saveConsolidated(
                         user,
                         conversation,
                         summaryResponse
@@ -220,24 +201,21 @@ class KnowledgeExtractionServiceTest {
 
         verify(aiKnowledgeMergeService, never())
                 .merge(
-                        existingNote,
-                        conversationContent
+                        consolidatedNote,
+                        incrementalNote
                 );
 
         verify(knowledgeNoteCommandService, never())
-                .updateAiSummary(
+                .updateConsolidated(
                         user,
-                        existingNote,
+                        consolidatedNote,
                         null
                 );
     }
 
     @Test
-    void 기존_노트가_있으면_AI_병합으로_기존_KnowledgeNote를_갱신한다() {
+    void 통합_노트가_있으면_새_증분_노트를_생성하고_통합_노트를_병합한다() {
         // given
-        Long userId = 1L;
-        Long conversationId = 1L;
-
         String conversationContent = """
                 USER:
                 Tasklet과 Chunk 방식의 차이가 뭐야?
@@ -247,129 +225,126 @@ class KnowledgeExtractionServiceTest {
                 """.trim();
 
         ConversationAiContext context =
-                new ConversationAiContext(
-                        List.of(
-                                userMessage,
-                                assistantMessage
-                        ),
-                        conversationContent
+                createContext(
+                        conversationContent,
+                        20L,
+                        21L
                 );
+
+        AiKnowledgeSummaryResponse summaryResponse =
+                createSummaryResponse();
 
         AiKnowledgeMergeResponse mergeResponse =
-                new AiKnowledgeMergeResponse(
-                        KnowledgeRootCategory.WEB_DEVELOPMENT,
-                        List.of(
-                                "Spring Framework",
-                                "Spring Batch"
-                        ),
-                        "Spring Batch 처리 방식",
-                        "Tasklet과 Chunk 처리 방식까지 포함해 Spring Batch 구조를 정리한 노트",
-                        "Spring Batch는 Job과 Step으로 구성되며 Step에서는 Tasklet 또는 Chunk 기반 처리를 사용할 수 있습니다.",
-                        List.of(
-                                "Spring Batch",
-                                "Tasklet",
-                                "Chunk"
-                        )
-                );
+                createMergeResponse();
 
-        when(userMessage.getId())
-                .thenReturn(20L);
-
-        when(assistantMessage.getId())
-                .thenReturn(21L);
-
-        when(userReader.get(userId))
-                .thenReturn(user);
+        mockCommonContext(
+                context
+        );
 
         when(
-                conversationReader.get(
-                        userId,
-                        conversationId
+                aiKnowledgeSummaryService.summarize(
+                        conversationContent
                 )
-        ).thenReturn(conversation);
+        ).thenReturn(
+                summaryResponse
+        );
 
-        when(contextBuilder.build(conversation))
-                .thenReturn(context);
+        when(
+                knowledgeNoteCommandService.saveIncremental(
+                        user,
+                        conversation,
+                        summaryResponse
+                )
+        ).thenReturn(
+                incrementalNote
+        );
 
         when(
                 knowledgeNoteRepository
-                        .findFirstByUserIdAndConversationIdOrderByCreatedAtAsc(
-                                userId,
-                                conversationId
+                        .findFirstByUserIdAndConversationIdAndType(
+                                USER_ID,
+                                CONVERSATION_ID,
+                                KnowledgeNoteType.CONSOLIDATED
                         )
         ).thenReturn(
-                Optional.of(existingNote)
+                Optional.of(consolidatedNote)
         );
 
         when(
                 aiKnowledgeMergeService.merge(
-                        existingNote,
-                        conversationContent
+                        consolidatedNote,
+                        incrementalNote
                 )
         ).thenReturn(
                 mergeResponse
         );
 
         when(
-                knowledgeNoteCommandService.updateAiSummary(
+                knowledgeNoteCommandService.updateConsolidated(
                         user,
-                        existingNote,
+                        consolidatedNote,
                         mergeResponse
                 )
         ).thenReturn(
-                existingNote
+                consolidatedNote
         );
 
         // when
         KnowledgeNote result =
                 knowledgeExtractionService.extract(
-                        userId,
-                        conversationId
+                        USER_ID,
+                        CONVERSATION_ID
                 );
 
         // then
         assertThat(result)
-                .isSameAs(existingNote);
+                .isSameAs(consolidatedNote);
 
         InOrder inOrder =
                 Mockito.inOrder(
                         userReader,
                         conversationReader,
                         contextBuilder,
+                        aiKnowledgeSummaryService,
+                        knowledgeNoteCommandService,
                         knowledgeNoteRepository,
                         aiKnowledgeMergeService,
-                        knowledgeNoteCommandService,
                         conversation
                 );
 
-        inOrder.verify(userReader)
-                .get(userId);
+        verifyCommonStart(
+                inOrder
+        );
 
-        inOrder.verify(conversationReader)
-                .get(
-                        userId,
-                        conversationId
-                );
-
-        inOrder.verify(contextBuilder)
-                .build(conversation);
-
-        inOrder.verify(knowledgeNoteRepository)
-                .findFirstByUserIdAndConversationIdOrderByCreatedAtAsc(
-                        userId,
-                        conversationId
-                );
-
-        inOrder.verify(aiKnowledgeMergeService)
-                .merge(
-                        existingNote,
+        inOrder.verify(aiKnowledgeSummaryService)
+                .summarize(
                         conversationContent
                 );
 
         inOrder.verify(knowledgeNoteCommandService)
-                .updateAiSummary(
+                .saveIncremental(
                         user,
-                        existingNote,
+                        conversation,
+                        summaryResponse
+                );
+
+        inOrder.verify(knowledgeNoteRepository)
+                .findFirstByUserIdAndConversationIdAndType(
+                        USER_ID,
+                        CONVERSATION_ID,
+                        KnowledgeNoteType.CONSOLIDATED
+                );
+
+        inOrder.verify(aiKnowledgeMergeService)
+                .merge(
+                        consolidatedNote,
+                        incrementalNote
+                );
+
+        inOrder.verify(knowledgeNoteCommandService)
+                .updateConsolidated(
+                        user,
+                        consolidatedNote,
                         mergeResponse
                 );
 
@@ -378,25 +353,17 @@ class KnowledgeExtractionServiceTest {
                         21L
                 );
 
-        verify(aiKnowledgeSummaryService, never())
-                .summarize(
-                        conversationContent
-                );
-
         verify(knowledgeNoteCommandService, never())
-                .saveAiSummary(
+                .saveConsolidated(
                         user,
                         conversation,
-                        null
+                        summaryResponse
                 );
     }
 
     @Test
-    void AI_병합이_실패하면_추출_체크포인트를_갱신하지_않는다() {
+    void 통합_노트_병합이_실패하면_체크포인트를_갱신하지_않는다() {
         // given
-        Long userId = 1L;
-        Long conversationId = 1L;
-
         String conversationContent = """
                 USER:
                 Spring Batch 재시작은 어떻게 동작해?
@@ -406,47 +373,52 @@ class KnowledgeExtractionServiceTest {
                 """.trim();
 
         ConversationAiContext context =
-                new ConversationAiContext(
-                        List.of(
-                                userMessage,
-                                assistantMessage
-                        ),
-                        conversationContent
+                createContext(
+                        conversationContent,
+                        30L,
+                        31L
                 );
 
-        when(userMessage.getId())
-                .thenReturn(30L);
+        AiKnowledgeSummaryResponse summaryResponse =
+                createSummaryResponse();
 
-        when(assistantMessage.getId())
-                .thenReturn(31L);
-
-        when(userReader.get(userId))
-                .thenReturn(user);
+        mockCommonContext(
+                context
+        );
 
         when(
-                conversationReader.get(
-                        userId,
-                        conversationId
+                aiKnowledgeSummaryService.summarize(
+                        conversationContent
                 )
-        ).thenReturn(conversation);
+        ).thenReturn(
+                summaryResponse
+        );
 
-        when(contextBuilder.build(conversation))
-                .thenReturn(context);
+        when(
+                knowledgeNoteCommandService.saveIncremental(
+                        user,
+                        conversation,
+                        summaryResponse
+                )
+        ).thenReturn(
+                incrementalNote
+        );
 
         when(
                 knowledgeNoteRepository
-                        .findFirstByUserIdAndConversationIdOrderByCreatedAtAsc(
-                                userId,
-                                conversationId
+                        .findFirstByUserIdAndConversationIdAndType(
+                                USER_ID,
+                                CONVERSATION_ID,
+                                KnowledgeNoteType.CONSOLIDATED
                         )
         ).thenReturn(
-                Optional.of(existingNote)
+                Optional.of(consolidatedNote)
         );
 
         when(
                 aiKnowledgeMergeService.merge(
-                        existingNote,
-                        conversationContent
+                        consolidatedNote,
+                        incrementalNote
                 )
         ).thenThrow(
                 new RuntimeException(
@@ -457,8 +429,8 @@ class KnowledgeExtractionServiceTest {
         // when & then
         assertThatThrownBy(() ->
                 knowledgeExtractionService.extract(
-                        userId,
-                        conversationId
+                        USER_ID,
+                        CONVERSATION_ID
                 )
         )
                 .isInstanceOf(
@@ -468,16 +440,132 @@ class KnowledgeExtractionServiceTest {
                         "AI 병합 실패"
                 );
 
+        verify(knowledgeNoteCommandService)
+                .saveIncremental(
+                        user,
+                        conversation,
+                        summaryResponse
+                );
+
+        verify(knowledgeNoteCommandService, never())
+                .updateConsolidated(
+                        user,
+                        consolidatedNote,
+                        null
+                );
+
         verify(conversation, never())
                 .completeKnowledgeExtraction(
                         31L
                 );
+    }
 
-        verify(knowledgeNoteCommandService, never())
-                .updateAiSummary(
-                        user,
-                        existingNote,
-                        null
+    private void mockCommonContext(
+            ConversationAiContext context
+    ) {
+        when(
+                userReader.get(
+                        USER_ID
+                )
+        ).thenReturn(
+                user
+        );
+
+        when(
+                conversationReader.get(
+                        USER_ID,
+                        CONVERSATION_ID
+                )
+        ).thenReturn(
+                conversation
+        );
+
+        when(
+                contextBuilder.build(
+                        conversation
+                )
+        ).thenReturn(
+                context
+        );
+    }
+
+    private void verifyCommonStart(
+            InOrder inOrder
+    ) {
+        inOrder.verify(userReader)
+                .get(
+                        USER_ID
                 );
+
+        inOrder.verify(conversationReader)
+                .get(
+                        USER_ID,
+                        CONVERSATION_ID
+                );
+
+        inOrder.verify(contextBuilder)
+                .build(
+                        conversation
+                );
+    }
+
+    private ConversationAiContext createContext(
+            String content,
+            Long userMessageId,
+            Long assistantMessageId
+    ) {
+        when(userMessage.getId())
+                .thenReturn(
+                        userMessageId
+                );
+
+        when(assistantMessage.getId())
+                .thenReturn(
+                        assistantMessageId
+                );
+
+        return new ConversationAiContext(
+                List.of(
+                        userMessage,
+                        assistantMessage
+                ),
+                content
+        );
+    }
+
+    private AiKnowledgeSummaryResponse createSummaryResponse() {
+        return new AiKnowledgeSummaryResponse(
+                KnowledgeRootCategory.WEB_DEVELOPMENT,
+                List.of(
+                        "Spring Framework",
+                        "Spring Batch"
+                ),
+                "Spring Batch 기본 구조",
+                "Job과 Step을 중심으로 Spring Batch 실행 구조를 정리한 노트",
+                "Spring Batch는 Job과 Step을 중심으로 대용량 일괄 처리를 구성합니다.",
+                List.of(
+                        "Spring Batch",
+                        "Job",
+                        "Step"
+                )
+        );
+    }
+
+    private AiKnowledgeMergeResponse createMergeResponse() {
+        return new AiKnowledgeMergeResponse(
+                KnowledgeRootCategory.WEB_DEVELOPMENT,
+                List.of(
+                        "Spring Framework",
+                        "Spring Batch"
+                ),
+                "Spring Batch 처리 방식",
+                "Tasklet과 Chunk 처리 방식까지 반영한 통합 노트",
+                "Spring Batch는 Job과 Step으로 구성되며 Tasklet 또는 Chunk 방식으로 작업을 처리할 수 있습니다.",
+                List.of(
+                        "Spring Batch",
+                        "Tasklet",
+                        "Chunk"
+                )
+        );
     }
 }
