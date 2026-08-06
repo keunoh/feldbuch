@@ -1,15 +1,10 @@
 package io.github.kaltz.feldbuch.ai.client;
 
-import io.github.kaltz.feldbuch.ai.dto.openai.ChatCompletionRequest;
-import io.github.kaltz.feldbuch.ai.dto.openai.ChatCompletionResponse;
-import io.github.kaltz.feldbuch.ai.dto.openai.Message;
 import io.github.kaltz.feldbuch.config.OpenAiProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,30 +34,4 @@ class OpenAiClientTest {
         assertThat(properties.getModel())
                 .isEqualTo("gpt-4.1-nano");
     }
-
-    @Test
-    void chat() {
-
-        ChatCompletionRequest request =
-                new ChatCompletionRequest(
-                        properties.getModel(),
-                        List.of(
-                                new Message(
-                                        "user",
-                                        "테스트코드 잘 짜는 법 쌈박하게 알려줘"
-                                )
-                        )
-                );
-
-        ChatCompletionResponse response =
-                openAiClient.chat(request);
-
-        System.out.println(
-                response.choices()
-                        .getFirst()
-                        .message()
-                        .content()
-        );
-    }
-
 }
