@@ -2,7 +2,7 @@
 
 > AI 기반 개발 지식 관리 플랫폼
 
-Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, 환경 설정을 대화와 노트로 기록하고, AI가 이를 요약해 재사용 가능한 지식으로 정리하는 개발 학습 서비스입니다.
+Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 대화를 AI가 재사용 가능한 Knowledge 노트로 정리하는 개발 학습 서비스입니다.
 
 ## Screens
 
@@ -10,14 +10,12 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 ![Feldbuch Knowledge Notes Screen](docs/images/screenshots/feldbuch-knowledge-notes-screen.png)
 
-현재 메인 화면은 `frontend/`의 Vue 3 + Vite SPA입니다. 왼쪽 `WorkspaceSidebar`에서 대화와 지식 폴더 탭을 전환하고, 대화 모드에서는 AI 채팅과 학습 정보 패널을, 지식 모드에서는 선택한 Knowledge 폴더의 추출 노트 목록과 상세 요약을 보여줍니다.
+현재 메인 화면은 `frontend/`의 Vue 3 + Vite SPA입니다. 왼쪽 `WorkspaceSidebar`에서 대화와 지식 폴더 탭을 전환하고, 대화 모드에서는 AI 채팅과 학습 정보 패널을, 지식 모드에서는 Knowledge 폴더의 추출 노트 목록과 상세 요약을 보여줍니다.
 
 ## Current Scope
 
 - JWT 기반 회원가입, 로그인, 클라이언트 로그아웃
 - Spring Security 인증/인가와 Vite 개발 서버 CORS 허용
-- 개발 노트 CRUD, QueryDSL 검색, 페이지네이션, Pin, 학습 상태 관리
-- AI 요약 Job 생성, 비동기 처리, 상태 조회
 - Conversation 생성, 목록/상세 조회, 제목 수정, 삭제
 - Conversation Message 저장과 대화 컨텍스트 기반 AI 채팅
 - OpenAI WebClient 기반 SSE 스트리밍 응답
@@ -26,7 +24,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 30분 기본 비활성 시간 이후 ACTIVE Conversation 자동 완료
 - 완료된 Conversation 기반 Knowledge 추출 대상 관리
 - 마지막 추출 메시지 ID 기반 증분 Knowledge 추출 체크포인트
-- Knowledge 대분류 고정 체계와 AI 기반 하위 폴더 재사용/생성
+- `KnowledgeCategory` 고정 카테고리 기반 Knowledge 폴더 생성
 - Knowledge 폴더 트리와 AI 추출 KnowledgeNote 저장
 - KnowledgeNote `INCREMENTAL`/`CONSOLIDATED` 타입 분리
 - 기존 통합 KnowledgeNote 자동 병합과 Conversation별 통합 노트 조회
@@ -46,7 +44,7 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 | --- | --- |
 | Backend | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, QueryDSL, Spring Batch, WebFlux WebClient |
 | Database / Infra | MySQL, H2 Test DB, Redis, Docker Compose |
-| AI | OpenAI Chat Completion, SSE Streaming, structured summary parsing |
+| AI | OpenAI Chat Completion, SSE Streaming, structured Knowledge summary/merge parsing |
 | Auth Config | JWT, Google OAuth2 client properties |
 | Frontend | Vue 3, Vite, Vue Router, Axios, Fetch SSE, marked, highlight.js, DOMPurify |
 | View Legacy | Thymeleaf, static CSS/JS comparison screens |
@@ -62,7 +60,6 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - 현재 로그인 API와 Vue 로그인 화면은 JWT 폼 로그인을 사용하며, OAuth2 로그인 플로우는 아직 연결하지 않았습니다.
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
-- Knowledge 추출 배치는 로컬 프로필에서 `feldbuch.batch.knowledge-extraction.run=true`일 때 `ApplicationRunner`가 애플리케이션 시작 직후 1회 실행합니다.
 - Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 기본값은 60초입니다.
 - Conversation 자동 완료 스케줄러는 `conversation.auto-completion.fixed-delay` 기본 60초마다 실행되고, `conversation.auto-completion.inactivity-timeout` 기본 30분을 기준으로 비활성 ACTIVE 대화를 COMPLETED로 전환합니다.
 
@@ -91,7 +88,6 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 - Knowledge 화면은 `GET /api/knowledge/tree`, `GET /api/knowledge/{knowledgeId}/notes`, `GET /api/knowledge/notes/{noteId}`를 사용합니다.
 - Conversation별 통합 Knowledge 노트는 `GET /api/knowledge/conversations/{conversationId}/consolidated-note`로 조회합니다.
 - 서버는 모든 요청에 UUID 기반 `requestId`를 생성하고 `X-Request-Id` 응답 헤더로 내려줍니다.
-- Postman 컬렉션은 JWT Bearer 인증과 `noteId`, `conversationId`, `jobId` 환경 변수를 기준으로 정리되어 있습니다.
 
 ## Architecture Summary
 
@@ -117,8 +113,6 @@ flowchart TD
     ConversationView --> StudyInfoPanel
     KnowledgeWorkspace --> KnowledgeNoteList
     KnowledgeWorkspace --> KnowledgeNoteDetail
-    KnowledgeNoteList --> SearchHighlight
-    KnowledgeSidebar --> SearchHighlight
 
     ConversationChatService --> ChatContextBuilder
     ConversationChatService --> OpenAiWebClient
@@ -131,23 +125,21 @@ flowchart TD
     KnowledgeExtractionTasklet --> KnowledgeExtractionService
     KnowledgeExtractionService --> OpenAiKnowledgeSummaryService
     KnowledgeExtractionService --> OpenAiKnowledgeMergeService
-    KnowledgeExtractionService --> KnowledgePathResolver
-    KnowledgePathResolver --> KnowledgeFolderSelectionService
     KnowledgeExtractionService --> KnowledgeNoteCommandService
+    KnowledgeNoteCommandService --> KnowledgeCategoryResolver
 ```
 
 ## Project Structure
 
 ```text
 src/main/java/io.github.kaltz.feldbuch
-├── ai               # OpenAI 연동, 요약, 채팅, AI Job
-├── auth             # 로그인, JWT 인증
-├── batch            # Spring Batch 요약/Knowledge 추출 파이프라인과 스케줄러
+├── ai               # OpenAI 연동, 대화 응답, Knowledge 요약/병합
+├── auth             # 로그인, JWT 인증, OAuth2 설정
+├── batch            # Knowledge 추출 Batch 파이프라인과 스케줄러
 ├── common           # 공통 응답, 예외, requestId 로깅
 ├── config           # Security, Redis, OpenAI, Batch 설정
 ├── conversation     # 대화, 메시지, 대화형 AI, 비활성 대화 자동 완료
-├── knowledge        # 지식 폴더, 대분류, AI 폴더 선택, 추출/통합 학습 노트
-├── note             # 개발 노트 CRUD/Search
+├── knowledge        # 지식 폴더, 카테고리, 추출/통합 학습 노트
 ├── redis            # Redis 유틸리티
 └── user             # 회원, 사용자 조회
 
@@ -178,3 +170,10 @@ frontend/src
 - AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
 - Docker Compose 운영 구성 정리
 - 테스트 커버리지와 모니터링 확장
+
+## 삭제 로그
+
+- Note 도메인 API/서비스/엔티티/프론트 문서 항목 제거
+- AI Job 기반 노트 요약 API와 Summary Batch 문서 항목 제거
+- `KnowledgePathResolver`, AI 폴더 선택 구조 문서 항목을 `KnowledgeCategoryResolver` 기반 구조로 대체
+- 개발용 `JwtTestRunner` 문서 노출 대상에서 제외

@@ -1,12 +1,12 @@
 # FELDBUCH DEVELOPMENT DOCUMENTATION
 
-> AI 기반 개발 학습 노트 서비스 Feldbuch의 현재 구현, 개발 흐름, 아키텍처를 정리한 문서입니다.
+> AI 기반 개발 학습 대화와 KnowledgeNote 추출 흐름을 정리한 현재 개발 문서입니다.
 
 ## Project Overview
 
-Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, 환경 설정을 기록하고 검색할 수 있는 개발 지식 관리 플랫폼입니다.
+Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 대화를 Batch로 처리해 Knowledge 폴더와 KnowledgeNote로 추출하는 개발 지식 관리 플랫폼입니다.
 
-현재 구현은 대화 중심 학습 흐름을 기준으로 구성되어 있습니다. 사용자는 Vue SPA에서 AI와 개발 학습 대화를 나누고, 완료된 대화는 Batch를 통해 Knowledge 폴더와 KnowledgeNote로 추출됩니다. 추출 결과는 매 실행마다 생성되는 증분 노트와 Conversation 단위로 누적 병합되는 통합 노트로 나뉩니다.
+현재 구현은 Conversation 중심입니다. 대화가 일정 시간 비활성 상태가 되면 자동으로 완료되고, 완료된 대화는 Knowledge 추출 Batch의 대상이 됩니다. 추출 결과는 매 실행마다 생성되는 `INCREMENTAL` 노트와 Conversation 단위로 누적 병합되는 `CONSOLIDATED` 노트로 나뉩니다.
 
 ## Current Product Surface
 
@@ -14,11 +14,10 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 - `WorkspaceSidebar`가 왼쪽 고정 영역에서 `대화`와 `지식` 탭을 전환합니다.
 - `대화` 모드에서는 대화 목록, 채팅 메시지, 입력창, 선택 대화의 학습 정보 패널을 렌더링합니다.
-- `지식` 모드에서는 Knowledge 폴더 트리, 선택된 폴더의 KnowledgeNote 목록, 선택한 노트의 상세 요약과 키워드를 함께 렌더링합니다.
-- Knowledge 폴더는 서버가 고정 대분류를 먼저 결정하고, AI가 기존 하위 폴더 재사용 또는 새 폴더 생성을 선택하는 방식으로 정리됩니다.
+- `지식` 모드에서는 Knowledge 폴더 트리, 선택 폴더의 KnowledgeNote 목록, 선택 노트의 상세 요약과 키워드를 렌더링합니다.
+- Knowledge 폴더는 `KnowledgeRootCategory` 대분류와 `KnowledgeCategory` 세부 카테고리 기준으로 생성됩니다.
 - Knowledge 폴더와 노트 목록은 검색을 지원하고, 검색어는 `SearchHighlight`로 강조합니다.
 - 선택한 사이드바 모드, 대화, Knowledge 폴더, Knowledge 경로, Knowledge 노트는 `localStorage`에 저장해 새로고침 후 복원합니다.
-- 로그아웃은 대화/지식 모드 양쪽 헤더에서 동일하게 제공됩니다.
 - 대화 메시지 전송은 사용자 메시지와 빈 Assistant 메시지를 낙관적으로 추가한 뒤 SSE 토큰을 누적 표시하고, 완료 후 상세를 재조회합니다.
 - 메시지가 저장될 때 Conversation은 ACTIVE 상태와 `lastMessageAt`을 갱신하며, 완료된 대화에 새 메시지가 추가되면 다음 증분 Knowledge 추출을 위해 추출 상태를 다시 `NONE`으로 준비합니다.
 
@@ -48,35 +47,15 @@ Feldbuch는 개발자가 학습하며 얻은 지식, 트러블슈팅, 코드, �
 
 ```mermaid
 flowchart TD
-    subgraph Phase1["초기 기반"]
-        A[프로젝트 생성] --> B[JWT 인증] --> C[회원가입/로그인]
-    end
-
-    subgraph Phase2["노트와 백엔드 구조"]
-        D[노트 CRUD] --> E[QueryDSL 검색] --> F[CQRS/Reader/Mapper]
-    end
-
-    subgraph Phase3["AI 처리 기반"]
-        G[OpenAI 연동] --> H[Async 처리] --> I[AI Job 상태 관리]
-    end
-
-    subgraph Phase4["대화 도메인"]
-        J[Conversation] --> K[Conversation Message] --> L[대화 컨텍스트 채팅]
-    end
-
-    subgraph Phase5["Vue 전환"]
-        M[Vue 3/Vite] --> N[Axios/Router Guard] --> O[SSE 스트리밍 채팅]
-    end
-
-    subgraph Phase6["Knowledge 구조"]
-        P[Knowledge 대분류] --> Q[AI 폴더 재사용] --> R[증분/통합 KnowledgeNote]
-    end
-
-    C --> D
-    F --> G
-    I --> J
-    L --> M
-    O --> P
+    A[JWT 인증] --> B[Conversation 도메인]
+    B --> C[대화형 AI 일반/SSE 응답]
+    C --> D[대화 활동 시각 갱신]
+    D --> E[비활성 Conversation 자동 완료]
+    E --> F[Knowledge 추출 Batch]
+    F --> G[INCREMENTAL KnowledgeNote 생성]
+    G --> H[CONSOLIDATED KnowledgeNote 생성/병합]
+    H --> I[Knowledge 트리와 노트 조회]
+    I --> J[Vue Workspace 렌더링]
 ```
 
 ## Implemented Features
@@ -85,13 +64,8 @@ flowchart TD
 - CustomUserDetails, JWT Filter, JWT AuthenticationEntryPoint 401 처리
 - Vite 개발 서버 `http://localhost:5173` CORS 허용
 - 회원가입, 로그인, 클라이언트 로그아웃
-- 노트 생성, 조회, 수정, 삭제
-- QueryDSL 검색, Pagination, Pin, StudyStatus
-- Reader Pattern, Mapper Pattern, CQRS, Facade
 - RestClient 기반 OpenAI 일반 요청
 - WebClient 기반 OpenAI Chat Completion SSE 스트리밍
-- AI Job Entity, Reader, Service, Controller
-- AI Job 상태 조회 API
 - Conversation Entity, Controller, Command/Query Service
 - Conversation 제목 수정/삭제 API
 - ConversationMessage Entity, Controller, Command/Query Service
@@ -106,24 +80,19 @@ flowchart TD
 - Conversation Knowledge 추출 상태 필드와 실패 재시도 메타데이터
 - Conversation Knowledge 추출 체크포인트 `lastExtractedMessageId`
 - Knowledge Entity, KnowledgeNote Entity, KnowledgeNote Keyword ElementCollection
-- KnowledgeRootCategory 기반 고정 대분류 체계
+- `KnowledgeRootCategory` 기반 대분류 체계
+- `KnowledgeCategory` 기반 세부 카테고리 체계
 - KnowledgeNoteType 기반 `INCREMENTAL`, `CONSOLIDATED` 노트 분리
 - KnowledgeRepository, KnowledgeNoteRepository
-- KnowledgePathResolver
-- KnowledgeRootCategoryResolver
-- KnowledgeFolderSelectionService, OpenAiKnowledgeFolderSelectionService
-- KnowledgeFolderCandidate, AiKnowledgeFolderSelectionResponse
-- AiKnowledgeSummaryResponse
-- AiKnowledgeMergeResponse
-- KnowledgeSummaryPrompt
-- KnowledgeFolderSelectionPrompt
-- KnowledgeMergePrompt
+- KnowledgeCategoryResolver
+- AiKnowledgeSummaryResponse, AiKnowledgeMergeResponse
+- KnowledgeSummaryPrompt, KnowledgeMergePrompt
 - AiKnowledgeSummaryService, OpenAiKnowledgeSummaryService
 - AiKnowledgeMergeService, OpenAiKnowledgeMergeService
 - KnowledgeExtractionService, KnowledgeExtractionStatusService
 - ConversationAiContextBuilder
 - KnowledgeConversationReader
-- KnowledgeExtractionBatchConfig, KnowledgeExtractionTasklet, LocalKnowledgeExtractionJobRunner
+- KnowledgeExtractionBatchConfig, KnowledgeExtractionTasklet
 - KnowledgeExtractionScheduler
 - 사용자별 Knowledge 루트/자식 조회, 동일 폴더명 중복 확인 쿼리
 - QueryDSL 기반 Knowledge 추출 대상 Conversation 조회와 대상 존재 여부 확인 쿼리
@@ -143,14 +112,12 @@ flowchart TD
 - Knowledge breadcrumb 표시
 - Knowledge 노트 목록 선택 상태 표시
 - Knowledge 노트 상세 화면에서 제목, 설명, 요약, 키워드 표시
-- Postman 컬렉션의 Bearer 인증, Path Variable 환경 변수화, Conversation Chat Stream 요청 정리
 - 사이드바 모드, 선택 대화, 선택 Knowledge 폴더, 선택 Knowledge 경로, 선택 Knowledge 노트 localStorage 저장/복원
 - Request ID Filter, SLF4J MDC 기반 requestId 저장/해제, `X-Request-Id` 응답 헤더
 - Axios 공통 API client와 Request/Response Interceptor
 - Vue Router Guard 기반 인증 라우트 보호
 - `localStorage` 기반 `accessToken`, `userId` 저장/삭제 유틸리티
-- RedisTemplate 구성
-- Spring Batch Summary Job 구성
+- RedisTemplate 구성과 RedisService 유틸리티
 - 주요 도메인/서비스/컨트롤러 통합 테스트와 Knowledge 추출 Batch 테스트
 
 ## Runtime Configuration
@@ -168,7 +135,6 @@ flowchart TD
 - 현재 Spring Security와 Vue 로그인 흐름은 JWT 폼 로그인 중심이며, OAuth2 인증 플로우는 아직 연결하지 않았습니다.
 - 로컬 Docker 인프라: MySQL, Redis
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
-- Knowledge 추출 배치 로컬 실행 플래그: `feldbuch.batch.knowledge-extraction.run=true`
 - Knowledge 추출 스케줄러 간격 설정 키: `batch.knowledge-extraction.fixed-delay`
 - Knowledge 추출 스케줄러 기본 간격: `60000` ms
 - Knowledge 추출 배치 Job 이름: `knowledgeExtractionJob`
@@ -215,13 +181,6 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    AiController --> AiFacade
-    AiFacade --> AiJobService
-    AiFacade --> AiSummaryAsyncService
-    AiSummaryAsyncService --> SummaryService
-    SummaryService --> OpenAiClient
-    OpenAiClient --> OpenAI
-
     ChatController --> ConversationChatService
     ConversationChatService --> ConversationMessageCommandService
     ConversationChatService --> ChatContextBuilder
@@ -242,7 +201,7 @@ flowchart TD
 
 ### Knowledge and Batch
 
-![Feldbuch AI Job Flow](./images/diagrams/feldbuch-ai-job-flow.svg)
+![Feldbuch Knowledge Extraction Flow](./images/diagrams/feldbuch-ai-job-flow.svg)
 
 ```mermaid
 flowchart TD
@@ -250,17 +209,8 @@ flowchart TD
     KnowledgeQueryService --> KnowledgeRepository
     KnowledgeQueryService --> KnowledgeNoteRepository
 
-    OpenAiKnowledgeSummaryService --> AiClient
-    OpenAiKnowledgeSummaryService --> KnowledgeSummaryPrompt
-    AiClient --> OpenAI
-
-    KnowledgeNoteCommandService --> KnowledgePathResolver
-    KnowledgePathResolver --> KnowledgeRepository
-    KnowledgeNoteCommandService --> KnowledgeNoteRepository
-
     KnowledgeExtractionScheduler --> KnowledgeConversationReader
     KnowledgeExtractionScheduler --> KnowledgeExtractionJob
-    LocalKnowledgeExtractionJobRunner --> KnowledgeExtractionJob
     KnowledgeExtractionJob --> KnowledgeExtractionStep
     KnowledgeExtractionStep --> KnowledgeExtractionTasklet
     KnowledgeExtractionTasklet --> KnowledgeConversationReader
@@ -271,9 +221,12 @@ flowchart TD
     KnowledgeExtractionService --> OpenAiKnowledgeSummaryService
     KnowledgeExtractionService --> OpenAiKnowledgeMergeService
     KnowledgeExtractionService --> KnowledgeNoteCommandService
-    KnowledgeNoteCommandService --> KnowledgePathResolver
-    KnowledgePathResolver --> KnowledgeRootCategoryResolver
-    KnowledgePathResolver --> OpenAiKnowledgeFolderSelectionService
+    KnowledgeNoteCommandService --> KnowledgeCategoryResolver
+    KnowledgeCategoryResolver --> KnowledgeRepository
+    KnowledgeNoteCommandService --> KnowledgeNoteRepository
+    OpenAiKnowledgeSummaryService --> AiClient
+    OpenAiKnowledgeMergeService --> AiClient
+    AiClient --> OpenAI
 ```
 
 ## Client Architecture
@@ -317,109 +270,6 @@ flowchart TD
     ApiClient --> SpringBootApi
 ```
 
-클라이언트 책임 분리:
-
-- `App.vue`: `RouterView`를 렌더링하는 Vue 앱 루트
-- `router/index.js`: `/login`, `/conversations` 라우트와 인증 Guard 관리
-- `LoginView.vue`: 로그인 폼, 로그인 API 호출, 토큰 저장, 대화 화면 이동
-- `ConversationView.vue`: 대화/지식 워크스페이스 컨테이너, 선택 상태와 요청 중 상태 관리, localStorage 기반 선택 상태 복원
-- `WorkspaceSidebar.vue`: 대화/지식 탭 전환과 하위 사이드바 이벤트 중계
-- `SidebarHeader.vue`: Feldbuch 로고와 새 대화 생성 버튼
-- `SidebarTabs.vue`: 대화/지식 모드 전환 버튼
-- `SidebarSectionLabel.vue`: 사이드바 섹션 라벨 공통 컴포넌트
-- `ConversationSidebar.vue`: 대화 목록, 선택 상태, 새 대화 생성, 인라인 제목 수정, 삭제 버튼
-- `KnowledgeSidebar.vue`: Knowledge 폴더 트리 조회, 폴더 검색, 새로고침, 선택 이벤트 전달
-- `KnowledgeTreeNode.vue`: 재귀 폴더 노드 렌더링, 펼침/접힘, 폴더 선택, 검색어 강조
-- `KnowledgeWorkspace.vue`: Knowledge breadcrumb, 노트 목록 패널, 노트 상세 패널 조합
-- `KnowledgeNoteList.vue`: 선택 Knowledge 폴더의 노트 목록 조회, 노트 검색, 검색어 강조, 선택 상태 표시
-- `KnowledgeNoteDetail.vue`: 선택한 Knowledge 노트의 제목, 설명, 요약, 키워드 표시
-- `SearchHighlight.vue`: 폴더/노트 검색어 부분 강조
-- `MessageList.vue`: `USER`, `ASSISTANT` 메시지 렌더링, Markdown, 코드 강조, COPY 버튼, 로딩 메시지
-- `ChatInput.vue`: 사용자 입력을 `send` 이벤트로 상위 컴포넌트에 전달하고 전송 중 입력 비활성화
-- `StudyInfoPanel.vue`: 선택 대화의 주제, 상태, 메시지 수, 생성일, 수정일, 활동 신호 표시
-- `apiClient.js`: Axios instance, baseURL, Request/Response Interceptor 관리
-- `authApi.js`, `conversationApi.js`, `knowledgeApi.js`: 도메인별 API 호출 함수
-- `utils/markdownRenderer.js`: marked, highlight.js, DOMPurify 조합 Markdown 렌더링
-- `utils/auth.js`: `accessToken`, `userId` 저장/조회/삭제와 로그인 여부 판단
-
-대화 화면 데이터 흐름:
-
-```text
-ConversationView mounted
-  ↓
-getConversations()
-  ↓
-대화 목록 저장
-  ↓
-첫 번째 대화 자동 선택
-  ↓
-getConversation(conversationId)
-  ↓
-conversation / messages 상태 갱신
-  ↓
-ConversationSidebar / MessageList / StudyInfoPanel 렌더링
-```
-
-메시지 스트리밍 전송 흐름:
-
-```text
-ChatInput send event
-  ↓
-ConversationView.sendMessage(content)
-  ↓
-sendingMessage = true
-  ↓
-사용자 메시지와 빈 ASSISTANT 메시지 낙관적 추가
-  ↓
-conversationApi.streamMessage(conversationId, message)
-  ↓
-POST /api/conversations/{conversationId}/chat/stream
-  ↓
-SSE TOKEN 이벤트마다 ASSISTANT 메시지 content 누적
-  ↓
-COMPLETE 이벤트 수신
-  ↓
-getConversation(conversationId) 재조회
-  ↓
-메시지 목록과 제목 최신화
-  ↓
-대화 목록 최상단 이동과 자동 스크롤
-```
-
-Knowledge 화면 데이터 흐름:
-
-```text
-WorkspaceSidebar 지식 탭 선택
-  ↓
-localStorage feldbuch.sidebarMode 갱신
-  ↓
-KnowledgeSidebar mounted
-  ↓
-GET /api/knowledge/tree
-  ↓
-폴더 검색어에 따라 KnowledgeTreeNode 재귀 렌더링
-  ↓
-폴더 선택
-  ↓
-ConversationView.selectedKnowledgeId / selectedKnowledgePath 갱신
-  ↓
-localStorage feldbuch.selectedKnowledgeId / feldbuch.selectedKnowledgePath 저장
-  ↓
-KnowledgeWorkspace
-  ↓
-GET /api/knowledge/{knowledgeId}/notes
-  ↓
-노트 목록 렌더링과 노트 검색
-  ↓
-노트 선택
-  ↓
-localStorage feldbuch.selectedKnowledgeNoteId 저장
-  ↓
-GET /api/knowledge/notes/{noteId}
-  ↓
-KnowledgeNoteDetail 제목/설명/요약/키워드 렌더링
-```
-
 ## API Communication
 
 공통 규칙:
@@ -437,18 +287,21 @@ KnowledgeNoteDetail 제목/설명/요약/키워드 렌더링
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/api/auth/login` | 로그인 |
+| `POST` | `/api/users/signup` | 회원가입 |
+| `GET` | `/api/users/me` | 내 정보 조회 |
 | `GET` | `/api/conversations` | 대화 목록 조회 |
 | `POST` | `/api/conversations` | 새 대화 생성 |
 | `GET` | `/api/conversations/{conversationId}` | 대화 상세와 메시지 조회 |
 | `PATCH` | `/api/conversations/{conversationId}` | 대화 제목 수정 |
 | `DELETE` | `/api/conversations/{conversationId}` | 대화 삭제 |
+| `POST` | `/api/conversations/{conversationId}/messages` | 대화 메시지 생성 |
+| `GET` | `/api/conversations/{conversationId}/messages` | 대화 메시지 목록 조회 |
 | `POST` | `/api/conversations/{conversationId}/chat` | 일반 대화형 AI 요청 |
 | `POST` | `/api/conversations/{conversationId}/chat/stream` | SSE 대화형 AI 요청 |
 | `GET` | `/api/knowledge/tree` | Knowledge 폴더 트리 조회 |
 | `GET` | `/api/knowledge/{knowledgeId}/notes` | Knowledge 폴더별 노트 목록 조회 |
 | `GET` | `/api/knowledge/notes/{noteId}` | Knowledge 노트 상세 조회 |
 | `GET` | `/api/knowledge/conversations/{conversationId}/consolidated-note` | Conversation별 통합 Knowledge 노트 조회 |
-| `GET` | `/api/ai/jobs/{jobId}` | AI Job 상태 조회 |
 
 SSE 이벤트 계약:
 
@@ -462,15 +315,13 @@ StreamResponse
 
 ![Feldbuch Entity Relationship Diagram](./images/diagrams/feldbuch-erd.svg)
 
-현재 영속 모델은 `users`, `user_identities`, `notes`, `ai_job`, `conversations`, `conversation_messages`, `knowledge`, `knowledge_notes`, `knowledge_note_keywords`를 중심으로 구성합니다.
+현재 영속 모델은 `users`, `user_identities`, `conversations`, `conversation_messages`, `knowledge`, `knowledge_notes`, `knowledge_note_keywords`를 중심으로 구성합니다.
 
-- `users`: 노트, 대화, Knowledge의 소유자
+- `users`: 대화와 Knowledge의 소유자
 - `user_identities`: Google OIDC 등 외부 인증 Provider 계정 식별자
-- `notes`: 개발 노트와 학습 상태
-- `ai_job`: 비동기 AI 요약 작업 상태
 - `conversations`: AI 학습 대화 세션, 마지막 메시지 활동 시각, Knowledge 추출 상태와 체크포인트
 - `conversation_messages`: 대화별 USER/ASSISTANT 메시지
-- `knowledge`: 사용자별 지식 폴더 트리. 최상위 폴더는 서버가 결정한 `KnowledgeRootCategory` 이름을 사용
+- `knowledge`: 사용자별 지식 폴더 트리. 최상위 폴더는 `KnowledgeRootCategory`, 하위 폴더는 `KnowledgeCategory` displayName 기반
 - `knowledge_notes`: 대화에서 AI가 추출한 학습 노트. `INCREMENTAL`은 추출 범위별 노트, `CONSOLIDATED`는 Conversation 누적 통합 노트
 - `knowledge_note_keywords`: KnowledgeNote 키워드 ElementCollection
 
@@ -483,9 +334,7 @@ Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 
 - 실행 방식: Tasklet 기반 단일 Step
 - 실행 시점: `KnowledgeExtractionScheduler`가 `batch.knowledge-extraction.fixed-delay` 기준으로 대상 존재 여부를 확인한 뒤 Job 실행
 - 기본 스케줄 간격: 60초
-- 로컬 수동 실행: `local` 프로필에서 `feldbuch.batch.knowledge-extraction.run=true` 설정 시 애플리케이션 시작 직후 1회 실행
 - Scheduler Job Parameter: `requestedAt=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
-- Local Runner Job Parameter: `executionTime=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
 - 반복 방식: 한 번 실행할 때 조회된 대상 Conversation 목록을 순회 처리
 - 대상 조건: `status = COMPLETED`이고 `knowledgeExtractStatus = NONE` 또는 재시도 가능한 `FAILED`
 - 재시도 조건: `knowledgeExtractStatus = FAILED`, `knowledgeExtractRetryCount < 3`, `knowledgeExtractFailedAt <= now - 1 minute`
@@ -497,19 +346,18 @@ Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 
 - 증분 추출: 완료된 대화에 새 메시지가 추가되면 상태를 `NONE`으로 되돌리고 `lastExtractedMessageId` 이후 메시지만 AI 컨텍스트로 구성
 - 노트 생성: 새 메시지 범위는 항상 `INCREMENTAL` KnowledgeNote로 저장
 - 통합 노트: 같은 Conversation의 `CONSOLIDATED` KnowledgeNote가 없으면 최초 생성하고, 있으면 기존 통합 노트와 신규 증분 노트를 AI로 병합해 갱신
-- 폴더 결정: AI 요약/병합 응답의 하위 경로를 `KnowledgeRootCategoryResolver`가 고정 대분류 아래에 배치하고, 기존 하위 폴더 후보가 있으면 `OpenAiKnowledgeFolderSelectionService`가 재사용 여부를 판단
+- 폴더 결정: AI 요약/병합 응답의 `KnowledgeCategory`를 `KnowledgeCategoryResolver`가 실제 Knowledge 폴더로 변환
 
 ## Knowledge Classification and Merge
 
 Knowledge 분류와 병합은 추출 품질과 폴더 중복 방지를 위한 서버 내부 정책입니다.
 
 - 최상위 분류: `KnowledgeRootCategory` enum으로 고정
-- 지원 대분류: `COMPUTER_SCIENCE`, `PROGRAMMING_LANGUAGE`, `WEB_DEVELOPMENT`, `DATABASE`, `NETWORK`, `OPERATING_SYSTEM`, `CLOUD`, `DEVOPS`, `ARTIFICIAL_INTELLIGENCE`, `SECURITY`, `COMPUTER_USAGE`, `COMMUNICATION`
-- AI 응답 경로: 하위 경로만 받으며 최대 2단계까지 허용
-- 기본 대분류: 키워드 매칭 실패 시 `COMPUTER_SCIENCE`
-- 폴더 재사용: 동일 이름이 없더라도 기존 자식 폴더 후보를 AI에 제공해 `EXISTING` 또는 `CREATE`를 선택
-- 병합 응답: `AiKnowledgeMergeResponse`가 `knowledgePath`, `title`, `description`, `summary`, `keywords`를 반환
-- 병합 결과의 경로가 바뀌면 통합 KnowledgeNote를 새 Knowledge 폴더로 이동
+- 세부 분류: `KnowledgeCategory` enum으로 고정
+- AI 응답: `category`, `title`, `description`, `summary`, `keywords`를 JSON으로 반환
+- 폴더 구조: `KnowledgeRootCategory.name()` 루트 아래 `KnowledgeCategory.displayName` 하위 폴더를 생성/조회
+- 병합 응답: `AiKnowledgeMergeResponse`가 `category`, `title`, `description`, `summary`, `keywords`를 반환
+- 병합 결과의 category가 바뀌면 통합 KnowledgeNote를 해당 Knowledge 폴더로 이동
 
 ## Conversation Auto Completion
 
@@ -531,23 +379,19 @@ Knowledge 분류와 병합은 추출 품질과 폴더 중복 방지를 위한 �
 src/main/java/io.github.kaltz.feldbuch
 ├── ai
 │   ├── client          # OpenAI REST/SSE 클라이언트
-│   ├── dto             # OpenAI/AI 응답 DTO
-│   ├── facade          # AI 요청 진입 Facade
-│   ├── job             # 비동기 AI Job 상태 관리
+│   ├── dto             # Knowledge AI 응답 DTO
 │   ├── mapper          # 요청/응답/메시지 변환
 │   ├── model           # 채팅/제목 생성 모델
-│   ├── prompt          # Summary/Knowledge/Title 프롬프트
-│   └── service         # 요약, 채팅, Knowledge 요약 서비스
+│   ├── prompt          # Knowledge/Title 프롬프트
+│   └── service         # 채팅, Knowledge 요약/병합 서비스
 ├── auth
 ├── batch
 ├── common
 ├── config
 ├── conversation
 ├── knowledge
-│   ├── folder          # AI 기반 기존 Knowledge 폴더 선택
 │   ├── context         # Conversation 메시지 기반 추출 컨텍스트
-│   └── service         # Knowledge 경로 결정, 추출, 노트 저장
-├── note
+│   └── service         # Knowledge 카테고리 결정, 추출, 노트 저장
 ├── redis
 └── user
 
@@ -574,7 +418,6 @@ frontend/src
 - CQRS 기반 Command/Query 책임 분리
 - Reader Pattern으로 조회 전용 도메인 접근 책임 분리
 - Mapper Pattern으로 DTO/도메인/OpenAI 메시지 변환 분리
-- Facade와 Async Service를 통한 AI Job 요청 흐름 분리
 - OpenAI 일반 요청과 SSE 스트리밍 요청 계층 분리
 - Conversation 메시지 영속화 후 AI 컨텍스트 구성
 - 메시지 저장 시 `lastMessageAt` 갱신과 완료 대화 재활성화
@@ -583,8 +426,7 @@ frontend/src
 - 낙관적 사용자 메시지와 스트리밍 Assistant 메시지 렌더링
 - Markdown 렌더링과 sanitize 책임을 `markdownRenderer.js`로 분리
 - Knowledge 폴더 트리 자기 참조 모델링
-- KnowledgePathResolver로 AI 응답 경로 기반 폴더 자동 조회/생성
-- 고정 대분류와 AI 폴더 선택으로 Knowledge 폴더 중복 생성 완화
+- 고정 `KnowledgeCategory` 기반 폴더 구조로 AI의 임의 폴더 생성 방지
 - 추출 범위별 `INCREMENTAL` 노트와 Conversation 단위 `CONSOLIDATED` 노트를 분리
 - 기존 통합 노트와 신규 증분 노트를 AI로 병합해 누적 요약 유지
 - Knowledge 워크스페이스를 목록 패널과 상세 패널로 분리
@@ -600,16 +442,19 @@ frontend/src
 
 - OAuth2 로그인 플로우 연결
 - Knowledge 노트 원본 Conversation 이동 링크
-- Knowledge 폴더/노트 생성/수정/삭제 UI 확장
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
-- Knowledge 추출 대상 조회 인덱스 추가
-- Conversation 자동 완료/Knowledge 추출 스케줄러 운영 설정 외부화 고도화
 - Postman Knowledge 요청 파일 보강
-- AI 태그 생성
-- 코드 리뷰
-- 학습 퀴즈 생성
-- 학습 로드맵 추천
+- AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
 - Docker Compose 운영 구성 정리
 - 테스트 커버리지 확장
 - Monitoring
+
+## 삭제 로그
+
+- Note 도메인 패키지, CRUD/Search API, PageResponse 기반 목록 문서 제거
+- 노트 요약용 AI Job 계층, Summary Prompt/Service/Batch 문서 제거
+- `AiController`, `AiFacade`, `AiJobController`, Summary Handler 계층 문서 제거
+- `LocalKnowledgeExtractionJobRunner` 문서 제거
+- `KnowledgePathResolver`, AI 폴더 선택 구조 문서 제거
+- ERD와 아키텍처에서 `notes`, `ai_job`, Summary Batch 구성 제거

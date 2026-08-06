@@ -1,77 +1,92 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 560" role="img" aria-labelledby="title desc">
-  <title id="title">Feldbuch AI Job Flow Diagram</title>
-  <desc id="desc">AI summary request flow from client to AI job creation, async processing, OpenAI call, note update, and job status lookup.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1220 620" role="img" aria-labelledby="title desc">
+  <title id="title">Feldbuch Knowledge Extraction Flow Diagram</title>
+  <desc id="desc">Knowledge extraction flow from inactive conversation completion to batch target lookup, OpenAI summary, incremental note creation, consolidated note merge, and checkpoint update.</desc>
   <defs>
     <style>
       .title { font: 700 28px Arial, Helvetica, sans-serif; fill: #111827; }
       .label { font: 700 16px Arial, Helvetica, sans-serif; fill: #111827; }
       .small { font: 500 13px Arial, Helvetica, sans-serif; fill: #374151; }
       .box { fill: #ffffff; stroke: #d1d5db; stroke-width: 2; }
-      .job { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 2; }
       .api { fill: #ecfdf5; stroke: #16a34a; stroke-width: 2; }
+      .job { fill: #fff7ed; stroke: #ea580c; stroke-width: 2; }
       .data { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; }
-      .external { fill: #fff7ed; stroke: #ea580c; stroke-width: 2; }
+      .external { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 2; }
+      .state { font: 700 14px Arial, Helvetica, sans-serif; fill: #9a3412; }
       .arrow { stroke: #374151; stroke-width: 2.3; fill: none; marker-end: url(#arrow); }
       .dashed { stroke-dasharray: 7 6; }
-      .state { font: 700 14px Arial, Helvetica, sans-serif; fill: #5b21b6; }
     </style>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L0,6 L9,3 z" fill="#374151"/>
     </marker>
   </defs>
 
-  <rect width="1180" height="560" fill="#ffffff"/>
-  <text x="44" y="52" class="title">Feldbuch AI Job Flow</text>
+  <rect width="1220" height="620" fill="#ffffff"/>
+  <text x="44" y="52" class="title">Feldbuch Knowledge Extraction Flow</text>
 
-  <rect x="44" y="124" width="154" height="74" rx="12" class="box"/>
-  <text x="121" y="154" text-anchor="middle" class="label">Client</text>
-  <text x="121" y="178" text-anchor="middle" class="small">summary request</text>
+  <rect x="44" y="116" width="180" height="84" rx="12" class="box"/>
+  <text x="134" y="148" text-anchor="middle" class="label">Conversation</text>
+  <text x="134" y="172" text-anchor="middle" class="small">ACTIVE + lastMessageAt</text>
 
-  <rect x="258" y="124" width="170" height="74" rx="12" class="api"/>
-  <text x="343" y="154" text-anchor="middle" class="label">AiController</text>
-  <text x="343" y="178" text-anchor="middle" class="small">POST /api/ai/notes/{id}/summary</text>
+  <rect x="284" y="116" width="190" height="84" rx="12" class="api"/>
+  <text x="379" y="148" text-anchor="middle" class="label">Completion Scheduler</text>
+  <text x="379" y="172" text-anchor="middle" class="small">inactive timeout 30m</text>
 
-  <rect x="488" y="124" width="170" height="74" rx="12" class="api"/>
-  <text x="573" y="154" text-anchor="middle" class="label">AiFacade</text>
-  <text x="573" y="178" text-anchor="middle" class="small">create job + dispatch</text>
+  <rect x="534" y="116" width="180" height="84" rx="12" class="data"/>
+  <text x="624" y="148" text-anchor="middle" class="label">Conversation</text>
+  <text x="624" y="172" text-anchor="middle" class="state">COMPLETED</text>
 
-  <rect x="718" y="104" width="176" height="112" rx="12" class="job"/>
-  <text x="806" y="138" text-anchor="middle" class="label">AiJob</text>
-  <text x="806" y="164" text-anchor="middle" class="state">REQUESTED</text>
-  <text x="806" y="188" text-anchor="middle" class="small">type: SUMMARY</text>
+  <rect x="774" y="116" width="190" height="84" rx="12" class="job"/>
+  <text x="869" y="148" text-anchor="middle" class="label">Extraction Scheduler</text>
+  <text x="869" y="172" text-anchor="middle" class="small">target exists check</text>
 
-  <rect x="954" y="124" width="170" height="74" rx="12" class="box"/>
-  <text x="1039" y="154" text-anchor="middle" class="label">Client</text>
-  <text x="1039" y="178" text-anchor="middle" class="small">receives jobId</text>
+  <rect x="1024" y="116" width="150" height="84" rx="12" class="job"/>
+  <text x="1099" y="148" text-anchor="middle" class="label">Batch Job</text>
+  <text x="1099" y="172" text-anchor="middle" class="small">Tasklet step</text>
 
-  <path d="M198 161h60" class="arrow"/>
-  <path d="M428 161h60" class="arrow"/>
-  <path d="M658 161h60" class="arrow"/>
-  <path d="M894 161h60" class="arrow dashed"/>
+  <path d="M224 158h60" class="arrow"/>
+  <path d="M474 158h60" class="arrow"/>
+  <path d="M714 158h60" class="arrow"/>
+  <path d="M964 158h60" class="arrow"/>
 
-  <rect x="258" y="304" width="184" height="92" rx="12" class="job"/>
-  <text x="350" y="338" text-anchor="middle" class="label">Async Handler</text>
-  <text x="350" y="364" text-anchor="middle" class="state">PROCESSING</text>
-  <text x="350" y="386" text-anchor="middle" class="small">new thread / transaction</text>
+  <rect x="44" y="306" width="180" height="92" rx="12" class="data"/>
+  <text x="134" y="338" text-anchor="middle" class="label">Context Builder</text>
+  <text x="134" y="364" text-anchor="middle" class="small">messages after checkpoint</text>
 
-  <rect x="502" y="304" width="184" height="92" rx="12" class="external"/>
-  <text x="594" y="338" text-anchor="middle" class="label">OpenAI API</text>
-  <text x="594" y="364" text-anchor="middle" class="small">summary generation</text>
+  <rect x="284" y="306" width="180" height="92" rx="12" class="external"/>
+  <text x="374" y="338" text-anchor="middle" class="label">OpenAI Summary</text>
+  <text x="374" y="364" text-anchor="middle" class="small">KnowledgeCategory JSON</text>
 
-  <rect x="746" y="304" width="184" height="92" rx="12" class="data"/>
-  <text x="838" y="338" text-anchor="middle" class="label">Note</text>
-  <text x="838" y="364" text-anchor="middle" class="small">summary saved</text>
+  <rect x="524" y="306" width="190" height="92" rx="12" class="data"/>
+  <text x="619" y="338" text-anchor="middle" class="label">Incremental Note</text>
+  <text x="619" y="364" text-anchor="middle" class="small">new extraction range</text>
 
-  <rect x="990" y="304" width="146" height="92" rx="12" class="job"/>
-  <text x="1063" y="338" text-anchor="middle" class="label">AiJob</text>
-  <text x="1063" y="364" text-anchor="middle" class="state">COMPLETED</text>
-  <text x="1063" y="386" text-anchor="middle" class="small">or FAILED</text>
+  <rect x="774" y="306" width="190" height="92" rx="12" class="external"/>
+  <text x="869" y="338" text-anchor="middle" class="label">OpenAI Merge</text>
+  <text x="869" y="364" text-anchor="middle" class="small">existing + incremental</text>
 
-  <path d="M806 216c0 68-456 20-456 88" class="arrow"/>
-  <path d="M442 350h60" class="arrow"/>
-  <path d="M686 350h60" class="arrow"/>
-  <path d="M930 350h60" class="arrow"/>
+  <rect x="1024" y="306" width="150" height="92" rx="12" class="data"/>
+  <text x="1099" y="338" text-anchor="middle" class="label">Consolidated</text>
+  <text x="1099" y="364" text-anchor="middle" class="small">create or update</text>
 
-  <rect x="44" y="456" width="1092" height="56" rx="12" class="box"/>
-  <text x="590" y="490" text-anchor="middle" class="small">Status lookup: GET /api/ai/jobs/{jobId} returns REQUESTED, PROCESSING, COMPLETED, or FAILED with timestamps and errorMessage.</text>
+  <path d="M1099 200c0 86-965 20-965 106" class="arrow"/>
+  <path d="M224 352h60" class="arrow"/>
+  <path d="M464 352h60" class="arrow"/>
+  <path d="M714 352h60" class="arrow dashed"/>
+  <path d="M964 352h60" class="arrow"/>
+
+  <rect x="284" y="484" width="210" height="78" rx="12" class="data"/>
+  <text x="389" y="516" text-anchor="middle" class="label">Category Resolver</text>
+  <text x="389" y="540" text-anchor="middle" class="small">root + fixed category folder</text>
+
+  <rect x="584" y="484" width="210" height="78" rx="12" class="data"/>
+  <text x="689" y="516" text-anchor="middle" class="label">KnowledgeNote</text>
+  <text x="689" y="540" text-anchor="middle" class="small">repository save</text>
+
+  <rect x="884" y="484" width="210" height="78" rx="12" class="data"/>
+  <text x="989" y="516" text-anchor="middle" class="label">Checkpoint</text>
+  <text x="989" y="540" text-anchor="middle" class="small">lastExtractedMessageId</text>
+
+  <path d="M619 398c0 58-230 28-230 86" class="arrow"/>
+  <path d="M1099 398c0 60-410 26-410 86" class="arrow"/>
+  <path d="M794 523h90" class="arrow"/>
 </svg>

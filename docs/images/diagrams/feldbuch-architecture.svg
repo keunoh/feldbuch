@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
   <title id="title">Feldbuch Project Architecture Diagram</title>
-  <desc id="desc">Current Feldbuch backend architecture with Spring Boot, request ID logging, Spring Security, JWT, QueryDSL, JPA, MySQL, Redis, Spring Batch, async AI jobs, and OpenAI.</desc>
+  <desc id="desc">Current Feldbuch backend architecture with Spring Boot, request ID logging, Spring Security, JWT, Conversation, Knowledge extraction batch, JPA, MySQL, Redis, and OpenAI.</desc>
   <defs>
     <style>
       .title { font: 700 30px Arial, Helvetica, sans-serif; fill: #111827; }
@@ -29,11 +29,11 @@
 
   <rect width="1280" height="760" fill="#ffffff"/>
   <text x="48" y="54" class="title">Feldbuch Project Architecture</text>
-  <text x="48" y="82" class="subtitle">AI 기반 개발 지식 관리 플랫폼의 현재 백엔드 구조</text>
+  <text x="48" y="82" class="subtitle">Conversation 중심 AI 학습 대화와 Knowledge 추출 구조</text>
 
   <rect x="48" y="150" width="180" height="86" rx="14" class="box"/>
   <text x="138" y="184" text-anchor="middle" class="label">Client</text>
-  <text x="138" y="210" text-anchor="middle" class="small">REST API Consumer</text>
+  <text x="138" y="210" text-anchor="middle" class="small">Vue SPA / Thymeleaf</text>
 
   <rect x="292" y="112" width="548" height="462" rx="24" class="app"/>
   <text x="566" y="146" text-anchor="middle" class="label">Spring Boot Application</text>
@@ -49,25 +49,25 @@
 
   <rect x="326" y="326" width="194" height="82" rx="12" class="module"/>
   <text x="423" y="358" text-anchor="middle" class="label">Controllers</text>
-  <text x="423" y="382" text-anchor="middle" class="small">Auth / User / Note / AI / Conversation</text>
+  <text x="423" y="382" text-anchor="middle" class="small">Auth / User / Conversation / Knowledge</text>
 
   <rect x="596" y="326" width="194" height="82" rx="12" class="module"/>
   <text x="693" y="358" text-anchor="middle" class="label">Service Layer</text>
-  <text x="693" y="382" text-anchor="middle" class="small">Command / Query / Facade</text>
+  <text x="693" y="382" text-anchor="middle" class="small">Command / Query / Extraction</text>
 
   <rect x="326" y="452" width="194" height="76" rx="12" class="module"/>
-  <text x="423" y="482" text-anchor="middle" class="label">Async AI Jobs</text>
-  <text x="423" y="506" text-anchor="middle" class="small">REQUESTED -> COMPLETED</text>
+  <text x="423" y="482" text-anchor="middle" class="label">Schedulers</text>
+  <text x="423" y="506" text-anchor="middle" class="small">Conversation / Knowledge</text>
 
   <rect x="596" y="452" width="194" height="76" rx="12" class="module"/>
-  <text x="693" y="482" text-anchor="middle" class="label">Persistence Boundary</text>
+  <text x="693" y="482" text-anchor="middle" class="label">Persistence</text>
   <text x="693" y="506" text-anchor="middle" class="small">Reader / Repository / QueryDSL</text>
 
   <path d="M228 193h64" class="arrow green"/>
   <path d="M520 245h76" class="arrow green"/>
   <path d="M693 284v42" class="arrow green"/>
   <path d="M596 367h-76" class="arrow green"/>
-  <path d="M423 408v44" class="arrow purple"/>
+  <path d="M423 408v44" class="arrow orange"/>
   <path d="M520 490h76" class="arrow blue"/>
 
   <rect x="914" y="118" width="278" height="142" rx="18" class="data"/>
@@ -78,21 +78,21 @@
 
   <rect x="914" y="312" width="278" height="116" rx="18" class="ai"/>
   <text x="1053" y="350" text-anchor="middle" class="label">OpenAI API</text>
-  <text x="1053" y="380" text-anchor="middle" class="small">RestClient</text>
-  <text x="1053" y="404" text-anchor="middle" class="small">Summary Prompt / Response</text>
+  <text x="1053" y="380" text-anchor="middle" class="small">Chat / Stream</text>
+  <text x="1053" y="404" text-anchor="middle" class="small">Knowledge Summary / Merge</text>
 
   <rect x="914" y="480" width="278" height="116" rx="18" class="batch"/>
   <text x="1053" y="518" text-anchor="middle" class="label">Spring Batch</text>
-  <text x="1053" y="548" text-anchor="middle" class="small">summaryJob / summaryStep</text>
-  <text x="1053" y="572" text-anchor="middle" class="small">Reader / Processor / Writer</text>
+  <text x="1053" y="548" text-anchor="middle" class="small">knowledgeExtractionJob</text>
+  <text x="1053" y="572" text-anchor="middle" class="small">Tasklet / retry state</text>
 
   <path d="M790 490c72 0 62-270 124-300" class="arrow blue"/>
-  <path d="M520 490c170 0 236-120 394-120" class="arrow purple"/>
+  <path d="M790 367h124" class="arrow purple"/>
   <path d="M790 490h124" class="arrow orange"/>
 
   <rect x="292" y="636" width="548" height="74" rx="18" class="runtime"/>
   <text x="566" y="666" text-anchor="middle" class="label">Local Runtime &amp; Configuration</text>
-  <text x="566" y="692" text-anchor="middle" class="small">Docker Compose / application.yml / application-prod.yml / environment variables</text>
+  <text x="566" y="692" text-anchor="middle" class="small">Docker Compose / application.yml / profile-specific config / environment variables</text>
   <path d="M566 636v-62" class="arrow yellow"/>
 
   <text x="48" y="720" class="tiny">Public endpoints: signup, login. Other endpoints require Bearer JWT. Every response includes X-Request-Id.</text>
