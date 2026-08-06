@@ -9,12 +9,6 @@ import java.util.Optional;
 
 public interface KnowledgeNoteRepository extends JpaRepository<KnowledgeNote, Long> {
 
-    List<KnowledgeNote>
-    findAllByUserIdAndKnowledgeIdOrderByCreatedAtAsc(
-            Long userId,
-            Long knowledgeId
-    );
-
     Optional<KnowledgeNote>
     findByIdAndUserId(
             Long noteId,

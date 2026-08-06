@@ -9,16 +9,6 @@ import java.util.Optional;
 public interface KnowledgeRepository extends JpaRepository<Knowledge, Long> {
 
     /**
-     * 사용자의 최상위 Knowledge 목록 조회
-     */
-    List<Knowledge> findAllByUserIdAndParentIsNullOrderByNameAsc(Long userId);
-
-    /**
-     * 특정 Knowledge의 바로 아래 자식 목록 조회
-     */
-    List<Knowledge> findAllByUserIdAndParentIdOrderByNameAsc(Long userId, Long parentId);
-
-    /**
      * 최상위 Knowledge 중 같은 이름이 있는지 조회
      */
     Optional<Knowledge> findByUserIdAndParentIsNullAndName(Long userId, String name);
@@ -30,15 +20,4 @@ public interface KnowledgeRepository extends JpaRepository<Knowledge, Long> {
 
     List<Knowledge> findAllByUserIdOrderByCreatedAtAsc(Long userId);
 
-    /**
-     * 특정 사용자의 Knowledge를 ID로 조회한다.
-     */
-    Optional<Knowledge> findByIdAndUserId(
-            Long knowledgeId,
-            Long userId
-    );
-
-    boolean existsByUserIdAndParentIsNullAndName(Long userId, String name);
-
-    boolean existsByUserIdAndParentIdAndName(Long userId, Long parentId, String name);
 }
