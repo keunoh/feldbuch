@@ -1,50 +1,282 @@
 <script setup>
-import {ref, watch} from "vue";
-import {getKnowledgeNote} from "@/api/knowledgeApi.js";
+import {computed, nextTick, ref, watch,} from "vue";
+
+import DOMPurify from "dompurify";
+import {marked} from "marked";
+
+import hljs from "highlight.js/lib/core";
+import bash from "highlight.js/lib/languages/bash";
+import java from "highlight.js/lib/languages/java";
+import javascript from "highlight.js/lib/languages/javascript";
+import json from "highlight.js/lib/languages/json";
+import sql from "highlight.js/lib/languages/sql";
+import xml from "highlight.js/lib/languages/xml";
+import yaml from "highlight.js/lib/languages/yaml";
+
+import "highlight.js/styles/github-dark.css";
+
+import {getKnowledgeNote,} from "@/api/knowledgeApi.js";
+
+hljs.registerLanguage(
+  "java",
+  java,
+);
+
+hljs.registerLanguage(
+  "javascript",
+  javascript,
+);
+
+hljs.registerLanguage(
+  "js",
+  javascript,
+);
+
+hljs.registerLanguage(
+  "vue",
+  xml,
+);
+
+hljs.registerLanguage(
+  "html",
+  xml,
+);
+
+hljs.registerLanguage(
+  "xml",
+  xml,
+);
+
+hljs.registerLanguage(
+  "sql",
+  sql,
+);
+
+hljs.registerLanguage(
+  "yaml",
+  yaml,
+);
+
+hljs.registerLanguage(
+  "yml",
+  yaml,
+);
+
+hljs.registerLanguage(
+  "bash",
+  bash,
+);
+
+hljs.registerLanguage(
+  "shell",
+  bash,
+);
+
+hljs.registerLanguage(
+  "json",
+  json,
+);
 
 const props = defineProps({
   noteId: {
     type: Number,
     required: true,
-  }
-})
+  },
+});
 
 const note = ref(null);
 const loading = ref(false);
-const errorMessage = ref('');
+const errorMessage = ref("");
 
-async function loadNote(noteId) {
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
+
+const renderedSummary = computed(() => {
+  const summary =
+    note.value?.summary;
+
+  if (
+    !summary
+    || typeof summary !== "string"
+  ) {
+    return "";
+  }
+
+  const html =
+    marked.parse(
+      summary,
+    );
+
+  return DOMPurify.sanitize(
+    html,
+    {
+      ADD_ATTR: [
+        "class",
+      ],
+    },
+  );
+});
+
+async function loadNote(
+  noteId,
+) {
   loading.value = true;
-  errorMessage.value = '';
-  note.value = '';
+  errorMessage.value = "";
+  note.value = null;
 
   try {
-    const response = await getKnowledgeNote(noteId);
+    const response =
+      await getKnowledgeNote(
+        noteId,
+      );
 
-    note.value = response.data;
+    note.value =
+      response.data;
+
+    await nextTick();
+
+    highlightCodeBlocks();
   } catch (error) {
-    console.log(error);
+    console.error(
+      "Knowledge 노트 상세 조회 실패",
+      error,
+    );
 
-    errorMessage.value = '지식 노트를 불러오지 못했습니다.';
+    note.value = null;
+    errorMessage.value =
+      "지식 노트를 불러오지 못했습니다.";
   } finally {
     loading.value = false;
   }
 }
 
-watch(
-  () => props.noteId,
-  async (noteId) => {
-    if (!noteId) {
-      note.value = null
+function highlightCodeBlocks() {
+  const blocks =
+    document.querySelectorAll(
+      ".knowledge-note-detail pre code",
+    );
+
+  blocks.forEach(block => {
+    if (
+      block.dataset.highlighted
+    ) {
       return;
     }
 
-    await loadNote(noteId);
+    hljs.highlightElement(
+      block,
+    );
+
+    addLanguageLabel(
+      block,
+    );
+  });
+}
+
+function addLanguageLabel(
+  codeElement,
+) {
+  const preElement =
+    codeElement.parentElement;
+
+  if (
+    !preElement
+    || preElement.querySelector(
+      ".code-language-label",
+    )
+  ) {
+    return;
+  }
+
+  const language =
+    findLanguageName(
+      codeElement,
+    );
+
+  if (!language) {
+    return;
+  }
+
+  const label =
+    document.createElement(
+      "span",
+    );
+
+  label.className =
+    "code-language-label";
+
+  label.textContent =
+    language.toUpperCase();
+
+  preElement.appendChild(
+    label,
+  );
+}
+
+function findLanguageName(
+  codeElement,
+) {
+  const languageClass =
+    Array.from(
+      codeElement.classList,
+    )
+      .find(className =>
+        className.startsWith(
+          "language-",
+        ),
+      );
+
+  if (languageClass) {
+    return languageClass.replace(
+      "language-",
+      "",
+    );
+  }
+
+  const detectedClass =
+    Array.from(
+      codeElement.classList,
+    )
+      .find(className =>
+        className.startsWith(
+          "hljs-",
+        ),
+      );
+
+  return detectedClass
+    ?.replace(
+      "hljs-",
+      "",
+    );
+}
+
+watch(
+  () => props.noteId,
+  async noteId => {
+    if (!noteId) {
+      note.value = null;
+      return;
+    }
+
+    await loadNote(
+      noteId,
+    );
   },
   {
     immediate: true,
-  }
-)
+  },
+);
+
+watch(
+  renderedSummary,
+  async () => {
+    await nextTick();
+
+    highlightCodeBlocks();
+  },
+);
 </script>
 
 <template>
@@ -82,21 +314,22 @@ watch(
       </header>
 
       <section class="note-section">
-        <h3>
-          Summary
+        <h3 class="section-label">
+          CONTENT
         </h3>
 
-        <p class="note-summary">
-          {{ note.summary }}
-        </p>
+        <div
+          class="note-summary markdown-content"
+          v-html="renderedSummary"
+        />
       </section>
 
       <section
         v-if="note.keywords?.length"
         class="note-section"
       >
-        <h3>
-          Keywords
+        <h3 class="section-label">
+          KEYWORDS
         </h3>
 
         <div class="keyword-list">
@@ -170,19 +403,19 @@ watch(
   border-bottom: 1px solid var(--color-border-soft);
 }
 
-.note-section h3 {
-  margin: 0 0 14px;
-  color: var(--color-text);
+.section-label {
+  margin: 0 0 18px;
+  color: var(--color-primary);
   font-family: "JetBrains Mono", monospace;
-  font-size: 13px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
 
 .note-summary {
-  margin: 0;
   color: var(--color-text-soft);
   font-size: 15px;
-  line-height: 1.9;
-  white-space: pre-wrap;
+  line-height: 1.85;
 }
 
 .keyword-list {
@@ -198,5 +431,183 @@ watch(
   color: var(--color-primary);
   background: var(--color-primary-soft);
   font-size: 12px;
+}
+
+.markdown-content :deep(h2) {
+  margin: 34px 0 14px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--color-border-soft);
+  color: var(--color-text);
+  font-size: 21px;
+  line-height: 1.45;
+}
+
+.markdown-content :deep(h2:first-child) {
+  margin-top: 0;
+}
+
+.markdown-content :deep(h3) {
+  margin: 28px 0 12px;
+  color: var(--color-text);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.markdown-content :deep(h4) {
+  margin: 22px 0 10px;
+  color: var(--color-text);
+  font-size: 15px;
+}
+
+.markdown-content :deep(p) {
+  margin: 0 0 16px;
+  color: var(--color-text-soft);
+  line-height: 1.85;
+}
+
+.markdown-content :deep(strong) {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  margin: 10px 0 18px;
+  padding-left: 26px;
+}
+
+.markdown-content :deep(li) {
+  margin: 7px 0;
+  color: var(--color-text-soft);
+  line-height: 1.75;
+}
+
+.markdown-content :deep(li::marker) {
+  color: var(--color-primary);
+}
+
+.markdown-content :deep(blockquote) {
+  margin: 20px 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--color-primary);
+  color: var(--color-text-soft);
+  background: var(--color-primary-soft);
+}
+
+.markdown-content :deep(code) {
+  padding: 2px 6px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 5px;
+  color: var(--color-primary);
+  background: var(--color-surface-raised);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.88em;
+}
+
+.markdown-content :deep(pre) {
+  position: relative;
+  margin: 18px 0 22px;
+  overflow-x: auto;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+  background: #0b0f14;
+}
+
+.markdown-content :deep(pre code) {
+  display: block;
+  min-width: max-content;
+  padding: 42px 18px 18px;
+  border: 0;
+  color: #d7e0ea;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre;
+}
+
+.markdown-content :deep(.code-language-label) {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 1;
+  padding: 3px 7px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 5px;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.markdown-content :deep(table) {
+  width: 100%;
+  margin: 20px 0;
+  border-collapse: collapse;
+  border: 1px solid var(--color-border-soft);
+  font-size: 13px;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  padding: 11px 13px;
+  border: 1px solid var(--color-border-soft);
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-content :deep(th) {
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  font-weight: 700;
+}
+
+.markdown-content :deep(td) {
+  color: var(--color-text-soft);
+}
+
+.markdown-content :deep(a) {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.markdown-content :deep(hr) {
+  margin: 30px 0;
+  border: 0;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.markdown-content :deep(img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 20px auto;
+  border-radius: 8px;
+}
+
+@media (max-width: 700px) {
+  .knowledge-note-detail {
+    padding: 20px;
+  }
+
+  .note-header h2 {
+    font-size: 23px;
+  }
+
+  .markdown-content :deep(h2) {
+    font-size: 19px;
+  }
+
+  .markdown-content :deep(pre code) {
+    padding: 40px 14px 14px;
+    font-size: 12px;
+  }
+
+  .markdown-content :deep(table) {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }
 </style>
