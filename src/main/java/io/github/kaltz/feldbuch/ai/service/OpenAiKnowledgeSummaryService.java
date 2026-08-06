@@ -26,9 +26,8 @@ public class OpenAiKnowledgeSummaryService
     private static final String SUMMARY_LOG =
             "[AI_KNOWLEDGE_SUMMARY]";
 
-    private static final int MAX_KNOWLEDGE_PATH_DEPTH = 2;
-
     private static final int MIN_KEYWORD_COUNT = 3;
+
     private static final int MAX_KEYWORD_COUNT = 7;
 
     private final AiClient aiClient;
@@ -42,18 +41,28 @@ public class OpenAiKnowledgeSummaryService
             String conversation
     ) {
         ChatCompletionRequest request =
-                createRequest(conversation);
+                createRequest(
+                        conversation
+                );
 
         ChatCompletionResponse response =
-                aiClient.chat(request);
+                aiClient.chat(
+                        request
+                );
 
         String json =
-                extractContent(response);
+                extractContent(
+                        response
+                );
 
         AiKnowledgeSummaryResponse summaryResponse =
-                parseResponse(json);
+                parseResponse(
+                        json
+                );
 
-        validateResponse(summaryResponse);
+        validateResponse(
+                summaryResponse
+        );
 
         return summaryResponse;
     }
@@ -82,14 +91,11 @@ public class OpenAiKnowledgeSummaryService
             String json
     ) {
         try {
-
             return objectMapper.readValue(
                     json,
                     AiKnowledgeSummaryResponse.class
             );
-
         } catch (JsonProcessingException exception) {
-
             log.error(
                     "{} Failed to parse response. response={}",
                     SUMMARY_LOG,
@@ -112,8 +118,8 @@ public class OpenAiKnowledgeSummaryService
             );
         }
 
-        validateKnowledgePath(
-                response.knowledgePath()
+        validateCategory(
+                response
         );
 
         validateRequiredText(
@@ -136,39 +142,12 @@ public class OpenAiKnowledgeSummaryService
         );
     }
 
-    private void validateKnowledgePath(
-            List<String> knowledgePath
+    private void validateCategory(
+            AiKnowledgeSummaryResponse response
     ) {
-        if (
-                knowledgePath == null
-                        || knowledgePath.isEmpty()
-        ) {
+        if (response.category() == null) {
             throw invalidResponse(
-                    "AI 지식 경로가 없습니다."
-            );
-        }
-
-        if (
-                knowledgePath.size()
-                        > MAX_KNOWLEDGE_PATH_DEPTH
-        ) {
-            throw invalidResponse(
-                    "AI 지식 하위 경로는 최대 "
-                            + MAX_KNOWLEDGE_PATH_DEPTH
-                            + "단계까지 허용됩니다."
-            );
-        }
-
-        boolean containsBlank =
-                knowledgePath.stream()
-                        .anyMatch(path ->
-                                path == null
-                                        || path.isBlank()
-                        );
-
-        if (containsBlank) {
-            throw invalidResponse(
-                    "AI 지식 경로에 빈 값이 포함되어 있습니다."
+                    "AI 지식 카테고리가 없습니다."
             );
         }
     }
@@ -205,6 +184,18 @@ public class OpenAiKnowledgeSummaryService
         if (containsBlank) {
             throw invalidResponse(
                     "AI 지식 키워드에 빈 값이 포함되어 있습니다."
+            );
+        }
+
+        long distinctCount =
+                keywords.stream()
+                        .map(String::trim)
+                        .distinct()
+                        .count();
+
+        if (distinctCount != keywords.size()) {
+            throw invalidResponse(
+                    "AI 지식 키워드에 중복된 값이 포함되어 있습니다."
             );
         }
     }
@@ -252,12 +243,20 @@ public class OpenAiKnowledgeSummaryService
             );
         }
 
-        String content =
+        Message message =
                 response
                         .choices()
                         .getFirst()
-                        .message()
-                        .content();
+                        .message();
+
+        if (message == null) {
+            throw new CustomException(
+                    ErrorCode.OPENAI_SERVER_ERROR
+            );
+        }
+
+        String content =
+                message.content();
 
         if (
                 content == null

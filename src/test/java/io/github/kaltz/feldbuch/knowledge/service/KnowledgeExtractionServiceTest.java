@@ -9,6 +9,7 @@ import io.github.kaltz.feldbuch.conversation.entity.ConversationMessage;
 import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContext;
 import io.github.kaltz.feldbuch.knowledge.context.ConversationAiContextBuilder;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeCategory;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
@@ -33,7 +34,8 @@ import static org.mockito.Mockito.*;
 class KnowledgeExtractionServiceTest {
 
     private static final Long USER_ID = 1L;
-    private static final Long CONVERSATION_ID = 1L;
+
+    private static final Long CONVERSATION_ID = 10L;
 
     @Mock
     private UserReader userReader;
@@ -78,14 +80,14 @@ class KnowledgeExtractionServiceTest {
     private KnowledgeExtractionService knowledgeExtractionService;
 
     @Test
-    void 통합_노트가_없으면_증분_노트와_통합_노트를_새로_생성한다() {
+    void 통합_노트가_없으면_증분_노트와_통합_노트를_생성한다() {
         // given
         String conversationContent = """
                 USER:
-                Spring Batch가 무엇인지 설명해줘.
+                Spring Batch의 Job과 Step 구조를 설명해줘.
                 
                 AI:
-                Spring Batch는 대용량 일괄 처리를 위한 프레임워크입니다.
+                Job은 전체 배치 작업이고 Step은 실제 처리 단위입니다.
                 """.trim();
 
         ConversationAiContext context =
@@ -213,7 +215,7 @@ class KnowledgeExtractionServiceTest {
     }
 
     @Test
-    void 통합_노트가_있으면_새_증분_노트를_생성하고_통합_노트를_병합한다() {
+    void 통합_노트가_있으면_증분_노트를_생성하고_통합_노트를_병합한다() {
         // given
         String conversationContent = """
                 USER:
@@ -361,14 +363,14 @@ class KnowledgeExtractionServiceTest {
     }
 
     @Test
-    void 통합_노트_병합이_실패하면_체크포인트를_갱신하지_않는다() {
+    void 병합_결과의_카테고리가_달라도_CommandService에_그대로_전달한다() {
         // given
         String conversationContent = """
                 USER:
-                Spring Batch 재시작은 어떻게 동작해?
+                이번에는 JPA 영속성 컨텍스트를 설명해줘.
                 
                 AI:
-                JobRepository에 저장된 실행 상태를 기반으로 재시작할 수 있습니다.
+                영속성 컨텍스트는 Entity를 관리하는 논리적 공간입니다.
                 """.trim();
 
         ConversationAiContext context =
@@ -376,6 +378,186 @@ class KnowledgeExtractionServiceTest {
                         conversationContent,
                         30L,
                         31L
+                );
+
+        AiKnowledgeSummaryResponse summaryResponse =
+                new AiKnowledgeSummaryResponse(
+                        KnowledgeCategory.JPA,
+                        "영속성 컨텍스트의 역할",
+                        "JPA가 Entity를 관리하는 공간을 정리한 노트",
+                        "영속성 컨텍스트는 Entity의 상태를 관리하고 1차 캐시와 변경 감지를 제공합니다.",
+                        List.of(
+                                "JPA",
+                                "영속성 컨텍스트",
+                                "1차 캐시"
+                        )
+                );
+
+        AiKnowledgeMergeResponse mergeResponse =
+                new AiKnowledgeMergeResponse(
+                        KnowledgeCategory.JPA,
+                        "영속성 컨텍스트와 변경 감지",
+                        "Entity 관리와 변경 반영 과정을 정리한 통합 노트",
+                        "JPA는 영속성 컨텍스트를 통해 Entity를 관리하고 flush 시 변경 사항을 반영합니다.",
+                        List.of(
+                                "JPA",
+                                "영속성 컨텍스트",
+                                "flush",
+                                "변경 감지"
+                        )
+                );
+
+        mockCommonContext(
+                context
+        );
+
+        when(
+                aiKnowledgeSummaryService.summarize(
+                        conversationContent
+                )
+        ).thenReturn(
+                summaryResponse
+        );
+
+        when(
+                knowledgeNoteCommandService.saveIncremental(
+                        user,
+                        conversation,
+                        summaryResponse
+                )
+        ).thenReturn(
+                incrementalNote
+        );
+
+        when(
+                knowledgeNoteRepository
+                        .findFirstByUserIdAndConversationIdAndType(
+                                USER_ID,
+                                CONVERSATION_ID,
+                                KnowledgeNoteType.CONSOLIDATED
+                        )
+        ).thenReturn(
+                Optional.of(consolidatedNote)
+        );
+
+        when(
+                aiKnowledgeMergeService.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        ).thenReturn(
+                mergeResponse
+        );
+
+        when(
+                knowledgeNoteCommandService.updateConsolidated(
+                        user,
+                        consolidatedNote,
+                        mergeResponse
+                )
+        ).thenReturn(
+                consolidatedNote
+        );
+
+        // when
+        KnowledgeNote result =
+                knowledgeExtractionService.extract(
+                        USER_ID,
+                        CONVERSATION_ID
+                );
+
+        // then
+        assertThat(result)
+                .isSameAs(consolidatedNote);
+
+        verify(knowledgeNoteCommandService)
+                .updateConsolidated(
+                        user,
+                        consolidatedNote,
+                        mergeResponse
+                );
+
+        verify(conversation)
+                .completeKnowledgeExtraction(
+                        31L
+                );
+    }
+
+    @Test
+    void AI_요약이_실패하면_노트를_저장하거나_체크포인트를_갱신하지_않는다() {
+        // given
+        String conversationContent = """
+                USER:
+                Spring Batch를 설명해줘.
+                
+                AI:
+                Spring Batch는 배치 처리 프레임워크입니다.
+                """.trim();
+
+        ConversationAiContext context =
+                createContext(
+                        conversationContent,
+                        40L,
+                        41L
+                );
+
+        mockCommonContext(
+                context
+        );
+
+        when(
+                aiKnowledgeSummaryService.summarize(
+                        conversationContent
+                )
+        ).thenThrow(
+                new RuntimeException(
+                        "AI 요약 실패"
+                )
+        );
+
+        // when & then
+        assertThatThrownBy(() ->
+                knowledgeExtractionService.extract(
+                        USER_ID,
+                        CONVERSATION_ID
+                )
+        )
+                .isInstanceOf(
+                        RuntimeException.class
+                )
+                .hasMessage(
+                        "AI 요약 실패"
+                );
+
+        verify(knowledgeNoteCommandService, never())
+                .saveIncremental(
+                        user,
+                        conversation,
+                        createSummaryResponse()
+                );
+
+        verify(conversation, never())
+                .completeKnowledgeExtraction(
+                        41L
+                );
+    }
+
+    @Test
+    void AI_병합이_실패하면_체크포인트를_갱신하지_않는다() {
+        // given
+        String conversationContent = """
+                USER:
+                Spring Batch의 Retry 정책을 알려줘.
+                
+                AI:
+                Retry는 일시적인 실패가 발생했을 때 작업을 다시 시도하는 정책입니다.
+                """.trim();
+
+        ConversationAiContext context =
+                createContext(
+                        conversationContent,
+                        50L,
+                        51L
                 );
 
         AiKnowledgeSummaryResponse summaryResponse =
@@ -455,7 +637,45 @@ class KnowledgeExtractionServiceTest {
 
         verify(conversation, never())
                 .completeKnowledgeExtraction(
-                        31L
+                        51L
+                );
+    }
+
+    @Test
+    void AI_컨텍스트가_비어있으면_추출에_실패한다() {
+        // given
+        ConversationAiContext emptyContext =
+                new ConversationAiContext(
+                        List.of(),
+                        ""
+                );
+
+        mockCommonContext(
+                emptyContext
+        );
+
+        // when & then
+        assertThatThrownBy(() ->
+                knowledgeExtractionService.extract(
+                        USER_ID,
+                        CONVERSATION_ID
+                )
+        )
+                .isInstanceOf(
+                        IllegalStateException.class
+                )
+                .hasMessage(
+                        "지식으로 추출할 새로운 대화 메시지가 없습니다."
+                );
+
+        verify(aiKnowledgeSummaryService, never())
+                .summarize(
+                        ""
+                );
+
+        verify(conversation, never())
+                .completeKnowledgeExtraction(
+                        null
                 );
     }
 
@@ -534,13 +754,10 @@ class KnowledgeExtractionServiceTest {
 
     private AiKnowledgeSummaryResponse createSummaryResponse() {
         return new AiKnowledgeSummaryResponse(
-                List.of(
-                        "Spring Framework",
-                        "Spring Batch"
-                ),
+                KnowledgeCategory.SPRING_BATCH,
                 "Spring Batch 기본 구조",
-                "Job과 Step을 중심으로 Spring Batch 실행 구조를 정리한 노트",
-                "Spring Batch는 Job과 Step을 중심으로 대용량 일괄 처리를 구성합니다.",
+                "Job과 Step 중심의 실행 구조를 정리한 노트",
+                "Spring Batch는 Job과 Step을 중심으로 배치 작업을 구성합니다.",
                 List.of(
                         "Spring Batch",
                         "Job",
@@ -551,15 +768,14 @@ class KnowledgeExtractionServiceTest {
 
     private AiKnowledgeMergeResponse createMergeResponse() {
         return new AiKnowledgeMergeResponse(
-                List.of(
-                        "Spring Framework",
-                        "Spring Batch"
-                ),
-                "Spring Batch 처리 방식",
-                "Tasklet과 Chunk 처리 방식까지 반영한 통합 노트",
-                "Spring Batch는 Job과 Step으로 구성되며 Tasklet 또는 Chunk 방식으로 작업을 처리할 수 있습니다.",
+                KnowledgeCategory.SPRING_BATCH,
+                "Spring Batch 실행 구조와 처리 방식",
+                "Job, Step, Tasklet과 Chunk 구조를 정리한 통합 노트",
+                "Spring Batch는 Job과 Step으로 구성되며 Step은 Tasklet 또는 Chunk 방식으로 작업을 처리할 수 있습니다.",
                 List.of(
                         "Spring Batch",
+                        "Job",
+                        "Step",
                         "Tasklet",
                         "Chunk"
                 )

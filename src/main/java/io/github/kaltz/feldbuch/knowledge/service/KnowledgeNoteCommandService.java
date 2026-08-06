@@ -4,6 +4,7 @@ import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeMergeResponse;
 import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeSummaryResponse;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeCategory;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
 import io.github.kaltz.feldbuch.user.entity.User;
@@ -15,14 +16,18 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class KnowledgeNoteCommandService {
 
-    private final KnowledgePathResolver knowledgePathResolver;
+    private final KnowledgeCategoryResolver
+            knowledgeCategoryResolver;
 
-    private final KnowledgeNoteRepository knowledgeNoteRepository;
+    private final KnowledgeNoteRepository
+            knowledgeNoteRepository;
 
     /**
-     * 새롭게 추출된 대화 범위를 개별 학습 노트로 저장한다.
+     * 새롭게 추출된 대화 범위를
+     * 개별 학습 노트로 저장한다.
      * <p>
-     * 배치가 실행될 때마다 새로운 INCREMENTAL 노트가 생성된다.
+     * 배치가 실행될 때마다 새로운
+     * INCREMENTAL 노트가 생성된다.
      */
     @Transactional
     public KnowledgeNote saveIncremental(
@@ -37,7 +42,7 @@ public class KnowledgeNoteCommandService {
         Knowledge knowledge =
                 resolveKnowledge(
                         user,
-                        response.knowledgePath()
+                        response.category()
                 );
 
         KnowledgeNote note =
@@ -57,7 +62,8 @@ public class KnowledgeNoteCommandService {
     }
 
     /**
-     * 같은 대화의 내용을 누적 관리하는 통합 노트를 최초 생성한다.
+     * 같은 대화의 내용을 누적 관리하는
+     * 통합 노트를 최초 생성한다.
      */
     @Transactional
     public KnowledgeNote saveConsolidated(
@@ -72,7 +78,7 @@ public class KnowledgeNoteCommandService {
         Knowledge knowledge =
                 resolveKnowledge(
                         user,
-                        response.knowledgePath()
+                        response.category()
                 );
 
         KnowledgeNote note =
@@ -92,10 +98,11 @@ public class KnowledgeNoteCommandService {
     }
 
     /**
-     * 기존 통합 노트를 AI 병합 결과로 갱신한다.
+     * 기존 통합 노트를
+     * AI 병합 결과로 갱신한다.
      * <p>
-     * 병합 결과의 지식 경로가 달라진 경우에는
-     * 통합 노트를 새 Knowledge 폴더로 이동한다.
+     * 병합 결과의 카테고리가 달라졌다면
+     * 통합 노트를 해당 카테고리 폴더로 이동한다.
      */
     @Transactional
     public KnowledgeNote updateConsolidated(
@@ -110,7 +117,7 @@ public class KnowledgeNoteCommandService {
         Knowledge resolvedKnowledge =
                 resolveKnowledge(
                         user,
-                        response.knowledgePath()
+                        response.category()
                 );
 
         note.updateContent(
@@ -136,11 +143,11 @@ public class KnowledgeNoteCommandService {
 
     private Knowledge resolveKnowledge(
             User user,
-            java.util.List<String> knowledgePath
+            KnowledgeCategory category
     ) {
-        return knowledgePathResolver.resolve(
+        return knowledgeCategoryResolver.resolve(
                 user,
-                knowledgePath
+                category
         );
     }
 
@@ -212,8 +219,8 @@ public class KnowledgeNoteCommandService {
             );
         }
 
-        validateKnowledgePath(
-                response.knowledgePath()
+        validateCategory(
+                response.category()
         );
     }
 
@@ -226,20 +233,17 @@ public class KnowledgeNoteCommandService {
             );
         }
 
-        validateKnowledgePath(
-                response.knowledgePath()
+        validateCategory(
+                response.category()
         );
     }
 
-    private void validateKnowledgePath(
-            java.util.List<String> knowledgePath
+    private void validateCategory(
+            KnowledgeCategory category
     ) {
-        if (
-                knowledgePath == null
-                        || knowledgePath.isEmpty()
-        ) {
+        if (category == null) {
             throw new IllegalArgumentException(
-                    "Knowledge 경로는 필수입니다."
+                    "Knowledge 카테고리는 필수입니다."
             );
         }
     }

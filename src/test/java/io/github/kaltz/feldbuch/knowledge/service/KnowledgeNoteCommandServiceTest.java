@@ -4,6 +4,7 @@ import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeMergeResponse;
 import io.github.kaltz.feldbuch.ai.dto.AiKnowledgeSummaryResponse;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeCategory;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNoteType;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
@@ -27,8 +28,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class KnowledgeNoteCommandServiceTest {
 
+    private static final Long USER_ID = 1L;
+    private static final Long CONVERSATION_ID = 10L;
+
     @Mock
-    private KnowledgePathResolver knowledgePathResolver;
+    private KnowledgeCategoryResolver knowledgeCategoryResolver;
 
     @Mock
     private KnowledgeNoteRepository knowledgeNoteRepository;
@@ -36,19 +40,22 @@ class KnowledgeNoteCommandServiceTest {
     private KnowledgeNoteCommandService service;
 
     private User user;
+
     private Conversation conversation;
 
-    private Knowledge currentKnowledge;
-    private Knowledge resolvedKnowledge;
+    private Knowledge springBatchKnowledge;
+
+    private Knowledge jpaKnowledge;
 
     private AiKnowledgeSummaryResponse summaryResponse;
+
     private AiKnowledgeMergeResponse mergeResponse;
 
     @BeforeEach
     void setUp() {
         service =
                 new KnowledgeNoteCommandService(
-                        knowledgePathResolver,
+                        knowledgeCategoryResolver,
                         knowledgeNoteRepository
                 );
 
@@ -63,7 +70,7 @@ class KnowledgeNoteCommandServiceTest {
         ReflectionTestUtils.setField(
                 user,
                 "id",
-                1L
+                USER_ID
         );
 
         conversation =
@@ -75,43 +82,65 @@ class KnowledgeNoteCommandServiceTest {
         ReflectionTestUtils.setField(
                 conversation,
                 "id",
-                10L
+                CONVERSATION_ID
         );
 
-        currentKnowledge =
+        Knowledge webDevelopmentRoot =
                 Knowledge.createRoot(
                         user,
-                        "웹 개발"
+                        "WEB_DEVELOPMENT"
                 );
 
         ReflectionTestUtils.setField(
-                currentKnowledge,
+                webDevelopmentRoot,
                 "id",
                 100L
         );
 
-        resolvedKnowledge =
+        springBatchKnowledge =
                 Knowledge.createChild(
                         user,
-                        currentKnowledge,
+                        webDevelopmentRoot,
                         "Spring Batch"
                 );
 
         ReflectionTestUtils.setField(
-                resolvedKnowledge,
+                springBatchKnowledge,
                 "id",
                 101L
         );
 
+        Knowledge databaseRoot =
+                Knowledge.createRoot(
+                        user,
+                        "DATABASE"
+                );
+
+        ReflectionTestUtils.setField(
+                databaseRoot,
+                "id",
+                200L
+        );
+
+        jpaKnowledge =
+                Knowledge.createChild(
+                        user,
+                        databaseRoot,
+                        "JPA"
+                );
+
+        ReflectionTestUtils.setField(
+                jpaKnowledge,
+                "id",
+                201L
+        );
+
         summaryResponse =
                 new AiKnowledgeSummaryResponse(
-                        List.of(
-                                "Spring Framework",
-                                "Spring Batch"
-                        ),
+                        KnowledgeCategory.SPRING_BATCH,
                         "Spring Batch 기본 구조",
                         "Job과 Step 중심의 실행 구조를 정리한 노트",
-                        "Spring Batch는 Job과 Step을 중심으로 대용량 일괄 처리를 구성합니다.",
+                        "Spring Batch는 Job과 Step을 중심으로 배치 작업을 구성합니다.",
                         List.of(
                                 "Spring Batch",
                                 "Job",
@@ -121,15 +150,14 @@ class KnowledgeNoteCommandServiceTest {
 
         mergeResponse =
                 new AiKnowledgeMergeResponse(
-                        List.of(
-                                "Spring Framework",
-                                "Spring Batch"
-                        ),
-                        "Spring Batch 처리 방식",
-                        "Tasklet과 Chunk 방식까지 반영한 통합 노트",
-                        "Spring Batch는 Job과 Step으로 구성되며 Tasklet 또는 Chunk 방식으로 작업을 처리할 수 있습니다.",
+                        KnowledgeCategory.SPRING_BATCH,
+                        "Spring Batch 실행 구조와 처리 방식",
+                        "Job, Step, Tasklet과 Chunk 구조를 정리한 통합 노트",
+                        "Spring Batch는 Job과 Step으로 구성되며 Step은 Tasklet 또는 Chunk 방식으로 작업을 처리할 수 있습니다.",
                         List.of(
                                 "Spring Batch",
+                                "Job",
+                                "Step",
                                 "Tasklet",
                                 "Chunk"
                         )
@@ -139,7 +167,14 @@ class KnowledgeNoteCommandServiceTest {
     @Test
     void AI_요약으로_Incremental_노트를_저장한다() {
         // given
-        mockResolvedKnowledge();
+        when(
+                knowledgeCategoryResolver.resolve(
+                        user,
+                        KnowledgeCategory.SPRING_BATCH
+                )
+        ).thenReturn(
+                springBatchKnowledge
+        );
 
         when(
                 knowledgeNoteRepository.save(
@@ -164,10 +199,10 @@ class KnowledgeNoteCommandServiceTest {
                         KnowledgeNote.class
                 );
 
-        verify(knowledgePathResolver)
+        verify(knowledgeCategoryResolver)
                 .resolve(
                         user,
-                        summaryResponse.knowledgePath()
+                        KnowledgeCategory.SPRING_BATCH
                 );
 
         verify(knowledgeNoteRepository)
@@ -175,28 +210,35 @@ class KnowledgeNoteCommandServiceTest {
                         captor.capture()
                 );
 
-        KnowledgeNote saved =
+        KnowledgeNote savedNote =
                 captor.getValue();
 
         assertSummaryNote(
-                saved,
+                savedNote,
                 KnowledgeNoteType.INCREMENTAL
         );
 
-        assertThat(saved.isIncremental())
+        assertThat(savedNote.isIncremental())
                 .isTrue();
 
-        assertThat(saved.isConsolidated())
+        assertThat(savedNote.isConsolidated())
                 .isFalse();
 
         assertThat(result)
-                .isSameAs(saved);
+                .isSameAs(savedNote);
     }
 
     @Test
     void AI_요약으로_Consolidated_노트를_저장한다() {
         // given
-        mockResolvedKnowledge();
+        when(
+                knowledgeCategoryResolver.resolve(
+                        user,
+                        KnowledgeCategory.SPRING_BATCH
+                )
+        ).thenReturn(
+                springBatchKnowledge
+        );
 
         when(
                 knowledgeNoteRepository.save(
@@ -221,50 +263,50 @@ class KnowledgeNoteCommandServiceTest {
                         KnowledgeNote.class
                 );
 
+        verify(knowledgeCategoryResolver)
+                .resolve(
+                        user,
+                        KnowledgeCategory.SPRING_BATCH
+                );
+
         verify(knowledgeNoteRepository)
                 .save(
                         captor.capture()
                 );
 
-        KnowledgeNote saved =
+        KnowledgeNote savedNote =
                 captor.getValue();
 
         assertSummaryNote(
-                saved,
+                savedNote,
                 KnowledgeNoteType.CONSOLIDATED
         );
 
-        assertThat(saved.isConsolidated())
+        assertThat(savedNote.isConsolidated())
                 .isTrue();
 
-        assertThat(saved.isIncremental())
+        assertThat(savedNote.isIncremental())
                 .isFalse();
 
         assertThat(result)
-                .isSameAs(saved);
+                .isSameAs(savedNote);
     }
 
     @Test
-    void AI_병합_결과로_Consolidated_노트의_내용과_경로를_갱신한다() {
+    void AI_병합_결과로_Consolidated_노트의_내용을_갱신한다() {
         // given
         KnowledgeNote consolidatedNote =
                 createConsolidatedNote(
-                        currentKnowledge
+                        springBatchKnowledge
                 );
 
-        ReflectionTestUtils.setField(
-                consolidatedNote,
-                "id",
-                200L
-        );
-
         when(
-                knowledgePathResolver.resolve(
+                knowledgeCategoryResolver.resolve(
                         user,
-                        mergeResponse.knowledgePath()
+                        KnowledgeCategory.SPRING_BATCH
                 )
         ).thenReturn(
-                resolvedKnowledge
+                springBatchKnowledge
         );
 
         // when
@@ -276,10 +318,10 @@ class KnowledgeNoteCommandServiceTest {
                 );
 
         // then
-        verify(knowledgePathResolver)
+        verify(knowledgeCategoryResolver)
                 .resolve(
                         user,
-                        mergeResponse.knowledgePath()
+                        KnowledgeCategory.SPRING_BATCH
                 );
 
         verify(knowledgeNoteRepository, never())
@@ -290,13 +332,8 @@ class KnowledgeNoteCommandServiceTest {
         assertThat(result)
                 .isSameAs(consolidatedNote);
 
-        assertThat(consolidatedNote.getType())
-                .isEqualTo(
-                        KnowledgeNoteType.CONSOLIDATED
-                );
-
         assertThat(consolidatedNote.getKnowledge())
-                .isSameAs(resolvedKnowledge);
+                .isSameAs(springBatchKnowledge);
 
         assertMergeContent(
                 consolidatedNote
@@ -304,20 +341,34 @@ class KnowledgeNoteCommandServiceTest {
     }
 
     @Test
-    void 병합된_경로가_기존과_같으면_내용만_갱신한다() {
+    void 병합_결과의_카테고리가_달라지면_통합_노트를_새_폴더로_이동한다() {
         // given
         KnowledgeNote consolidatedNote =
                 createConsolidatedNote(
-                        resolvedKnowledge
+                        springBatchKnowledge
+                );
+
+        AiKnowledgeMergeResponse changedResponse =
+                new AiKnowledgeMergeResponse(
+                        KnowledgeCategory.JPA,
+                        "영속성 컨텍스트와 변경 감지",
+                        "JPA가 Entity를 관리하고 변경 사항을 반영하는 과정을 정리한 통합 노트",
+                        "영속성 컨텍스트는 Entity를 관리하며 flush 시점에 변경 감지를 통해 SQL을 실행합니다.",
+                        List.of(
+                                "JPA",
+                                "영속성 컨텍스트",
+                                "flush",
+                                "변경 감지"
+                        )
                 );
 
         when(
-                knowledgePathResolver.resolve(
+                knowledgeCategoryResolver.resolve(
                         user,
-                        mergeResponse.knowledgePath()
+                        KnowledgeCategory.JPA
                 )
         ).thenReturn(
-                resolvedKnowledge
+                jpaKnowledge
         );
 
         // when
@@ -325,7 +376,7 @@ class KnowledgeNoteCommandServiceTest {
                 service.updateConsolidated(
                         user,
                         consolidatedNote,
-                        mergeResponse
+                        changedResponse
                 );
 
         // then
@@ -333,11 +384,27 @@ class KnowledgeNoteCommandServiceTest {
                 .isSameAs(consolidatedNote);
 
         assertThat(consolidatedNote.getKnowledge())
-                .isSameAs(resolvedKnowledge);
+                .isSameAs(jpaKnowledge);
 
-        assertMergeContent(
-                consolidatedNote
-        );
+        assertThat(consolidatedNote.getTitle())
+                .isEqualTo(
+                        changedResponse.title()
+                );
+
+        assertThat(consolidatedNote.getDescription())
+                .isEqualTo(
+                        changedResponse.description()
+                );
+
+        assertThat(consolidatedNote.getSummary())
+                .isEqualTo(
+                        changedResponse.summary()
+                );
+
+        assertThat(consolidatedNote.getKeywords())
+                .containsExactlyElementsOf(
+                        changedResponse.keywords()
+                );
     }
 
     @Test
@@ -347,14 +414,14 @@ class KnowledgeNoteCommandServiceTest {
                 KnowledgeNote.createIncremental(
                         user,
                         conversation,
-                        currentKnowledge,
-                        "증분 제목",
-                        "증분 설명",
-                        "증분 요약",
+                        springBatchKnowledge,
+                        "Tasklet과 Chunk",
+                        "두 처리 방식의 차이를 정리한 노트",
+                        "Tasklet은 단일 작업을 처리하고 Chunk는 Item을 묶어서 처리합니다.",
                         List.of(
-                                "Spring",
-                                "Batch",
-                                "Job"
+                                "Spring Batch",
+                                "Tasklet",
+                                "Chunk"
                         )
                 );
 
@@ -373,40 +440,124 @@ class KnowledgeNoteCommandServiceTest {
                         "통합 노트만 갱신할 수 있습니다."
                 );
 
-        verify(knowledgePathResolver, never())
+        verify(knowledgeCategoryResolver, never())
                 .resolve(
                         any(),
                         any()
                 );
     }
 
-    private void mockResolvedKnowledge() {
-        when(
-                knowledgePathResolver.resolve(
+    @Test
+    void AI_요약_응답의_카테고리가_null이면_저장에_실패한다() {
+        // given
+        AiKnowledgeSummaryResponse invalidResponse =
+                new AiKnowledgeSummaryResponse(
+                        null,
+                        "제목",
+                        "설명",
+                        "요약",
+                        List.of(
+                                "키워드1",
+                                "키워드2",
+                                "키워드3"
+                        )
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.saveIncremental(
                         user,
-                        summaryResponse.knowledgePath()
+                        conversation,
+                        invalidResponse
                 )
-        ).thenReturn(
-                resolvedKnowledge
-        );
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "Knowledge 카테고리는 필수입니다."
+                );
+
+        verify(knowledgeCategoryResolver, never())
+                .resolve(
+                        any(),
+                        any()
+                );
+
+        verify(knowledgeNoteRepository, never())
+                .save(
+                        any()
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_카테고리가_null이면_갱신에_실패한다() {
+        // given
+        KnowledgeNote consolidatedNote =
+                createConsolidatedNote(
+                        springBatchKnowledge
+                );
+
+        AiKnowledgeMergeResponse invalidResponse =
+                new AiKnowledgeMergeResponse(
+                        null,
+                        "제목",
+                        "설명",
+                        "요약",
+                        List.of(
+                                "키워드1",
+                                "키워드2",
+                                "키워드3"
+                        )
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.updateConsolidated(
+                        user,
+                        consolidatedNote,
+                        invalidResponse
+                )
+        )
+                .isInstanceOf(
+                        IllegalArgumentException.class
+                )
+                .hasMessage(
+                        "Knowledge 카테고리는 필수입니다."
+                );
+
+        verify(knowledgeCategoryResolver, never())
+                .resolve(
+                        any(),
+                        any()
+                );
     }
 
     private KnowledgeNote createConsolidatedNote(
             Knowledge knowledge
     ) {
-        return KnowledgeNote.createConsolidated(
-                user,
-                conversation,
-                knowledge,
-                "기존 제목",
-                "기존 설명",
-                "기존 요약",
-                List.of(
-                        "Spring Batch",
-                        "Job",
-                        "Step"
-                )
+        KnowledgeNote note =
+                KnowledgeNote.createConsolidated(
+                        user,
+                        conversation,
+                        knowledge,
+                        "기존 Spring Batch 노트",
+                        "기존 통합 노트 설명",
+                        "기존 통합 노트 요약",
+                        List.of(
+                                "Spring Batch",
+                                "Job",
+                                "Step"
+                        )
+                );
+
+        ReflectionTestUtils.setField(
+                note,
+                "id",
+                300L
         );
+
+        return note;
     }
 
     private void assertSummaryNote(
@@ -423,7 +574,7 @@ class KnowledgeNoteCommandServiceTest {
                 .isSameAs(conversation);
 
         assertThat(note.getKnowledge())
-                .isSameAs(resolvedKnowledge);
+                .isSameAs(springBatchKnowledge);
 
         assertThat(note.getTitle())
                 .isEqualTo(
@@ -449,6 +600,11 @@ class KnowledgeNoteCommandServiceTest {
     private void assertMergeContent(
             KnowledgeNote note
     ) {
+        assertThat(note.getType())
+                .isEqualTo(
+                        KnowledgeNoteType.CONSOLIDATED
+                );
+
         assertThat(note.getTitle())
                 .isEqualTo(
                         mergeResponse.title()

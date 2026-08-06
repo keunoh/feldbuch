@@ -11,6 +11,7 @@ import io.github.kaltz.feldbuch.common.exception.CustomException;
 import io.github.kaltz.feldbuch.config.OpenAiProperties;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
+import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeCategory;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.entity.UserRole;
@@ -29,12 +30,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class OpenAiKnowledgeMergeServiceTest {
+
     private AiClient aiClient;
+
     private OpenAiProperties properties;
 
     private OpenAiKnowledgeMergeService service;
 
     private KnowledgeNote consolidatedNote;
+
     private KnowledgeNote incrementalNote;
 
     @BeforeEach
@@ -76,20 +80,45 @@ class OpenAiKnowledgeMergeServiceTest {
                         "Spring Batch 학습"
                 );
 
-        Knowledge knowledge =
+        ReflectionTestUtils.setField(
+                conversation,
+                "id",
+                10L
+        );
+
+        Knowledge root =
                 Knowledge.createRoot(
                         user,
-                        "웹 개발"
+                        "WEB_DEVELOPMENT"
                 );
+
+        ReflectionTestUtils.setField(
+                root,
+                "id",
+                100L
+        );
+
+        Knowledge springBatch =
+                Knowledge.createChild(
+                        user,
+                        root,
+                        "Spring Batch"
+                );
+
+        ReflectionTestUtils.setField(
+                springBatch,
+                "id",
+                101L
+        );
 
         consolidatedNote =
                 KnowledgeNote.createConsolidated(
                         user,
                         conversation,
-                        knowledge,
-                        "Spring Batch 종합 정리",
-                        "Spring Batch의 전체 구조를 정리한 통합 노트",
-                        "Spring Batch는 Job과 Step으로 작업을 구성합니다.",
+                        springBatch,
+                        "Spring Batch 기본 구조",
+                        "Job과 Step을 중심으로 정리한 통합 노트",
+                        "Spring Batch는 Job과 Step을 중심으로 배치 작업을 구성합니다.",
                         List.of(
                                 "Spring Batch",
                                 "Job",
@@ -97,20 +126,32 @@ class OpenAiKnowledgeMergeServiceTest {
                         )
                 );
 
+        ReflectionTestUtils.setField(
+                consolidatedNote,
+                "id",
+                200L
+        );
+
         incrementalNote =
                 KnowledgeNote.createIncremental(
                         user,
                         conversation,
-                        knowledge,
-                        "Tasklet과 Chunk 방식",
-                        "Tasklet과 Chunk의 차이를 정리한 증분 노트",
-                        "Tasklet은 단일 작업을 처리하고 Chunk는 여러 Item을 묶어서 처리합니다.",
+                        springBatch,
+                        "Tasklet과 Chunk 처리 방식",
+                        "두 가지 Step 처리 방식의 차이를 정리한 증분 노트",
+                        "Tasklet은 단일 작업을 수행하고 Chunk는 여러 Item을 일정 단위로 처리합니다.",
                         List.of(
+                                "Spring Batch",
                                 "Tasklet",
-                                "Chunk",
-                                "Item"
+                                "Chunk"
                         )
                 );
+
+        ReflectionTestUtils.setField(
+                incrementalNote,
+                "id",
+                201L
+        );
     }
 
     @Test
@@ -123,15 +164,14 @@ class OpenAiKnowledgeMergeServiceTest {
 
         String json = """
                 {
-                  "knowledgePath": [
-                    "Spring Framework",
-                    "Spring Batch"
-                  ],
-                  "title": "Spring Batch 처리 구조",
-                  "description": "Job, Step, Tasklet 및 Chunk 구조를 정리한 통합 노트",
-                  "summary": "Spring Batch는 Job과 Step으로 구성되며 Step에서는 Tasklet 또는 Chunk 방식으로 작업을 처리할 수 있습니다.",
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch 실행 구조와 처리 방식",
+                  "description": "Job과 Step부터 Tasklet과 Chunk까지 핵심 실행 구조를 정리한 통합 노트",
+                  "summary": "Spring Batch에서 Job은 전체 배치 작업을 나타내고 Step은 실제 처리 단위를 담당합니다. Step은 Tasklet 또는 Chunk 방식으로 구성할 수 있습니다.",
                   "keywords": [
                     "Spring Batch",
+                    "Job",
+                    "Step",
                     "Tasklet",
                     "Chunk"
                   ]
@@ -154,24 +194,25 @@ class OpenAiKnowledgeMergeServiceTest {
                 );
 
         // then
-        assertThat(result.knowledgePath())
-                .containsExactly(
-                        "Spring Framework",
-                        "Spring Batch"
+        assertThat(result.category())
+                .isEqualTo(
+                        KnowledgeCategory.SPRING_BATCH
                 );
 
         assertThat(result.title())
                 .isEqualTo(
-                        "Spring Batch 처리 구조"
+                        "Spring Batch 실행 구조와 처리 방식"
                 );
 
         assertThat(result.description())
                 .isEqualTo(
-                        "Job, Step, Tasklet 및 Chunk 구조를 정리한 통합 노트"
+                        "Job과 Step부터 Tasklet과 Chunk까지 핵심 실행 구조를 정리한 통합 노트"
                 );
 
         assertThat(result.summary())
                 .contains(
+                        "Job",
+                        "Step",
                         "Tasklet",
                         "Chunk"
                 );
@@ -179,13 +220,15 @@ class OpenAiKnowledgeMergeServiceTest {
         assertThat(result.keywords())
                 .containsExactly(
                         "Spring Batch",
+                        "Job",
+                        "Step",
                         "Tasklet",
                         "Chunk"
                 );
     }
 
     @Test
-    void AI_요청에_통합_노트와_증분_노트_내용을_포함한다() {
+    void AI_병합_요청에_시스템_프롬프트와_두_노트의_내용을_포함한다() {
         // given
         when(properties.getModel())
                 .thenReturn(
@@ -194,11 +237,15 @@ class OpenAiKnowledgeMergeServiceTest {
 
         String json = """
                 {
-                  "knowledgePath": ["Spring Framework", "Spring Batch"],
-                  "title": "Spring Batch",
-                  "description": "Spring Batch 통합 노트",
-                  "summary": "병합된 요약",
-                  "keywords": ["Spring Batch", "Tasklet", "Chunk"]
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch 통합 노트",
+                  "description": "Spring Batch 내용을 병합한 노트",
+                  "summary": "기존 내용과 신규 내용을 병합했습니다.",
+                  "keywords": [
+                    "Spring Batch",
+                    "Tasklet",
+                    "Chunk"
+                  ]
                 }
                 """;
 
@@ -230,15 +277,42 @@ class OpenAiKnowledgeMergeServiceTest {
         ChatCompletionRequest request =
                 captor.getValue();
 
+        assertThat(request.model())
+                .isEqualTo(
+                        "gpt-4.1-mini"
+                );
+
         assertThat(request.messages())
                 .hasSize(2);
 
-        String userPrompt =
+        Message systemMessage =
                 request.messages()
-                        .get(1)
-                        .content();
+                        .getFirst();
 
-        assertThat(userPrompt)
+        Message userMessage =
+                request.messages()
+                        .get(1);
+
+        assertThat(systemMessage.role())
+                .isEqualTo(
+                        "system"
+                );
+
+        assertThat(systemMessage.content())
+                .contains(
+                        "\"category\"",
+                        "SPRING_BATCH",
+                        "JPA",
+                        "MYSQL",
+                        "DOCKER"
+                );
+
+        assertThat(userMessage.role())
+                .isEqualTo(
+                        "user"
+                );
+
+        assertThat(userMessage.content())
                 .contains(
                         consolidatedNote.getTitle(),
                         consolidatedNote.getDescription(),
@@ -247,10 +321,414 @@ class OpenAiKnowledgeMergeServiceTest {
                         incrementalNote.getDescription(),
                         incrementalNote.getSummary()
                 );
+
+        assertThat(userMessage.content())
+                .contains(
+                        "<consolidated-note>",
+                        "</consolidated-note>",
+                        "<incremental-note>",
+                        "</incremental-note>"
+                );
     }
 
     @Test
-    void AI_응답이_JSON이_아니면_예외가_발생한다() {
+    void AI_병합_응답의_카테고리를_enum으로_변환한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch",
+                  "description": "Spring Batch 통합 설명",
+                  "summary": "Spring Batch 통합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    "Tasklet",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when
+        AiKnowledgeMergeResponse result =
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                );
+
+        // then
+        assertThat(result.category())
+                .isSameAs(
+                        KnowledgeCategory.SPRING_BATCH
+                );
+    }
+
+    @Test
+    void 지원하지_않는_카테고리가_반환되면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH_FRAMEWORK",
+                  "title": "Spring Batch",
+                  "description": "병합 설명",
+                  "summary": "병합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    "Tasklet",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_카테고리가_null이면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": null,
+                  "title": "Spring Batch",
+                  "description": "병합 설명",
+                  "summary": "병합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    "Tasklet",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_제목이_비어있으면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH",
+                  "title": " ",
+                  "description": "병합 설명",
+                  "summary": "병합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    "Tasklet",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_설명이_비어있으면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch",
+                  "description": "",
+                  "summary": "병합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    "Tasklet",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_요약이_비어있으면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch",
+                  "description": "병합 설명",
+                  "summary": null,
+                  "keywords": [
+                    "Spring Batch",
+                    "Tasklet",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_키워드가_3개_미만이면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch",
+                  "description": "병합 설명",
+                  "summary": "병합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_키워드가_7개를_초과하면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch",
+                  "description": "병합 설명",
+                  "summary": "병합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    "Job",
+                    "Step",
+                    "Tasklet",
+                    "Chunk",
+                    "Reader",
+                    "Processor",
+                    "Writer"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_키워드에_빈_값이_있으면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch",
+                  "description": "병합 설명",
+                  "summary": "병합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    " ",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_키워드가_중복되면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        String json = """
+                {
+                  "category": "SPRING_BATCH",
+                  "title": "Spring Batch",
+                  "description": "병합 설명",
+                  "summary": "병합 요약",
+                  "keywords": [
+                    "Spring Batch",
+                    "Chunk",
+                    "Chunk"
+                  ]
+                }
+                """;
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        responseOf(json)
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답이_JSON이_아니면_예외가_발생한다() {
         // given
         when(properties.getModel())
                 .thenReturn(
@@ -260,7 +738,7 @@ class OpenAiKnowledgeMergeServiceTest {
         when(aiClient.chat(any()))
                 .thenReturn(
                         responseOf(
-                                "두 노트를 합쳤습니다."
+                                "두 노트를 병합했습니다."
                         )
                 );
 
@@ -277,7 +755,32 @@ class OpenAiKnowledgeMergeServiceTest {
     }
 
     @Test
-    void AI_응답의_choices가_비어있으면_예외가_발생한다() {
+    void AI_병합_응답이_null이면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        null
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답의_choices가_비어있으면_예외가_발생한다() {
         // given
         when(properties.getModel())
                 .thenReturn(
@@ -304,7 +807,41 @@ class OpenAiKnowledgeMergeServiceTest {
     }
 
     @Test
-    void AI_응답_내용이_비어있으면_예외가_발생한다() {
+    void AI_병합_응답의_message가_null이면_예외가_발생한다() {
+        // given
+        when(properties.getModel())
+                .thenReturn(
+                        "gpt-4.1-mini"
+                );
+
+        ChatCompletionResponse response =
+                new ChatCompletionResponse(
+                        List.of(
+                                new Choice(
+                                        null
+                                )
+                        )
+                );
+
+        when(aiClient.chat(any()))
+                .thenReturn(
+                        response
+                );
+
+        // when & then
+        assertThatThrownBy(() ->
+                service.merge(
+                        consolidatedNote,
+                        incrementalNote
+                )
+        )
+                .isInstanceOf(
+                        CustomException.class
+                );
+    }
+
+    @Test
+    void AI_병합_응답_내용이_비어있으면_예외가_발생한다() {
         // given
         when(properties.getModel())
                 .thenReturn(
@@ -313,7 +850,9 @@ class OpenAiKnowledgeMergeServiceTest {
 
         when(aiClient.chat(any()))
                 .thenReturn(
-                        responseOf("   ")
+                        responseOf(
+                                "   "
+                        )
                 );
 
         // when & then
@@ -342,5 +881,4 @@ class OpenAiKnowledgeMergeServiceTest {
                 )
         );
     }
-
 }

@@ -24,7 +24,12 @@ import java.util.List;
 public class OpenAiKnowledgeMergeService
         implements AiKnowledgeMergeService {
 
-    private static final String MERGE_LOG = "[AI_KNOWLEDGE_MERGE]";
+    private static final String MERGE_LOG =
+            "[AI_KNOWLEDGE_MERGE]";
+
+    private static final int MIN_KEYWORD_COUNT = 3;
+
+    private static final int MAX_KEYWORD_COUNT = 7;
 
     private final AiClient aiClient;
 
@@ -37,24 +42,11 @@ public class OpenAiKnowledgeMergeService
             KnowledgeNote consolidatedNote,
             KnowledgeNote incrementalNote
     ) {
+
         ChatCompletionRequest request =
-                new ChatCompletionRequest(
-                        properties.getModel(),
-                        List.of(
-                                new Message(
-                                        "system",
-                                        KnowledgeMergePrompt
-                                                .systemPrompt()
-                                ),
-                                new Message(
-                                        "user",
-                                        KnowledgeMergePrompt
-                                                .userPrompt(
-                                                        consolidatedNote,
-                                                        incrementalNote
-                                                )
-                                )
-                        )
+                createRequest(
+                        consolidatedNote,
+                        incrementalNote
                 );
 
         ChatCompletionResponse response =
@@ -67,20 +59,52 @@ public class OpenAiKnowledgeMergeService
                         response
                 );
 
-        return parseResponse(
-                json
+        AiKnowledgeMergeResponse mergeResponse =
+                parseResponse(
+                        json
+                );
+
+        validateResponse(
+                mergeResponse
+        );
+
+        return mergeResponse;
+    }
+
+    private ChatCompletionRequest createRequest(
+            KnowledgeNote consolidatedNote,
+            KnowledgeNote incrementalNote
+    ) {
+
+        return new ChatCompletionRequest(
+                properties.getModel(),
+                List.of(
+                        new Message(
+                                "system",
+                                KnowledgeMergePrompt.systemPrompt()
+                        ),
+                        new Message(
+                                "user",
+                                KnowledgeMergePrompt.userPrompt(
+                                        consolidatedNote,
+                                        incrementalNote
+                                )
+                        )
+                )
         );
     }
 
     private AiKnowledgeMergeResponse parseResponse(
             String json
     ) {
+
         try {
             return objectMapper.readValue(
                     json,
                     AiKnowledgeMergeResponse.class
             );
         } catch (JsonProcessingException exception) {
+
             log.error(
                     "{} Failed to parse response. response={}",
                     MERGE_LOG,
@@ -94,9 +118,136 @@ public class OpenAiKnowledgeMergeService
         }
     }
 
-    private String extractContent(
+    private void validateResponse(
+            AiKnowledgeMergeResponse response
+    ) {
+
+        if (response == null) {
+            throw invalidResponse(
+                    "AI 병합 응답이 없습니다."
+            );
+        }
+
+        validateCategory(
+                response
+        );
+
+        validateRequiredText(
+                response.title(),
+                "제목"
+        );
+
+        validateRequiredText(
+                response.description(),
+                "설명"
+        );
+
+        validateRequiredText(
+                response.summary(),
+                "요약"
+        );
+
+        validateKeywords(
+                response.keywords()
+        );
+    }
+
+    private void validateCategory(
+            AiKnowledgeMergeResponse response
+    ) {
+
+        if (response.category() == null) {
+            throw invalidResponse(
+                    "AI 병합 카테고리가 없습니다."
+            );
+        }
+    }
+
+    private void validateKeywords(
+            List<String> keywords
+    ) {
+
+        if (keywords == null) {
+            throw invalidResponse(
+                    "AI 키워드가 없습니다."
+            );
+        }
+
+        if (
+                keywords.size() < MIN_KEYWORD_COUNT
+                        || keywords.size() > MAX_KEYWORD_COUNT
+        ) {
+            throw invalidResponse(
+                    "AI 키워드는 "
+                            + MIN_KEYWORD_COUNT
+                            + "개 이상 "
+                            + MAX_KEYWORD_COUNT
+                            + "개 이하이어야 합니다."
+            );
+        }
+
+        boolean containsBlank =
+                keywords.stream()
+                        .anyMatch(keyword ->
+                                keyword == null
+                                        || keyword.isBlank()
+                        );
+
+        if (containsBlank) {
+            throw invalidResponse(
+                    "AI 키워드에 빈 값이 포함되어 있습니다."
+            );
+        }
+
+        long distinctCount =
+                keywords.stream()
+                        .map(String::trim)
+                        .distinct()
+                        .count();
+
+        if (distinctCount != keywords.size()) {
+            throw invalidResponse(
+                    "AI 키워드에 중복된 값이 포함되어 있습니다."
+            );
+        }
+    }
+
+    private void validateRequiredText(
+            String value,
+            String fieldName
+    ) {
+
+        if (
+                value == null
+                        || value.isBlank()
+        ) {
+            throw invalidResponse(
+                    "AI 병합 결과의 "
+                            + fieldName
+                            + "이 없습니다."
+            );
+        }
+    }
+
+    private CustomException invalidResponse(
+            String message
+    ) {
+
+        log.warn(
+                "{} Invalid response. reason={}",
+                MERGE_LOG,
+                message
+        );
+
+        return new CustomException(
+                ErrorCode.OPENAI_SERVER_ERROR
+        );
+    }
+
+    private static String extractContent(
             ChatCompletionResponse response
     ) {
+
         if (
                 response == null
                         || response.choices() == null
@@ -107,12 +258,20 @@ public class OpenAiKnowledgeMergeService
             );
         }
 
-        String content =
+        Message message =
                 response
                         .choices()
                         .getFirst()
-                        .message()
-                        .content();
+                        .message();
+
+        if (message == null) {
+            throw new CustomException(
+                    ErrorCode.OPENAI_SERVER_ERROR
+            );
+        }
+
+        String content =
+                message.content();
 
         if (
                 content == null
