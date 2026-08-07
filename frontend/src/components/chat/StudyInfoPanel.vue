@@ -199,7 +199,7 @@ const statusClass = computed(() => {
   width: var(--study-panel-width);
   min-width: var(--study-panel-width);
   height: 100vh;
-  padding: 24px 22px;
+  padding: var(--space-10) 22px;
   border-left: 1px solid var(--color-border);
   color: var(--color-text);
   background: radial-gradient(
@@ -212,7 +212,7 @@ const statusClass = computed(() => {
     rgba(13, 19, 26, 0.98),
     rgba(5, 8, 12, 0.98)
   );
-  box-shadow: inset 1px 0 rgba(255, 255, 255, 0.015);
+  box-shadow: var(--shadow-inset-left);
   overflow: hidden;
 }
 
@@ -245,9 +245,9 @@ const statusClass = computed(() => {
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-5);
   margin-bottom: 30px;
-  padding-bottom: 20px;
+  padding-bottom: var(--space-9);
   border-bottom: 1px solid var(--color-border-soft);
 }
 
@@ -259,27 +259,21 @@ const statusClass = computed(() => {
   width: 38px;
   height: 38px;
   border: 1px solid var(--color-border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-10);
   color: var(--color-primary);
   background: var(--color-primary-soft);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.03),
-  0 0 18px rgba(66, 245, 123, 0.06);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  box-shadow: var(--shadow-inset-top-soft),
+  var(--shadow-glow-18);
+  font-family: var(--font-family-terminal);
   font-size: 14px;
   font-weight: 800;
-  text-shadow: 0 0 10px var(--color-primary-glow);
+  text-shadow: var(--text-shadow-primary-medium);
 }
 
 .panel-eyebrow {
   margin: 0 0 3px;
   color: var(--color-text-muted);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.15em;
@@ -297,7 +291,7 @@ const statusClass = computed(() => {
   margin-left: auto;
   color: var(--color-primary);
   font-size: 12px;
-  text-shadow: 0 0 8px var(--color-primary),
+  text-shadow: var(--text-shadow-primary),
   0 0 18px var(--color-primary-glow);
   animation: sparkPulse 2.4s ease-in-out infinite;
 }
@@ -313,7 +307,7 @@ const statusClass = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  padding: 18px 4px;
+  padding: var(--space-8) 4px;
   border-bottom: 1px solid var(--color-border-soft);
 }
 
@@ -323,10 +317,7 @@ const statusClass = computed(() => {
 
 .info-label {
   color: var(--color-text-muted);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -342,23 +333,20 @@ const statusClass = computed(() => {
   font-size: 15px;
   line-height: 1.55;
   overflow-wrap: anywhere;
-  text-shadow: 0 0 16px rgba(66, 245, 123, 0.08);
+  text-shadow: var(--text-shadow-primary-soft-16);
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   width: fit-content;
   padding: 7px 11px;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border-radius: var(--radius-round);
   color: var(--color-text-muted);
   background: var(--color-surface);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 12px;
   font-weight: 700;
 }
@@ -367,7 +355,7 @@ const statusClass = computed(() => {
   color: var(--color-primary);
   border-color: rgba(66, 245, 123, 0.25);
   background: rgba(66, 245, 123, 0.08);
-  box-shadow: 0 0 18px rgba(66, 245, 123, 0.06);
+  box-shadow: var(--shadow-glow-18);
 }
 
 .status-badge.completed {
@@ -387,16 +375,13 @@ const statusClass = computed(() => {
   height: 7px;
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 9px currentColor;
+  box-shadow: var(--shadow-current-color);
   animation: statusPulse 1.9s ease-in-out infinite;
 }
 
 .metric-value {
   color: var(--color-text);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 23px;
   font-weight: 700;
 }
@@ -409,10 +394,7 @@ const statusClass = computed(() => {
 }
 
 .mono-value {
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 13px;
   letter-spacing: 0.02em;
 }
@@ -429,13 +411,13 @@ const statusClass = computed(() => {
 
 .signal-decoration span {
   width: 5px;
-  border-radius: 999px 999px 2px 2px;
+  border-radius: var(--radius-round) var(--radius-round) var(--radius-2) var(--radius-2);
   background: linear-gradient(
     to top,
     var(--color-primary),
     rgba(66, 245, 123, 0.15)
   );
-  box-shadow: 0 0 8px rgba(66, 245, 123, 0.18);
+  box-shadow: var(--shadow-glow-soft);
   transform-origin: bottom;
   animation: signalWave 1.8s ease-in-out infinite;
 }
@@ -466,28 +448,25 @@ const statusClass = computed(() => {
   position: relative;
   z-index: 1;
   margin-top: 56px;
-  padding: 28px 16px;
+  padding: 28px var(--space-7);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-medium);
   color: var(--color-text-muted);
   background: rgba(255, 255, 255, 0.015);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   text-align: center;
 }
 
 .empty-prompt {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-4);
   color: var(--color-primary);
   font-size: 18px;
-  text-shadow: 0 0 12px var(--color-primary-glow);
+  text-shadow: var(--shadow-glow-medium);
 }
 
 .empty-state p {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-5);
   color: var(--color-text-soft);
   font-size: 12px;
 }
@@ -541,7 +520,7 @@ const statusClass = computed(() => {
   .study-info-panel {
     width: 240px;
     min-width: 240px;
-    padding-inline: 18px;
+    padding-inline: var(--space-8);
   }
 }
 </style>

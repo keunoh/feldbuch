@@ -21,6 +21,7 @@ import KnowledgeWorkspace from "@/components/knowledge/KnowledgeWorkspace.vue";
 import {STORAGE_KEYS} from "@/constants/storageKeys.js";
 import {getMe} from "@/api/authApi.js";
 import UserProfilePanel from "@/components/sidebar/UserProfilePanel.vue";
+import SettingsModal from "@/components/settings/SettingsModal.vue";
 
 const router = useRouter();
 
@@ -41,6 +42,15 @@ const storedKnowledgeNoteId = localStorage.getItem(STORAGE_KEYS.SELECTED_KNOWLED
 
 const currentUser = ref(null)
 const userLoading = ref(false)
+const settingsOpen = ref(false)
+
+function openSettings() {
+  settingsOpen.value = true
+}
+
+function closeSettings() {
+  settingsOpen.value = false
+}
 
 async function loadCurrentUser() {
   userLoading.value = true
@@ -505,6 +515,7 @@ onMounted(async () => {
         <UserProfilePanel
           v-if="currentUser"
           :user="currentUser"
+          @settings="openSettings"
           @logout="logoutUser"
         />
       </template>
@@ -552,6 +563,13 @@ onMounted(async () => {
         @select-note="selectKnowledgeNote"
       />
     </template>
+
+    <SettingsModal
+      v-if="settingsOpen"
+      :user="currentUser"
+      @close="closeSettings"
+      @logout="logoutUser"
+    />
   </div>
 </template>
 
@@ -571,7 +589,7 @@ onMounted(async () => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  padding: var(--space-10);
   box-sizing: border-box;
   background: radial-gradient(
     circle at 50% 0%,
@@ -585,9 +603,9 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
+  gap: var(--space-7);
+  margin-bottom: var(--space-7);
+  padding-bottom: var(--space-7);
   border-bottom: 1px solid var(--color-border-soft);
 }
 
@@ -602,15 +620,15 @@ onMounted(async () => {
 }
 
 .conversation-title::before {
-  margin-right: 10px;
+  margin-right: var(--space-4);
   color: var(--color-primary);
   content: ">_";
-  text-shadow: 0 0 14px var(--color-primary-glow);
+  text-shadow: var(--text-shadow-primary-strong);
 }
 
 .logout-button {
   flex-shrink: 0;
-  padding: 8px 12px;
+  padding: var(--space-3) var(--space-5);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-small);
   color: var(--color-text-soft);

@@ -227,7 +227,7 @@ watch(
 
 .note-item.active {
   background: var(--color-primary-soft);
-  box-shadow: inset 3px 0 0 var(--color-primary);
+  box-shadow: var(--shadow-note-active);
 }
 
 .note-title {
@@ -249,9 +249,9 @@ watch(
 
 .note-created-at {
   display: block;
-  margin-top: 8px;
+  margin-top: var(--space-3);
   color: var(--color-text-muted);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
 }
 
@@ -259,7 +259,7 @@ watch(
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: 12px;
+  padding: var(--space-5);
   border-bottom: 1px solid var(--color-border-soft);
   background: var(--color-surface);
 }
@@ -268,7 +268,7 @@ watch(
   width: 100%;
   padding: 9px 34px 9px 11px;
   border: 1px solid var(--color-border);
-  border-radius: 7px;
+  border-radius: var(--radius-7);
   color: var(--color-text);
   background: var(--color-surface-raised);
   box-sizing: border-box;
@@ -277,7 +277,7 @@ watch(
 
 .note-search input:focus {
   border-color: var(--color-border-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  box-shadow: var(--shadow-focus);
 }
 
 .clear-search-button {
@@ -295,7 +295,7 @@ watch(
 }
 
 .note-state {
-  padding: 24px 16px;
+  padding: var(--space-10) var(--space-7);
   color: var(--color-text-muted);
   font-size: 13px;
   text-align: center;
@@ -310,7 +310,7 @@ watch(
 .note-search-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .note-search-row input {
@@ -324,7 +324,7 @@ watch(
   height: 34px;
   padding: 0;
   border: 1px solid var(--color-border);
-  border-radius: 7px;
+  border-radius: var(--radius-7);
   color: var(--color-primary);
   background: var(--color-surface-raised);
   cursor: pointer;

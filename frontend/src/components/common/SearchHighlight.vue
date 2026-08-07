@@ -72,7 +72,7 @@ const segments = computed(() => {
 <style scoped>
 .search-highlight {
   padding: 0 2px;
-  border-radius: 3px;
+  border-radius: var(--radius-3);
   color: var(--color-text);
   background: rgba(255, 214, 10, 0.35);
 }

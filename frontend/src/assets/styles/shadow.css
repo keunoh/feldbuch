@@ -1,0 +1,95 @@
+/*
+ * Feldbuch Shadow Tokens
+ */
+
+:root {
+  /* Elevation */
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.22);
+
+  --shadow-panel: 0 18px 50px rgba(0, 0, 0, 0.35);
+
+  --shadow-modal: var(--shadow-modal);
+
+  /* Focus */
+  --shadow-focus: var(--shadow-focus);
+
+  --shadow-focus-subtle: var(--shadow-focus-subtle);
+
+  --shadow-focus-login: var(--shadow-focus-login);
+
+  /* Green glow */
+  --shadow-glow-status: var(--shadow-glow-status);
+
+  --shadow-glow-status-soft: var(--shadow-glow-status-soft);
+
+  --shadow-glow-soft: var(--shadow-glow-soft);
+
+  --shadow-glow-medium: var(--shadow-glow-medium);
+
+  --shadow-glow-14: var(--shadow-glow-14);
+
+  --shadow-glow-18: var(--shadow-glow-18);
+
+  --shadow-glow-22: var(--shadow-glow-22);
+
+  /* Inset */
+  --shadow-inset-top: var(--shadow-inset-top);
+
+  --shadow-inset-top-medium: var(--shadow-inset-top-medium);
+
+  --shadow-inset-left: var(--shadow-inset-left);
+
+  --shadow-inset-glow: var(--shadow-inset-glow);
+
+  /* Text glow */
+  --text-shadow-primary: var(--text-shadow-primary);
+
+  --text-shadow-primary-soft: var(--text-shadow-primary-soft);
+
+  --text-shadow-primary-medium: var(--text-shadow-primary-medium);
+
+  --text-shadow-primary-strong: var(--text-shadow-primary-strong);
+
+  /* Decorative / text glow */
+  --text-shadow-watermark: 0 0 30px rgba(70, 255, 130, 0.03);
+
+  --text-shadow-primary-16: var(--text-shadow-primary-16);
+
+  --text-shadow-primary-soft-16: var(--text-shadow-primary-soft-16);
+
+  --text-shadow-primary-soft-14: var(--text-shadow-primary-soft-14);
+
+  --text-shadow-primary-soft-10: var(--text-shadow-primary-soft-10);
+
+  /* Modal */
+  --shadow-modal-strong: var(--shadow-modal-strong);
+
+  /* Inset */
+  --shadow-inset-top-soft: var(--shadow-inset-top-soft);
+
+  --shadow-inset-glow-soft: var(--shadow-inset-glow-soft);
+
+  --shadow-login-inset: var(--shadow-login-inset);
+
+  --shadow-note-active: var(--shadow-note-active);
+
+  /* Glow */
+  --shadow-current-color: var(--shadow-current-color);
+
+  --shadow-glow-error: var(--shadow-glow-error);
+
+  --shadow-glow-input: 0 0 12px rgba(66, 245, 123, 0.25);
+
+  --shadow-glow-login: var(--shadow-glow-login);
+
+  --shadow-glow-login-status: var(--shadow-glow-login-status);
+
+  /* Focus */
+  --shadow-focus-strong: 0 0 0 4px rgba(66, 245, 123, 0.08);
+
+  /* Warning accent */
+  --shadow-warning-accent: var(--shadow-warning-accent);
+
+  /* Browser autofill */
+  --shadow-autofill: 0 0 0 1000px #020503 inset;
+}

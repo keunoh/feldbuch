@@ -248,7 +248,7 @@ onMounted(loadKnowledgeTree)
   width: 100%;
   height: 100%;
 
-  padding: 16px var(--sidebar-padding-x) 20px;
+  padding: var(--space-7) var(--sidebar-padding-x) var(--space-9);
 
   overflow-y: auto;
   background: var(--color-surface);
@@ -258,9 +258,9 @@ onMounted(loadKnowledgeTree)
 .knowledge-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-9);
 }
 
 
@@ -274,7 +274,7 @@ onMounted(loadKnowledgeTree)
   width: 100%;
   padding: 9px 34px 9px 11px;
   border: 1px solid var(--color-border);
-  border-radius: 7px;
+  border-radius: var(--radius-7);
   color: var(--color-text);
   background: var(--color-surface-raised);
   box-sizing: border-box;
@@ -283,7 +283,7 @@ onMounted(loadKnowledgeTree)
 
 .search-box input:focus {
   border-color: var(--color-border-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  box-shadow: var(--shadow-focus);
 }
 
 .clear-search-button {
@@ -305,7 +305,7 @@ onMounted(loadKnowledgeTree)
   width: 38px;
   height: 38px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-8);
   color: var(--color-text-muted);
   background: var(--color-surface-raised);
   cursor: pointer;

@@ -248,7 +248,7 @@ function formatConversationTime(conversation) {
   position: relative;
   width: 100%;
   height: 100%;
-  padding: 16px var(--sidebar-padding-x) 20px;
+  padding: var(--space-7) var(--sidebar-padding-x) var(--space-9);
   overflow-y: auto;
   box-sizing: border-box;
 }
@@ -272,12 +272,12 @@ function formatConversationTime(conversation) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-3);
 
   width: 100%;
   min-height: 42px;
-  margin: 0 0 20px;
-  padding: 10px 14px;
+  margin: 0 0 var(--space-9);
+  padding: var(--space-4) 14px;
 
   border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-medium);
@@ -290,13 +290,10 @@ function formatConversationTime(conversation) {
   ),
   var(--color-surface);
 
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025),
+  box-shadow: var(--shadow-inset-top),
   0 0 0 rgba(66, 245, 123, 0);
 
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 13px;
   font-weight: 700;
 
@@ -318,7 +315,7 @@ function formatConversationTime(conversation) {
     transparent 62%
   ),
   var(--color-surface-raised);
-  box-shadow: 0 0 22px rgba(66, 245, 123, 0.1);
+  box-shadow: var(--shadow-glow-22);
 }
 
 .create-button:active:not(:disabled) {
@@ -353,7 +350,7 @@ function formatConversationTime(conversation) {
   align-items: center;
   gap: 7px;
   min-height: 44px;
-  padding: 3px 6px 3px 12px;
+  padding: 3px 6px 3px var(--space-5);
   border: 1px solid transparent;
   border-radius: var(--radius-medium);
   color: var(--color-text-muted);
@@ -369,7 +366,7 @@ function formatConversationTime(conversation) {
   bottom: 7px;
   left: -1px;
   width: 2px;
-  border-radius: 999px;
+  border-radius: var(--radius-round);
   background: transparent;
   content: "";
   transition: background var(--transition-fast),
@@ -390,21 +387,18 @@ function formatConversationTime(conversation) {
     rgba(66, 245, 123, 0.13),
     rgba(66, 245, 123, 0.035)
   );
-  box-shadow: inset 0 0 18px rgba(66, 245, 123, 0.025);
+  box-shadow: var(--shadow-inset-glow);
 }
 
 .conversation-item.selected::before {
   background: var(--color-primary);
-  box-shadow: 0 0 12px var(--color-primary-glow);
+  box-shadow: var(--shadow-glow-medium);
 }
 
 .conversation-prompt {
   flex-shrink: 0;
   color: var(--color-text-disabled);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 12px;
   transition: color var(--transition-fast),
   text-shadow var(--transition-fast);
@@ -416,7 +410,7 @@ function formatConversationTime(conversation) {
 
 .conversation-item.selected .conversation-prompt {
   color: var(--color-primary);
-  text-shadow: 0 0 10px var(--color-primary-glow);
+  text-shadow: var(--text-shadow-primary-medium);
 }
 
 .conversation-button {
@@ -442,18 +436,15 @@ function formatConversationTime(conversation) {
 .conversation-title-input {
   flex: 1;
   min-width: 0;
-  padding: 8px 10px;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-small);
   outline: none;
   color: var(--color-text);
   background: var(--color-bg-deep);
-  box-shadow: 0 0 0 3px rgba(66, 245, 123, 0.08),
+  box-shadow: var(--shadow-focus-subtle),
   0 0 16px rgba(66, 245, 123, 0.06);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 12px;
 }
 
@@ -469,7 +460,7 @@ function formatConversationTime(conversation) {
   height: 28px;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--radius-7);
   color: var(--color-text-disabled);
   background: transparent;
   font-size: 18px;
@@ -498,10 +489,7 @@ function formatConversationTime(conversation) {
 .conversation-time {
   flex-shrink: 0;
   color: var(--color-text-disabled);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 11px;
   letter-spacing: -0.02em;
   transition: color var(--transition-fast),
@@ -531,17 +519,14 @@ function formatConversationTime(conversation) {
 .empty-conversations {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
   margin-top: 28px;
-  padding: 18px 12px;
+  padding: var(--space-8) var(--space-5);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-medium);
   color: var(--color-text-muted);
   background: rgba(255, 255, 255, 0.015);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   text-align: center;
 }
 

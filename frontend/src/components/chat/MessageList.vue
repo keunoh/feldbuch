@@ -243,13 +243,13 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 30px;
-  padding: 16px 20px 28px;
+  padding: var(--space-7) var(--space-9) 28px;
 }
 
 .message-row {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: var(--space-6);
   animation: messageFadeIn 0.22s ease-out;
 }
 
@@ -287,7 +287,7 @@ onBeforeUnmount(() => {
   height: 50px;
   margin-top: 2px;
   border: 1px solid rgba(66, 245, 123, 0.34);
-  border-radius: 13px;
+  border-radius: var(--radius-13);
   color: var(--color-primary);
   background: linear-gradient(
     135deg,
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
     rgba(66, 245, 123, 0.025)
   ),
   var(--color-surface);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.035),
+  box-shadow: var(--shadow-inset-top-medium),
   0 0 20px rgba(66, 245, 123, 0.07);
   overflow: hidden;
 }
@@ -308,7 +308,7 @@ onBeforeUnmount(() => {
   height: 4px;
   border-radius: 50%;
   background: var(--color-danger);
-  box-shadow: 7px 0 0 #facc15,
+  box-shadow: var(--shadow-warning-accent),
   14px 0 0 var(--color-primary);
   content: "";
   opacity: 0.7;
@@ -325,16 +325,13 @@ onBeforeUnmount(() => {
 }
 
 .terminal-symbol {
-  margin-top: 10px;
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  margin-top: var(--space-4);
+  font-family: var(--font-family-terminal);
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -0.08em;
-  text-shadow: 0 0 8px var(--color-primary),
-  0 0 16px var(--color-primary-glow);
+  text-shadow: var(--text-shadow-primary),
+  var(--text-shadow-primary-16);
 }
 
 .assistant-avatar:hover .terminal-symbol {
@@ -346,31 +343,25 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-7);
   width: 100%;
   min-height: 22px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-3);
   color: var(--color-primary);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
 }
 
 .role-identity {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   min-width: 0;
 }
 
 .message-time {
   flex-shrink: 0;
   color: var(--color-text-disabled);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -392,7 +383,7 @@ onBeforeUnmount(() => {
 
 .assistant .role-name {
   color: var(--color-primary);
-  text-shadow: 0 0 14px rgba(66, 245, 123, 0.15);
+  text-shadow: var(--text-shadow-primary-soft-14);
 }
 
 .user .role {
@@ -402,7 +393,7 @@ onBeforeUnmount(() => {
 .user-symbol {
   padding: 2px 6px;
   border: 1px solid rgba(139, 92, 246, 0.24);
-  border-radius: 5px;
+  border-radius: var(--radius-5);
   color: var(--color-accent-purple);
   background: rgba(139, 92, 246, 0.07);
   font-size: 9px;
@@ -413,7 +404,7 @@ onBeforeUnmount(() => {
 .processing-label {
   padding: 2px 6px;
   border: 1px solid rgba(66, 245, 123, 0.2);
-  border-radius: 5px;
+  border-radius: var(--radius-5);
   color: var(--color-primary);
   background: rgba(66, 245, 123, 0.055);
   font-size: 9px;
@@ -426,12 +417,12 @@ onBeforeUnmount(() => {
 .bubble {
   position: relative;
   width: 100%;
-  padding: 16px 18px;
+  padding: var(--space-7) var(--space-8);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-medium);
   color: var(--color-text-soft);
   background: var(--color-surface);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-sm);
   box-sizing: border-box;
   transition: transform var(--transition-fast),
   border-color var(--transition-fast),
@@ -441,7 +432,7 @@ onBeforeUnmount(() => {
 .bubble:hover {
   transform: translateY(-1px);
   border-color: rgba(66, 245, 123, 0.3);
-  box-shadow: var(--shadow-card),
+  box-shadow: var(--shadow-sm),
   0 0 24px rgba(66, 245, 123, 0.05);
 }
 
@@ -467,7 +458,7 @@ onBeforeUnmount(() => {
     rgba(66, 245, 123, 0.07)
   ),
   var(--color-surface-raised);
-  box-shadow: var(--shadow-card),
+  box-shadow: var(--shadow-sm),
   0 0 20px rgba(139, 92, 246, 0.07);
 }
 
@@ -479,7 +470,7 @@ onBeforeUnmount(() => {
 }
 
 .content :deep(p) {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-5);
 }
 
 .content :deep(p:last-child) {
@@ -490,7 +481,7 @@ onBeforeUnmount(() => {
 .content :deep(h2),
 .content :deep(h3),
 .content :deep(h4) {
-  margin: 22px 0 10px;
+  margin: 22px 0 var(--space-4);
   color: var(--color-text);
   line-height: 1.35;
 }
@@ -504,8 +495,8 @@ onBeforeUnmount(() => {
 
 .content :deep(ul),
 .content :deep(ol) {
-  margin: 12px 0;
-  padding-left: 24px;
+  margin: var(--space-5) 0;
+  padding-left: var(--space-10);
 }
 
 .content :deep(li) {
@@ -517,8 +508,8 @@ onBeforeUnmount(() => {
 }
 
 .content :deep(blockquote) {
-  margin: 14px 0;
-  padding: 10px 14px;
+  margin: var(--space-6) 0;
+  padding: var(--space-4) 14px;
   border-left: 3px solid var(--color-accent-cyan);
   border-radius: 0 var(--radius-small) var(--radius-small) 0;
   color: var(--color-text-soft);
@@ -528,23 +519,20 @@ onBeforeUnmount(() => {
 .content :deep(code) {
   padding: 2px 6px;
   border: 1px solid var(--color-border-soft);
-  border-radius: 5px;
+  border-radius: var(--radius-5);
   color: var(--color-primary);
   background: var(--color-bg-deep);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 0.9em;
 }
 
 /* 코드 블록 전체 */
 .content :deep(.code-block) {
-  margin: 16px 0;
+  margin: var(--space-7) 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-medium);
   background: var(--color-bg-deep);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025),
+  box-shadow: var(--shadow-inset-top),
   0 8px 28px rgba(0, 0, 0, 0.16);
   overflow: hidden;
 }
@@ -555,7 +543,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   min-height: 38px;
-  padding: 0 12px 0 14px;
+  padding: 0 var(--space-5) 0 14px;
   border-bottom: 1px solid var(--color-border);
   background: linear-gradient(
     90deg,
@@ -568,28 +556,22 @@ onBeforeUnmount(() => {
 /* 언어 표시 */
 .content :deep(.code-language) {
   color: var(--color-primary);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  text-shadow: 0 0 10px rgba(66, 245, 123, 0.18);
+  text-shadow: var(--text-shadow-primary-soft-10);
 }
 
 /* COPY 버튼 */
 .content :deep(.code-copy-button) {
   min-width: 58px;
-  padding: 5px 8px;
+  padding: 5px var(--space-3);
   border: 1px solid var(--color-border-soft);
-  border-radius: 6px;
+  border-radius: var(--radius-6);
   color: var(--color-text-muted);
   background: rgba(255, 255, 255, 0.025);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -606,16 +588,16 @@ onBeforeUnmount(() => {
   color: var(--color-primary);
   border-color: rgba(66, 245, 123, 0.38);
   background: rgba(66, 245, 123, 0.08);
-  box-shadow: 0 0 14px rgba(66, 245, 123, 0.08);
+  box-shadow: var(--shadow-glow-14);
 }
 
 .content :deep(.code-copy-button.copied) {
   color: var(--color-primary);
   border-color: rgba(66, 245, 123, 0.48);
   background: rgba(66, 245, 123, 0.12);
-  box-shadow: inset 0 0 10px rgba(66, 245, 123, 0.04),
+  box-shadow: var(--shadow-inset-glow-soft),
   0 0 16px rgba(66, 245, 123, 0.1);
-  text-shadow: 0 0 8px var(--color-primary-glow);
+  text-shadow: var(--text-shadow-primary-soft);
 }
 
 .content :deep(.code-copy-button:active) {
@@ -625,7 +607,7 @@ onBeforeUnmount(() => {
 /* 실제 코드 영역 */
 .content :deep(.code-block pre) {
   margin: 0;
-  padding: 18px;
+  padding: var(--space-8);
   border: 0;
   border-radius: 0;
   background: linear-gradient(
@@ -646,10 +628,7 @@ onBeforeUnmount(() => {
   border-radius: 0;
   color: inherit;
   background: transparent;
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 13px;
   line-height: 1.65;
   white-space: pre;
@@ -657,14 +636,14 @@ onBeforeUnmount(() => {
 
 .content :deep(table) {
   width: 100%;
-  margin: 16px 0;
+  margin: var(--space-7) 0;
   border-collapse: collapse;
   overflow: hidden;
 }
 
 .content :deep(th),
 .content :deep(td) {
-  padding: 10px 12px;
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--color-border);
   text-align: left;
 }
@@ -699,7 +678,7 @@ onBeforeUnmount(() => {
   color: var(--color-danger);
   border-color: rgba(248, 113, 113, 0.48);
   background: rgba(248, 113, 113, 0.1);
-  box-shadow: 0 0 14px rgba(248, 113, 113, 0.08);
+  box-shadow: var(--shadow-glow-error);
 }
 
 /* 빈 대화 */
@@ -707,16 +686,13 @@ onBeforeUnmount(() => {
   margin: auto;
   padding: 36px;
   color: var(--color-text-muted);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   text-align: center;
 }
 
 .empty-message::before {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-4);
   color: var(--color-primary);
   content: "> waiting_for_input";
 }
@@ -732,10 +708,7 @@ onBeforeUnmount(() => {
   gap: 6px;
   min-height: 28px;
   color: var(--color-text-muted);
-  font-family: "JetBrains Mono",
-  "SFMono-Regular",
-  Consolas,
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -773,7 +746,7 @@ onBeforeUnmount(() => {
 
   40% {
     opacity: 1;
-    text-shadow: 0 0 8px var(--color-primary-glow);
+    text-shadow: var(--text-shadow-primary-soft);
   }
 }
 
@@ -793,13 +766,13 @@ onBeforeUnmount(() => {
   0%,
   100% {
     border-color: rgba(66, 245, 123, 0.25);
-    box-shadow: inset 0 1px rgba(255, 255, 255, 0.035),
+    box-shadow: var(--shadow-inset-top-medium),
     0 0 12px rgba(66, 245, 123, 0.04);
   }
 
   50% {
     border-color: rgba(66, 245, 123, 0.55);
-    box-shadow: inset 0 1px rgba(255, 255, 255, 0.035),
+    box-shadow: var(--shadow-inset-top-medium),
     0 0 24px rgba(66, 245, 123, 0.13);
   }
 }
@@ -829,7 +802,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 900px) {
   .message-list {
-    padding-inline: 10px;
+    padding-inline: var(--space-4);
   }
 
   .assistant-avatar {

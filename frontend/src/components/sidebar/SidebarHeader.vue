@@ -19,19 +19,19 @@ const emit = defineEmits([
       </span>
 
       <span
-        class="brand-cursor"
-        aria-hidden="true"
+          class="brand-cursor"
+          aria-hidden="true"
       >
         &gt;_
       </span>
     </div>
 
     <button
-      type="button"
-      class="create-button"
-      :disabled="creating"
-      aria-label="새 대화 만들기"
-      @click="$emit('create-conversation')"
+        type="button"
+        class="create-button"
+        :disabled="creating"
+        aria-label="새 대화 만들기"
+        @click="$emit('create-conversation')"
     >
       +
     </button>
@@ -43,34 +43,34 @@ const emit = defineEmits([
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-7);
   width: 100%;
-  padding: 22px var(--sidebar-padding-x) 18px;
+  padding: 22px var(--sidebar-padding-x) var(--space-8);
   box-sizing: border-box;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-6);
   min-width: 0;
 }
 
 .brand-name {
   flex-shrink: 0;
   color: var(--color-primary);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-family-terminal);
   font-size: 23px;
   font-weight: 800;
   letter-spacing: 0.08em;
   line-height: 1;
-  text-shadow: 0 0 16px var(--color-primary-glow);
+  text-shadow: var(--text-shadow-primary-16);
 }
 
 .brand-cursor {
   flex-shrink: 0;
   color: var(--color-primary);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-family-terminal);
   font-size: 20px;
   font-weight: 700;
   line-height: 1;
@@ -116,7 +116,7 @@ const emit = defineEmits([
 
   50% {
     opacity: 0.9;
-    text-shadow: 0 0 8px var(--color-primary-glow),
+    text-shadow: var(--text-shadow-primary-soft),
     0 0 18px var(--color-primary-glow);
   }
 }

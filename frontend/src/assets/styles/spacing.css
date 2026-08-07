@@ -1,0 +1,43 @@
+/*
+ * Feldbuch Spacing
+ *
+ * padding, margin, gap 값을 공통 토큰으로 관리한다.
+ */
+
+:root {
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 16px;
+  --space-8: 18px;
+  --space-9: 20px;
+  --space-10: 24px;
+  --space-11: 28px;
+  --space-12: 32px;
+  --space-13: 36px;
+  --space-14: 40px;
+  --space-15: 48px;
+  --space-16: 56px;
+  --space-17: 64px;
+}
+
+/*
+ * 자주 쓰는 컴포넌트 간격
+ */
+
+:root {
+  --spacing-page-x: var(--space-10);
+
+  --spacing-page-y: var(--space-10);
+
+  --spacing-panel: var(--space-7);
+
+  --spacing-section: var(--space-10);
+
+  --spacing-control: var(--space-3);
+
+  --spacing-inline: var(--space-2);
+}

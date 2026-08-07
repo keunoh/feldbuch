@@ -1,0 +1,31 @@
+/*
+ * Feldbuch Radius Tokens
+ */
+
+:root {
+  --radius-none: 0;
+
+  --radius-2: 2px;
+  --radius-3: 3px;
+  --radius-4: 4px;
+  --radius-5: 5px;
+  --radius-6: 6px;
+  --radius-7: 7px;
+  --radius-8: 8px;
+  --radius-9: 9px;
+  --radius-10: 10px;
+  --radius-12: 12px;
+  --radius-13: 13px;
+  --radius-18: 18px;
+
+  --radius-round: 999px;
+
+  /*
+   * Semantic aliases
+   */
+  --radius-small: var(--radius-8);
+
+  --radius-medium: var(--radius-12);
+
+  --radius-large: var(--radius-18);
+}

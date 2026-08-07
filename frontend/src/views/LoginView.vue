@@ -466,7 +466,7 @@ async function loginUser() {
   min-height: 100vh;
   justify-content: center;
   align-items: flex-start;
-  padding: 72px 24px 48px;
+  padding: 72px var(--space-10) 48px;
   box-sizing: border-box;
 }
 
@@ -478,14 +478,14 @@ async function loginUser() {
   );
   overflow: hidden;
   border: 1px solid rgba(104, 255, 164, 0.13);
-  border-radius: 10px;
+  border-radius: var(--radius-10);
   background: rgba(
     5,
     10,
     7,
     0.93
   );
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58),
+  box-shadow: var(--shadow-lg),
   0 0 45px rgba(74, 255, 143, 0.035);
   backdrop-filter: blur(12px);
 }
@@ -520,7 +520,7 @@ async function loginUser() {
 .dot {
   width: 9px;
   height: 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-round);
   opacity: 0.92;
 }
 
@@ -544,8 +544,7 @@ async function loginUser() {
     230,
     0.55
   );
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   text-align: center;
   text-overflow: ellipsis;
@@ -553,9 +552,8 @@ async function loginUser() {
 }
 
 .terminal-session {
-  padding: 17px 20px 18px;
-  font-family: "JetBrains Mono",
-  monospace;
+  padding: 17px var(--space-9) var(--space-8);
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   line-height: 1.7;
 }
@@ -612,8 +610,7 @@ async function loginUser() {
 .login-command {
   margin: 0 0 9px;
   color: var(--color-primary);
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 11px;
   font-weight: 700;
 }
@@ -649,8 +646,7 @@ async function loginUser() {
     215,
     0.7
   );
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   font-weight: 600;
 }
@@ -661,7 +657,7 @@ async function loginUser() {
   align-items: center;
   overflow: hidden;
   border: 1px solid rgba(102, 255, 157, 0.14);
-  border-radius: 6px;
+  border-radius: var(--radius-6);
   background: #020503;
   transition: border-color 0.16s ease,
   box-shadow 0.16s ease,
@@ -675,15 +671,14 @@ async function loginUser() {
 .terminal-input:focus-within {
   border-color: rgba(91, 255, 151, 0.7);
   background: #030704;
-  box-shadow: 0 0 0 3px rgba(66, 255, 136, 0.06),
+  box-shadow: var(--shadow-focus-login),
   0 0 18px rgba(66, 255, 136, 0.035);
 }
 
 .input-prefix {
   padding-left: 13px;
   color: rgba(88, 255, 148, 0.82);
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 11px;
   user-select: none;
 }
@@ -691,13 +686,12 @@ async function loginUser() {
 .terminal-input input {
   width: 100%;
   min-width: 0;
-  padding: 11px 13px 11px 8px;
+  padding: 11px 13px 11px var(--space-3);
   border: 0;
   color: #dcebe1;
   background: transparent;
   caret-color: #64ffa1;
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 12px;
   outline: none;
 }
@@ -725,20 +719,19 @@ async function loginUser() {
 .terminal-input input:-webkit-autofill:active {
   -webkit-text-fill-color: #dcebe1 !important;
   caret-color: #64ffa1;
-  box-shadow: 0 0 0 1000px #020503 inset !important;
-  -webkit-box-shadow: 0 0 0 1000px #020503 inset !important;
+  box-shadow: var(--shadow-autofill) !important;
+  -webkit-box-shadow: var(--shadow-autofill) !important;
   transition: background-color 9999s ease-out 0s;
 }
 
 .login-error {
   margin: 0;
-  padding: 10px 12px;
+  padding: var(--space-4) var(--space-5);
   border: 1px solid rgba(255, 92, 92, 0.3);
-  border-radius: 6px;
+  border-radius: var(--radius-6);
   color: #ff8585;
   background: rgba(255, 75, 75, 0.055);
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   line-height: 1.6;
 }
@@ -753,17 +746,16 @@ async function loginUser() {
   min-height: 45px;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-4);
   border: 1px solid rgba(82, 255, 143, 0.3);
-  border-radius: 6px;
+  border-radius: var(--radius-6);
   color: #77ffb2;
   background: linear-gradient(
     180deg,
     #173221,
     #0d1d13
   );
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -775,7 +767,7 @@ async function loginUser() {
 
 .login-button:hover:not(:disabled) {
   border-color: rgba(82, 255, 143, 0.52);
-  box-shadow: 0 0 22px rgba(82, 255, 143, 0.075);
+  box-shadow: var(--shadow-glow-login);
   filter: brightness(1.08);
   transform: translateY(-1px);
 }
@@ -797,11 +789,10 @@ async function loginUser() {
   margin-top: 21px;
   padding: 14px 15px;
   border: 1px solid rgba(80, 255, 140, 0.09);
-  border-radius: 6px;
+  border-radius: var(--radius-6);
   background: rgba(1, 4, 2, 0.9);
-  box-shadow: inset 0 0 18px rgba(60, 255, 130, 0.012);
-  font-family: "JetBrains Mono",
-  monospace;
+  box-shadow: var(--shadow-login-inset);
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   line-height: 1.85;
 }
@@ -850,8 +841,7 @@ async function loginUser() {
     196,
     0.28
   );
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 9px;
 }
 
@@ -881,7 +871,7 @@ async function loginUser() {
     255,
     0.095
   );
-  border-radius: 6px;
+  border-radius: var(--radius-6);
   color: rgba(
     232,
     242,
@@ -938,7 +928,7 @@ async function loginUser() {
     255,
     0.1
   );
-  border-radius: 5px;
+  border-radius: var(--radius-5);
   color: rgba(
     240,
     247,
@@ -946,8 +936,7 @@ async function loginUser() {
     0.9
   );
   background: #080c09;
-  font-family: Arial,
-  sans-serif;
+  font-family: var(--font-family-base);
   font-size: 10px;
   font-weight: 700;
 }
@@ -970,8 +959,7 @@ async function loginUser() {
     190,
     0.3
   );
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 8px;
   letter-spacing: 0.03em;
 }
@@ -979,9 +967,9 @@ async function loginUser() {
 .status-dot {
   width: 5px;
   height: 5px;
-  border-radius: 999px;
+  border-radius: var(--radius-round);
   background: #56ff98;
-  box-shadow: 0 0 7px rgba(86, 255, 152, 0.5);
+  box-shadow: var(--shadow-glow-login-status);
 }
 
 .terminal-log-enter-active,
@@ -1016,7 +1004,7 @@ async function loginUser() {
 max-width: 520px
 ) {
   .login-view {
-    padding: 40px 15px 24px;
+    padding: 40px 15px var(--space-10);
   }
 
   .login-shell {

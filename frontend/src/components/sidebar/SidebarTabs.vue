@@ -58,18 +58,18 @@ function selectMode(mode) {
 .sidebar-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: var(--space-3);
 
-  padding: 0 var(--sidebar-padding-x) 16px;
+  padding: 0 var(--sidebar-padding-x) var(--space-7);
 
   border-bottom: 1px solid var(--color-border-soft);
 }
 
 .tab-button {
   min-height: 42px;
-  padding: 9px 12px;
+  padding: 9px var(--space-5);
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: var(--radius-9);
   color: var(--color-text-muted);
   background: transparent;
   font-size: 14px;

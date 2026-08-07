@@ -9,8 +9,11 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
+  'settings',
   'logout',
 ])
+
+const menuOpen = ref(false)
 
 const sessionStartedAt =
   ref(
@@ -30,6 +33,18 @@ const email =
       ?? 'unknown'
   })
 
+const provider =
+  computed(() => {
+    return props.user?.provider
+      ?? 'UNKNOWN'
+  })
+
+const role =
+  computed(() => {
+    return props.user?.role
+      ?? 'USER'
+  })
+
 const formattedSessionStartedAt =
   computed(() => {
     return sessionStartedAt.value
@@ -46,7 +61,22 @@ const formattedSessionStartedAt =
       )
   })
 
+function toggleMenu() {
+  menuOpen.value =
+    !menuOpen.value
+}
+
+function openSettings() {
+  menuOpen.value = false
+
+  emit(
+    'settings',
+  )
+}
+
 function logout() {
+  menuOpen.value = false
+
   emit(
     'logout',
   )
@@ -55,116 +85,187 @@ function logout() {
 
 <template>
   <section class="user-profile-panel">
-    <div class="profile-command">
-      <span class="prompt-symbol">
-        $
-      </span>
-
-      <span>
-        whoami
-      </span>
-
-      <span
-        class="command-cursor"
-        aria-hidden="true"
-      >
-        █
-      </span>
-    </div>
-
-    <div class="profile-result">
-      <strong class="profile-name">
-        {{ nickname }}
-      </strong>
-
-      <span class="profile-email">
-        {{ email }}
-      </span>
-    </div>
-
-    <div class="profile-meta">
-        <span class="provider-badge">
-          {{ user.provider }}
-        </span>
-
-      <span class="role-badge">
-          {{ user.role }}
-        </span>
-    </div>
-
-
-    <div class="auth-status">
-      <span
-        class="status-dot"
-        aria-hidden="true"
-      />
-
-      <span>
-        authenticated
-      </span>
-    </div>
-
-    <div class="session-info">
-      <span class="session-label">
-        Session started
-      </span>
-
-      <time>
-        {{ formattedSessionStartedAt }}
-      </time>
-    </div>
-
-    <div class="profile-divider"/>
-
     <button
       type="button"
-      class="logout-button"
-      @click="logout"
+      class="profile-trigger"
+      :aria-expanded="menuOpen"
+      @click="toggleMenu"
     >
+      <div class="profile-main">
+        <div class="profile-command">
+          <span class="prompt-symbol">
+            $
+          </span>
+
+          <span>
+            whoami
+          </span>
+
+          <span
+            class="command-cursor"
+            aria-hidden="true"
+          >
+            █
+          </span>
+        </div>
+
+        <div class="profile-result">
+          <strong class="profile-name">
+            {{ nickname }}
+          </strong>
+
+          <span class="profile-email">
+            {{ email }}
+          </span>
+        </div>
+
+        <div class="profile-meta">
+          <span class="provider-badge">
+            {{ provider }}
+          </span>
+
+          <span class="role-badge">
+            {{ role }}
+          </span>
+        </div>
+
+        <div class="auth-status">
+          <span
+            class="status-dot"
+            aria-hidden="true"
+          />
+
+          <span>
+            authenticated
+          </span>
+        </div>
+
+        <div class="session-info">
+          <span class="session-label">
+            Session started
+          </span>
+
+          <time>
+            {{ formattedSessionStartedAt }}
+          </time>
+        </div>
+      </div>
+
       <span
-        class="logout-prompt"
+        class="menu-indicator"
         aria-hidden="true"
       >
-        ❯
-      </span>
-
-      <span>
-        logout
+        {{ menuOpen ? '⌃' : '⌄' }}
       </span>
     </button>
+
+    <Transition name="profile-menu">
+      <div
+        v-if="menuOpen"
+        class="profile-menu"
+      >
+        <button
+          type="button"
+          class="profile-menu-item"
+          @click="openSettings"
+        >
+          <span class="menu-prompt">
+            ❯
+          </span>
+
+          <span>
+            settings
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="profile-menu-item logout"
+          @click="logout"
+        >
+          <span class="menu-prompt">
+            ❯
+          </span>
+
+          <span>
+            logout
+          </span>
+        </button>
+      </div>
+    </Transition>
   </section>
 </template>
 
 <style scoped>
 .user-profile-panel {
+  position: relative;
   flex-shrink: 0;
-  padding: 16px 14px 14px;
+  padding: var(--space-5) var(--space-5) 10px;
   border-top: 1px solid var(--color-border-soft);
   background: linear-gradient(
     180deg,
     rgba(8, 13, 10, 0.9),
     rgba(3, 7, 5, 0.97)
   );
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
+}
+
+.profile-trigger {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-7);
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.profile-trigger:hover {
+  background: rgba(
+    82,
+    255,
+    143,
+    0.035
+  );
+}
+
+.profile-main {
+  min-width: 0;
+  flex: 1;
 }
 
 .profile-command {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 13px;
+  margin-bottom: 11px;
   color: var(--color-primary);
   font-size: 10px;
   font-weight: 700;
 }
 
 .prompt-symbol {
-  color: rgba(96, 255, 157, 0.75);
+  color: rgba(
+    96,
+    255,
+    157,
+    0.75
+  );
 }
 
 .command-cursor {
-  color: rgba(103, 255, 164, 0.78);
+  color: rgba(
+    103,
+    255,
+    164,
+    0.78
+  );
   font-size: 7px;
   animation: cursor-blink 0.85s steps(1) infinite;
 }
@@ -179,10 +280,7 @@ function logout() {
 .profile-name {
   overflow: hidden;
   color: var(--color-text);
-  font-family: inherit;
   font-size: 12px;
-  font-weight: 700;
-  line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -191,16 +289,39 @@ function logout() {
   overflow: hidden;
   color: var(--color-text-muted);
   font-size: 9px;
-  line-height: 1.5;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-3);
+}
+
+.provider-badge,
+.role-badge {
+  padding: 3px 6px;
+  border: 1px solid rgba(96, 255, 157, 0.14);
+  border-radius: var(--radius-4);
+  color: rgba(112, 255, 169, 0.72);
+  background: rgba(82, 255, 143, 0.035);
+  font-size: 7px;
+  letter-spacing: 0.05em;
+}
+
+.role-badge {
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(205, 224, 211, 0.42);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .auth-status {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-top: 12px;
+  margin-top: 11px;
   color: rgba(103, 255, 164, 0.72);
   font-size: 9px;
 }
@@ -208,9 +329,9 @@ function logout() {
 .status-dot {
   width: 6px;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-round);
   background: #59ff99;
-  box-shadow: 0 0 8px rgba(89, 255, 153, 0.55);
+  box-shadow: var(--shadow-glow-status);
   animation: status-pulse 2.4s ease-in-out infinite;
 }
 
@@ -218,84 +339,72 @@ function logout() {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 13px;
+  margin-top: var(--space-5);
   color: rgba(190, 211, 197, 0.42);
   font-size: 8px;
-  line-height: 1.5;
 }
 
 .session-label {
   color: rgba(104, 255, 164, 0.35);
 }
 
-.session-info time {
-  color: rgba(210, 229, 216, 0.52);
+.menu-indicator {
+  flex-shrink: 0;
+  padding-top: 2px;
+  color: rgba(113, 255, 168, 0.45);
+  font-size: 11px;
 }
 
-.profile-divider {
-  height: 1px;
-  margin: 14px 0 10px;
-  background: rgba(255, 255, 255, 0.05);
+.profile-menu {
+  display: grid;
+  gap: 3px;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.logout-button {
+.profile-menu-item {
   display: flex;
   width: 100%;
   min-height: 32px;
   align-items: center;
   gap: 7px;
-  padding: 6px 8px;
+  padding: 6px 9px;
   border: 0;
-  border-radius: 5px;
-  color: rgba(203, 223, 209, 0.55);
+  border-radius: var(--radius-5);
+  color: rgba(205, 224, 211, 0.55);
   background: transparent;
   font-family: inherit;
   font-size: 9px;
   text-align: left;
   cursor: pointer;
-  transition: color 0.15s ease,
-  background 0.15s ease;
 }
 
-.logout-prompt {
-  width: 10px;
-  color: transparent;
-  transition: color 0.15s ease;
-}
-
-.logout-button:hover {
+.profile-menu-item:hover {
   color: #6effaa;
   background: rgba(82, 255, 143, 0.045);
 }
 
-.logout-button:hover
-.logout-prompt {
-  color: #58ff99;
+.profile-menu-item.logout:hover {
+  color: #ff8585;
+  background: rgba(255, 90, 90, 0.045);
 }
 
-.profile-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+.menu-prompt {
+  width: 10px;
+  color: rgba(89, 255, 153, 0.65);
 }
 
-.provider-badge,
-.role-badge {
-  padding: 3px 6px;
-  border: 1px solid rgba(96, 255, 157, 0.14);
-  border-radius: 4px;
-  color: rgba(112, 255, 169, 0.72);
-  background: rgba(82, 255, 143, 0.035);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 7px;
-  letter-spacing: 0.05em;
+.profile-menu-enter-active,
+.profile-menu-leave-active {
+  transition: opacity 0.15s ease,
+  transform 0.15s ease;
 }
 
-.role-badge {
-  color: rgba(205, 224, 211, 0.42);
-  border-color: rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+.profile-menu-enter-from,
+.profile-menu-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
 }
 
 @keyframes cursor-blink {
@@ -314,12 +423,10 @@ function logout() {
   0%,
   100% {
     opacity: 0.45;
-    box-shadow: 0 0 4px rgba(89, 255, 153, 0.3);
   }
 
   50% {
     opacity: 1;
-    box-shadow: 0 0 10px rgba(89, 255, 153, 0.65);
   }
 }
 

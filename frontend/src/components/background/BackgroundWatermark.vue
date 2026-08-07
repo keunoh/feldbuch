@@ -174,8 +174,7 @@ onUnmounted(() => {
 
   font-size: clamp(140px, 16vw, 260px);
 
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
 
   font-weight: 900;
 
@@ -183,7 +182,7 @@ onUnmounted(() => {
 
   color: rgba(70, 255, 130, .018);
 
-  text-shadow: 0 0 30px rgba(70, 255, 130, .03);
+  text-shadow: var(--text-shadow-watermark);
 
 }
 
@@ -194,14 +193,13 @@ onUnmounted(() => {
   grid-template-columns:
 repeat(4, auto);
 
-  gap: 18px 40px;
+  gap: var(--space-8) 40px;
 
 }
 
 .watermark-grid span {
 
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
 
   font-size: 13px;
 

@@ -265,7 +265,7 @@ onMounted(() => {
   min-height: 100vh;
   justify-content: center;
   align-items: flex-start;
-  padding: 92px 24px 48px;
+  padding: 92px var(--space-10) 48px;
   box-sizing: border-box;
 }
 
@@ -276,14 +276,14 @@ onMounted(() => {
   );
   overflow: hidden;
   border: 1px solid rgba(104, 255, 164, 0.13);
-  border-radius: 10px;
+  border-radius: var(--radius-10);
   background: rgba(
     5,
     10,
     7,
     0.93
   );
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58),
+  box-shadow: var(--shadow-lg),
   0 0 45px rgba(74, 255, 143, 0.035);
   backdrop-filter: blur(12px);
 }
@@ -314,7 +314,7 @@ onMounted(() => {
 .dot {
   width: 9px;
   height: 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-round);
 }
 
 .dot.red {
@@ -336,8 +336,7 @@ onMounted(() => {
     230,
     0.55
   );
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   text-align: center;
 }
@@ -347,10 +346,9 @@ onMounted(() => {
 }
 
 .terminal-command {
-  margin: 0 0 18px;
+  margin: 0 0 var(--space-8);
   color: var(--color-primary);
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 11px;
   font-weight: 700;
 }
@@ -368,12 +366,11 @@ onMounted(() => {
 }
 
 .terminal-log {
-  padding: 15px 16px;
+  padding: 15px var(--space-7);
   border: 1px solid rgba(80, 255, 140, 0.09);
-  border-radius: 6px;
+  border-radius: var(--radius-6);
   background: rgba(1, 4, 2, 0.9);
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 10px;
   line-height: 1.9;
 }
@@ -412,13 +409,12 @@ onMounted(() => {
 }
 
 .oauth-error {
-  padding: 14px 16px;
+  padding: 14px var(--space-7);
   border: 1px solid rgba(255, 92, 92, 0.3);
-  border-radius: 6px;
+  border-radius: var(--radius-6);
   color: #ff8585;
   background: rgba(255, 75, 75, 0.055);
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
   font-size: 11px;
   line-height: 1.7;
 }
@@ -433,7 +429,7 @@ onMounted(() => {
 
 .back-link {
   display: inline-block;
-  margin-top: 14px;
+  margin-top: var(--space-6);
   color: #72ffae;
   text-decoration: none;
 }
@@ -458,7 +454,7 @@ onMounted(() => {
 max-width: 520px
 ) {
   .oauth-success-view {
-    padding: 48px 15px 24px;
+    padding: 48px 15px var(--space-10);
   }
 
   .terminal-content {

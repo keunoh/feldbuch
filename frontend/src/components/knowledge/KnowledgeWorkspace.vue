@@ -132,7 +132,7 @@ watch(
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  padding: 24px;
+  padding: var(--space-10);
   box-sizing: border-box;
   background: radial-gradient(
     circle at 50% 0%,
@@ -146,9 +146,9 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
+  gap: var(--space-7);
+  margin-bottom: var(--space-9);
+  padding-bottom: var(--space-7);
   border-bottom: 1px solid var(--color-border-soft);
 }
 
@@ -161,7 +161,7 @@ watch(
 .workspace-eyebrow {
   margin: 0;
   color: var(--color-primary);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-family-terminal);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -212,7 +212,7 @@ watch(
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: var(--space-4);
   color: var(--color-text-muted);
   font-size: 12px;
 }

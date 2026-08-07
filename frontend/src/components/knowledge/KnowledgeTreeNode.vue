@@ -144,7 +144,7 @@ function selectNode() {
   display: flex;
   align-items: center;
   min-height: 36px;
-  border-radius: 7px;
+  border-radius: var(--radius-7);
   transition: color var(--transition-fast),
   background var(--transition-fast);
 }
@@ -170,10 +170,10 @@ function selectNode() {
 .node-button {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   min-width: 0;
   flex: 1;
-  padding: 7px 8px 7px 0;
+  padding: 7px var(--space-3) 7px 0;
   border: 0;
   color: var(--color-text-soft);
   background: transparent;

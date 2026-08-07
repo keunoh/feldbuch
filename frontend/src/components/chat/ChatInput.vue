@@ -75,7 +75,7 @@ function submit() {
   display: flex;
   align-items: center;
 
-  margin-top: 20px;
+  margin-top: var(--space-9);
 }
 
 .prompt {
@@ -86,14 +86,13 @@ function submit() {
 
   color: var(--color-primary);
 
-  font-family: "JetBrains Mono",
-  monospace;
+  font-family: var(--font-family-terminal);
 
   font-weight: 700;
 
   pointer-events: none;
 
-  text-shadow: 0 0 10px var(--color-primary-glow);
+  text-shadow: var(--text-shadow-primary-medium);
 }
 
 input {
@@ -104,7 +103,7 @@ input {
 
   border: 1px solid var(--color-border);
 
-  border-radius: 18px;
+  border-radius: var(--radius-18);
 
   background: linear-gradient(
     135deg,
@@ -115,7 +114,7 @@ input {
 
   color: var(--color-text);
 
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-sm);
 
   transition: border-color var(--transition-fast),
   box-shadow var(--transition-fast),
@@ -143,7 +142,7 @@ input:focus {
 
   border-color: var(--color-border-primary);
 
-  box-shadow: 0 0 0 4px rgba(66, 245, 123, .08),
+  box-shadow: var(--shadow-focus-strong),
   0 0 24px rgba(66, 245, 123, .08);
 
   outline: none;
@@ -172,9 +171,9 @@ input:disabled {
 
   background: var(--color-primary);
 
-  border-radius: 2px;
+  border-radius: var(--radius-2);
 
-  box-shadow: 0 0 12px rgba(66, 245, 123, .25);
+  box-shadow: var(--shadow-glow-input);
 
   pointer-events: none;
 
@@ -192,7 +191,7 @@ input:disabled {
   opacity: 0.7;
 
   font-size: 12px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-family-terminal);
   letter-spacing: 0.08em;
 
   user-select: none;
@@ -202,7 +201,7 @@ input:disabled {
   color: var(--color-primary);
   opacity: 1;
 
-  text-shadow: 0 0 10px var(--color-primary-glow);
+  text-shadow: var(--text-shadow-primary-medium);
 }
 
 @keyframes terminalCaret {
