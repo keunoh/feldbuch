@@ -29,11 +29,11 @@ public class KnowledgeExtractionScheduler {
     private final Job knowledgeExtractionJob;
 
     /**
-     * 1분마다 지식 추출 대화를 확인한다.
+     * 30분마다 지식 추출 대화를 확인한다.
      */
     @Scheduled(
             fixedDelayString =
-                    "${batch.knowledge-extraction.fixed-delay:60000}"
+                    "${batch.knowledge-extraction.fixed-delay:1800000}"
     )
     public void run() {
 

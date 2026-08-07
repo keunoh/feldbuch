@@ -2,6 +2,7 @@ package io.github.kaltz.feldbuch.config;
 
 import io.github.kaltz.feldbuch.auth.jwt.JwtAuthenticationFilter;
 import io.github.kaltz.feldbuch.auth.oauth2.GoogleOidcUserService;
+import io.github.kaltz.feldbuch.auth.oauth2.OAuth2LoginSuccessHandler;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetailsService;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final GoogleOidcUserService googleOidcUserService;
+    private final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -85,11 +86,15 @@ public class SecurityConfig {
                  * /login/oauth2/code/google
                  */
                 .oauth2Login(oauth2 ->
-                        oauth2.userInfoEndpoint(userInfo ->
-                                userInfo.oidcUserService(
-                                        googleOidcUserService
+                        oauth2
+                                .userInfoEndpoint(userInfo ->
+                                        userInfo.oidcUserService(
+                                                googleOidcUserService
+                                        )
                                 )
-                        )
+                                .successHandler(
+                                        oauth2LoginSuccessHandler
+                                )
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,

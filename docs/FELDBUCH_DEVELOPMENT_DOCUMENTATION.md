@@ -136,7 +136,7 @@ flowchart TD
 - 로컬 Docker 인프라: MySQL, Redis
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
 - Knowledge 추출 스케줄러 간격 설정 키: `batch.knowledge-extraction.fixed-delay`
-- Knowledge 추출 스케줄러 기본 간격: `60000` ms
+- Knowledge 추출 스케줄러 기본 간격: `1800000` ms, 30분
 - Knowledge 추출 배치 Job 이름: `knowledgeExtractionJob`
 - Knowledge 추출 배치 Step 이름: `knowledgeExtractionStep`
 - Conversation 자동 완료 스케줄러 간격 설정 키: `conversation.auto-completion.fixed-delay`
@@ -333,7 +333,7 @@ Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 
 - Step 이름: `knowledgeExtractionStep`
 - 실행 방식: Tasklet 기반 단일 Step
 - 실행 시점: `KnowledgeExtractionScheduler`가 `batch.knowledge-extraction.fixed-delay` 기준으로 대상 존재 여부를 확인한 뒤 Job 실행
-- 기본 스케줄 간격: 60초
+- 기본 스케줄 간격: 30분
 - Scheduler Job Parameter: `requestedAt=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
 - 반복 방식: 한 번 실행할 때 조회된 대상 Conversation 목록을 순회 처리
 - 대상 조건: `status = COMPLETED`이고 `knowledgeExtractStatus = NONE` 또는 재시도 가능한 `FAILED`
