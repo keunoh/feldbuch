@@ -67,3 +67,4 @@ frontend/dist/
 # JPA
 # ==========================
 spy.log
+app.log
