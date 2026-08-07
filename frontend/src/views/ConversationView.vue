@@ -19,6 +19,8 @@ import StudyInfoPanel from '@/components/chat/StudyInfoPanel.vue'
 import WorkspaceSidebar from '@/components/sidebar/WorkspaceSidebar.vue'
 import KnowledgeWorkspace from "@/components/knowledge/KnowledgeWorkspace.vue";
 import {STORAGE_KEYS} from "@/constants/storageKeys.js";
+import {getMe} from "@/api/authApi.js";
+import UserProfilePanel from "@/components/sidebar/UserProfilePanel.vue";
 
 const router = useRouter();
 
@@ -36,6 +38,30 @@ const sendingMessage = ref(false);
 const sidebarMode = ref(loadSidebarMode())
 const storedKnowledgeId = localStorage.getItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_ID);
 const storedKnowledgeNoteId = localStorage.getItem(STORAGE_KEYS.SELECTED_KNOWLEDGE_NOTE_ID);
+
+const currentUser = ref(null)
+const userLoading = ref(false)
+
+async function loadCurrentUser() {
+  userLoading.value = true
+
+  try {
+    const response =
+      await getMe()
+
+    currentUser.value =
+      response.data
+  } catch (error) {
+    console.error(
+      '현재 사용자 조회 실패',
+      error,
+    )
+
+    logoutUser()
+  } finally {
+    userLoading.value = false
+  }
+}
 
 const selectedKnowledgeId = ref(
   storedKnowledgeId && Number.isInteger(Number(storedKnowledgeId))
@@ -449,6 +475,8 @@ onMounted(async () => {
     if (initialConversationId !== null) {
       await selectConversation(initialConversationId);
     }
+
+    await loadCurrentUser()
   } catch (error) {
     console.error(error);
   }
@@ -472,7 +500,15 @@ onMounted(async () => {
       @update-conversation-title="renameConversation"
       @select-knowledge="selectKnowledge"
       @change-mode="changeSidebarMode"
-    />
+    >
+      <template #footer>
+        <UserProfilePanel
+          v-if="currentUser"
+          :user="currentUser"
+          @logout="logoutUser"
+        />
+      </template>
+    </WorkspaceSidebar>
 
     <template v-if="sidebarMode === 'conversation'">
       <main
@@ -486,13 +522,6 @@ onMounted(async () => {
               ?? 'Feldbuch Chat'
             }}
           </h1>
-
-          <button
-            class="logout-button"
-            @click="logoutUser"
-          >
-            로그아웃
-          </button>
         </header>
 
         <div
@@ -521,16 +550,7 @@ onMounted(async () => {
         :knowledge-path="selectedKnowledgePath"
         :selected-note-id="selectedKnowledgeNoteId"
         @select-note="selectKnowledgeNote"
-      >
-        <template #header-action>
-          <button
-            class="logout-button"
-            @click="logoutUser"
-          >
-            로그아웃
-          </button>
-        </template>
-      </KnowledgeWorkspace>
+      />
     </template>
   </div>
 </template>

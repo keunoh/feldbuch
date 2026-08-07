@@ -2,39 +2,46 @@
 import ConversationSidebar from '@/components/sidebar/ConversationSidebar.vue'
 
 import KnowledgeSidebar from '@/components/sidebar/KnowledgeSidebar.vue'
-import SidebarHeader from "@/components/sidebar/SidebarHeader.vue";
-import SidebarTabs from "@/components/sidebar/SidebarTabs.vue";
+
+import SidebarHeader from '@/components/sidebar/SidebarHeader.vue'
+
+import SidebarTabs from '@/components/sidebar/SidebarTabs.vue'
 
 const props = defineProps({
   mode: {
     type: String,
     default: 'conversation',
   },
+
   conversations: {
     type: Array,
     default: () => [],
   },
+
   selectedConversationId: {
     type: Number,
     default: null,
   },
+
   selectedKnowledgeId: {
     type: Number,
     default: null,
   },
+
   creating: {
     type: Boolean,
     default: false,
   },
+
   deletingConversationId: {
     type: Number,
     default: null,
   },
+
   updatingConversationId: {
     type: Number,
     default: null,
   },
-
 })
 
 const emit = defineEmits([
@@ -45,7 +52,6 @@ const emit = defineEmits([
   'select-knowledge',
   'change-mode',
 ])
-
 </script>
 
 <template>
@@ -69,25 +75,51 @@ const emit = defineEmits([
         v-if="props.mode === 'conversation'"
         class="sidebar-content"
         :conversations="props.conversations"
-        :selected-conversation-id="props.selectedConversationId"
+        :selected-conversation-id="
+          props.selectedConversationId
+        "
         :creating="props.creating"
-        :deleting-conversation-id="props.deletingConversationId"
-        :updating-conversation-id="props.updatingConversationId"
-        @select="emit('select-conversation', $event)"
-        @create="emit('create-conversation')"
-        @delete="emit('delete-conversation', $event)"
-        @update-title="emit('update-conversation-title', $event)"
+        :deleting-conversation-id="
+          props.deletingConversationId
+        "
+        :updating-conversation-id="
+          props.updatingConversationId
+        "
+        @select="
+          emit('select-conversation', $event)
+        "
+        @create="
+          emit('create-conversation')
+        "
+        @delete="
+          emit('delete-conversation', $event)
+        "
+        @update-title="
+          emit(
+            'update-conversation-title',
+            $event,
+          )
+        "
       />
 
       <KnowledgeSidebar
         v-else
         class="sidebar-content"
-        :selected-knowledge-id="props.selectedKnowledgeId"
+        :selected-knowledge-id="
+          props.selectedKnowledgeId
+        "
         @select-knowledge="
           emit('select-knowledge', $event)
         "
       />
     </div>
+
+    <footer
+      v-if="$slots.footer"
+      class="sidebar-footer"
+    >
+      <slot name="footer"/>
+    </footer>
   </aside>
 </template>
 
@@ -97,10 +129,10 @@ const emit = defineEmits([
   --sidebar-padding-y: 18px;
 
   display: flex;
-  flex-direction: column;
   width: 290px;
   min-width: 290px;
   height: 100vh;
+  flex-direction: column;
   border-right: 1px solid var(--color-border);
   background: var(--color-surface);
   box-sizing: border-box;
@@ -118,5 +150,16 @@ const emit = defineEmits([
   height: 100%;
   border-right: 0;
   box-sizing: border-box;
+}
+
+.sidebar-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border-soft);
+  background: rgba(
+    3,
+    8,
+    5,
+    0.96
+  );
 }
 </style>

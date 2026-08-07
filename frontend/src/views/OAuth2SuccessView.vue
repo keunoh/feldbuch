@@ -1,127 +1,476 @@
 <script setup>
+import {onMounted, ref,} from 'vue'
 
-import {useRoute, useRouter} from "vue-router";
-import {onMounted, ref} from "vue";
-import {saveAccessToken, saveUserId} from "@/utils/auth.js";
+import {useRoute, useRouter,} from 'vue-router'
+
+import {saveAccessToken, saveUserId,} from '@/utils/auth.js'
+
+import BackgroundStars from '@/components/background/BackgroundStars.vue'
+
+import BackgroundWatermark from '@/components/background/BackgroundWatermark.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const errorMessage = ref('')
+const logs = ref([])
 
-onMounted(async () => {
-  const token = route.query.token
-  const userId = route.query.userId
+function wait(ms) {
+  return new Promise(resolve =>
+    setTimeout(
+      resolve,
+      ms,
+    ),
+  )
+}
 
-  if (!token || typeof token !== 'string' || !userId) {
-    errorMessage.value = '로그인 정보를 확인할 수 없습니다.'
+async function appendLog(
+  message,
+  status = 'progress',
+) {
+  logs.value.push({
+    message,
+    status,
+  })
+
+  await wait(
+    180,
+  )
+}
+
+function completeLastLog(
+  message,
+) {
+  const last =
+    logs.value[
+    logs.value.length - 1
+      ]
+
+  if (!last) {
+    return
+  }
+
+  last.message = message
+  last.status = 'success'
+}
+
+async function completeOAuthLogin() {
+  const token =
+    route.query.token
+
+  const userId =
+    route.query.userId
+
+  if (
+    !token
+    || typeof token !== 'string'
+    || !userId
+  ) {
+    errorMessage.value =
+      'OAuth2 로그인 정보를 확인할 수 없습니다.'
 
     return
   }
 
-  saveAccessToken(token)
-  saveUserId(Number(userId))
+  saveAccessToken(
+    token,
+  )
+
+  saveUserId(
+    Number(userId),
+  )
+
+  await appendLog(
+    'verifying google identity...',
+  )
+
+  await wait(
+    220,
+  )
+
+  completeLastLog(
+    'google identity verified',
+  )
+
+  await appendLog(
+    'binding feldbuch account...',
+  )
+
+  await wait(
+    220,
+  )
+
+  completeLastLog(
+    'feldbuch account linked',
+  )
+
+  await appendLog(
+    'storing access token...',
+  )
+
+  await wait(
+    220,
+  )
+
+  completeLastLog(
+    'access token stored',
+  )
+
+  await appendLog(
+    'opening knowledge workspace...',
+  )
+
+  await wait(
+    450,
+  )
 
   await router.replace(
-    '/conversations'
+    '/conversations',
   )
+}
+
+onMounted(() => {
+  completeOAuthLogin()
 })
 </script>
 
 <template>
-  <main class="oauth2-success-view">
-    <section class="login-state-card">
-      <template v-if="errorMessage">
-        <p class="state-eyebrow">
-          LOGIN ERROR
-        </p>
+  <div class="oauth-success-page">
+    <BackgroundStars/>
+    <BackgroundWatermark/>
 
-        <h1>
-          로그인에 실패했습니다.
-        </h1>
+    <main class="oauth-success-view">
+      <section class="oauth-terminal">
+        <header class="terminal-toolbar">
+          <div
+            class="terminal-dots"
+            aria-hidden="true"
+          >
+            <span class="dot red"/>
+            <span class="dot yellow"/>
+            <span class="dot green"/>
+          </div>
 
-        <p class="state-message">
-          {{ errorMessage }}
-        </p>
+          <span class="terminal-title">
+            feldbuch://auth/oauth2
+          </span>
 
-        <RouterLink
-          to="/login"
-          class="login-link"
-        >
-          로그인 화면으로 돌아가기
-        </RouterLink>
-      </template>
+          <span
+            class="toolbar-spacer"
+            aria-hidden="true"
+          />
+        </header>
 
-      <template v-else>
-        <p class="state-eyebrow">
-          FELDBUCH
-        </p>
+        <div class="terminal-content">
+          <p class="terminal-command">
+            $ oauth2 complete
+          </p>
 
-        <h1>
-          로그인 중입니다.
-        </h1>
+          <template v-if="errorMessage">
+            <div class="oauth-error">
+              <p>
+                <span>
+                  error:
+                </span>
 
-        <p class="state-message">
-          Google 계정을 Feldbuch에 연결하고 있습니다.
-        </p>
-      </template>
-    </section>
-  </main>
+                {{ errorMessage }}
+              </p>
+
+              <RouterLink
+                to="/login"
+                class="back-link"
+              >
+                ❯ return to login
+              </RouterLink>
+            </div>
+          </template>
+
+          <template v-else>
+            <div class="oauth-status">
+              <h1>
+                Authentication complete
+              </h1>
+
+              <p>
+                Preparing your Feldbuch workspace.
+              </p>
+            </div>
+
+            <div
+              class="terminal-log"
+              aria-live="polite"
+            >
+              <p
+                v-for="(log, index) in logs"
+                :key="index"
+                class="terminal-log-line"
+                :class="log.status"
+              >
+                <span
+                  v-if="log.status === 'success'"
+                  class="log-symbol"
+                  aria-hidden="true"
+                >
+                  ✓
+                </span>
+
+                <span
+                  v-else
+                  class="log-symbol"
+                  aria-hidden="true"
+                >
+                  &gt;
+                </span>
+
+                <span>
+                  {{ log.message }}
+                </span>
+
+                <span
+                  v-if="
+                    log.status === 'progress'
+                    && index === logs.length - 1
+                  "
+                  class="terminal-cursor"
+                  aria-hidden="true"
+                >
+                  █
+                </span>
+              </p>
+            </div>
+          </template>
+        </div>
+      </section>
+    </main>
+  </div>
 </template>
 
 <style scoped>
-.oauth2-success-view {
-  display: grid;
+.oauth-success-page {
+  position: relative;
   min-height: 100vh;
-  padding: 24px;
-  place-items: center;
-  background: var(--color-bg);
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 50% -10%,
+    rgba(56, 255, 137, 0.055),
+    transparent 42%
+  ),
+  #030605;
+}
+
+.oauth-success-view {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  min-height: 100vh;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 92px 24px 48px;
   box-sizing: border-box;
 }
 
-.login-state-card {
+.oauth-terminal {
   width: min(
     100%,
-    420px
+    430px
   );
-  padding: 36px;
-  border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-medium);
-  background: var(--color-surface);
+  overflow: hidden;
+  border: 1px solid rgba(104, 255, 164, 0.13);
+  border-radius: 10px;
+  background: rgba(
+    5,
+    10,
+    7,
+    0.93
+  );
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58),
+  0 0 45px rgba(74, 255, 143, 0.035);
+  backdrop-filter: blur(12px);
+}
+
+.terminal-toolbar {
+  display: grid;
+  grid-template-columns:
+    64px
+    1fr
+    64px;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(
+    3,
+    8,
+    5,
+    0.97
+  );
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+}
+
+.dot.red {
+  background: #ff5f57;
+}
+
+.dot.yellow {
+  background: #febc2e;
+}
+
+.dot.green {
+  background: #28c840;
+}
+
+.terminal-title {
+  color: rgba(
+    224,
+    240,
+    230,
+    0.55
+  );
+  font-family: "JetBrains Mono",
+  monospace;
+  font-size: 10px;
   text-align: center;
 }
 
-.state-eyebrow {
-  margin: 0 0 8px;
-  color: var(--color-primary);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+.terminal-content {
+  padding: 30px 32px;
 }
 
-.login-state-card h1 {
+.terminal-command {
+  margin: 0 0 18px;
+  color: var(--color-primary);
+  font-family: "JetBrains Mono",
+  monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.oauth-status h1 {
   margin: 0;
   color: var(--color-text);
-  font-size: 24px;
+  font-size: 23px;
 }
 
-.state-message {
-  margin: 14px 0 0;
+.oauth-status p {
+  margin: 9px 0 22px;
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.terminal-log {
+  padding: 15px 16px;
+  border: 1px solid rgba(80, 255, 140, 0.09);
+  border-radius: 6px;
+  background: rgba(1, 4, 2, 0.9);
+  font-family: "JetBrains Mono",
+  monospace;
+  font-size: 10px;
+  line-height: 1.9;
+}
+
+.terminal-log-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+
+.terminal-log-line.progress {
+  color: rgba(
+    125,
+    255,
+    175,
+    0.7
+  );
+}
+
+.terminal-log-line.success {
+  color: #63ff9f;
+}
+
+.log-symbol {
+  width: 12px;
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.terminal-cursor {
+  margin-left: 1px;
+  color: #72ffae;
+  font-size: 8px;
+  animation: cursor-blink 0.7s steps(1) infinite;
+}
+
+.oauth-error {
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 92, 92, 0.3);
+  border-radius: 6px;
+  color: #ff8585;
+  background: rgba(255, 75, 75, 0.055);
+  font-family: "JetBrains Mono",
+  monospace;
+  font-size: 11px;
   line-height: 1.7;
 }
 
-.login-link {
+.oauth-error p {
+  margin: 0;
+}
+
+.oauth-error span {
+  font-weight: 700;
+}
+
+.back-link {
   display: inline-block;
-  margin-top: 24px;
-  color: var(--color-primary);
-  font-size: 14px;
+  margin-top: 14px;
+  color: #72ffae;
   text-decoration: none;
 }
 
-.login-link:hover {
+.back-link:hover {
   text-decoration: underline;
+}
+
+@keyframes cursor-blink {
+  0%,
+  48% {
+    opacity: 1;
+  }
+
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (
+max-width: 520px
+) {
+  .oauth-success-view {
+    padding: 48px 15px 24px;
+  }
+
+  .terminal-content {
+    padding: 26px 21px;
+  }
+}
+
+@media (
+prefers-reduced-motion: reduce
+) {
+  .terminal-cursor {
+    animation: none;
+  }
 }
 </style>
