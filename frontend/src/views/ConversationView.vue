@@ -626,25 +626,6 @@ onMounted(async () => {
   text-shadow: var(--text-shadow-primary-strong);
 }
 
-.logout-button {
-  flex-shrink: 0;
-  padding: var(--space-3) var(--space-5);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-small);
-  color: var(--color-text-soft);
-  background: var(--color-surface);
-  cursor: pointer;
-  transition: color var(--transition-fast),
-  border-color var(--transition-fast),
-  background var(--transition-fast);
-}
-
-.logout-button:hover {
-  color: var(--color-primary);
-  border-color: var(--color-border-primary);
-  background: var(--color-primary-soft);
-}
-
 .messages {
   flex: 1;
   min-height: 0;

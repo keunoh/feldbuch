@@ -73,14 +73,14 @@ body {
 
   color: var(--color-text);
   background: radial-gradient(
-    circle at 50% -20%,
-    rgba(66, 245, 123, 0.06),
-    transparent 32%
+    circle at 50% -30%,
+    rgba(66, 245, 123, .05),
+    transparent 45%
   ),
   linear-gradient(
     180deg,
-    var(--color-bg) 0%,
-    var(--color-bg-deep) 100%
+    #06080b,
+    #040608
   );
 
   font-family: var(--font-family-base);

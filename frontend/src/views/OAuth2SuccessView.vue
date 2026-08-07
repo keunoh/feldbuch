@@ -5,10 +5,6 @@ import {useRoute, useRouter,} from 'vue-router'
 
 import {saveAccessToken, saveUserId,} from '@/utils/auth.js'
 
-import BackgroundStars from '@/components/background/BackgroundStars.vue'
-
-import BackgroundWatermark from '@/components/background/BackgroundWatermark.vue'
-
 const route = useRoute()
 const router = useRouter()
 
@@ -136,9 +132,6 @@ onMounted(() => {
 
 <template>
   <div class="oauth-success-page">
-    <BackgroundStars/>
-    <BackgroundWatermark/>
-
     <main class="oauth-success-view">
       <section class="oauth-terminal">
         <header class="terminal-toolbar">

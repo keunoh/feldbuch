@@ -7,10 +7,6 @@ import {login,} from '@/api/authApi.js'
 
 import {saveAccessToken, saveUserId,} from '@/utils/auth.js'
 
-import BackgroundStars from '@/components/background/BackgroundStars.vue'
-
-import BackgroundWatermark from '@/components/background/BackgroundWatermark.vue'
-
 const router = useRouter()
 
 const email = ref('')
@@ -200,11 +196,17 @@ async function loginUser() {
 
 <template>
   <div class="login-page">
-    <BackgroundStars/>
-
-    <BackgroundWatermark/>
-
     <main class="login-view">
+      <div
+        class="background-terminal"
+        aria-hidden="true"
+      >
+        <div class="terminal-prompt">
+          whoami@feldbuch:~$
+          <span class="cursor">_</span>
+        </div>
+      </div>
+
       <section class="login-shell">
         <header class="terminal-header">
           <div class="terminal-toolbar">
@@ -254,12 +256,8 @@ async function loginUser() {
 
         <div class="login-content">
           <header class="login-header">
-            <p class="login-command">
-              $ authenticate
-            </p>
-
             <h1>
-              Login
+              Authenticate
             </h1>
 
             <p class="login-description">
@@ -451,12 +449,32 @@ async function loginUser() {
   position: relative;
   min-height: 100vh;
   overflow: hidden;
+
   background: radial-gradient(
-    circle at 50% -10%,
-    rgba(56, 255, 137, 0.055),
-    transparent 42%
+    circle at top,
+    rgba(66, 245, 123, .025),
+    transparent 45%
   ),
-  #030605;
+  linear-gradient(
+    180deg,
+    #050706 0%,
+    #020302 100%
+  );
+}
+
+.login-page::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  opacity: .03;
+
+  background-image: radial-gradient(#fff 0.4px, transparent 0.4px);
+
+  background-size: 8px 8px;
 }
 
 .login-view {
@@ -472,22 +490,35 @@ async function loginUser() {
 
 .login-shell {
   position: relative;
-  width: min(
-    100%,
-    420px
-  );
+
+  width: min(100%, 420px);
+
   overflow: hidden;
-  border: 1px solid rgba(104, 255, 164, 0.13);
+
+  border: 1px solid rgba(90, 255, 150, .16);
+
   border-radius: var(--radius-10);
-  background: rgba(
-    5,
-    10,
-    7,
-    0.93
+
+  background: rgba(6, 9, 7, .97);
+
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .62),
+  0 0 18px rgba(66, 245, 123, .04);
+}
+
+.login-shell::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, .025),
+    transparent 18%
   );
-  box-shadow: var(--shadow-lg),
-  0 0 45px rgba(74, 255, 143, 0.035);
-  backdrop-filter: blur(12px);
 }
 
 .terminal-header {
@@ -593,12 +624,6 @@ async function loginUser() {
   );
 }
 
-.session-cursor {
-  margin-left: 3px;
-  font-size: 8px;
-  animation: cursor-blink 0.8s steps(1) infinite;
-}
-
 .login-content {
   padding: 30px 32px 26px;
 }
@@ -608,18 +633,17 @@ async function loginUser() {
 }
 
 .login-command {
-  margin: 0 0 9px;
-  color: var(--color-primary);
-  font-family: var(--font-family-terminal);
-  font-size: 11px;
-  font-weight: 700;
+  color: #6fffad;
+
+  opacity: .82;
 }
 
 .login-header h1 {
-  margin: 0;
-  color: var(--color-text);
-  font-size: 25px;
-  line-height: 1.3;
+  font-size: 26px;
+
+  letter-spacing: .03em;
+
+  color: #f2fff7;
 }
 
 .login-description {
@@ -1028,10 +1052,40 @@ max-width: 520px
   }
 }
 
+.background-terminal {
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+}
+
+.terminal-prompt {
+  position: absolute;
+
+  top: 34px;
+  left: 38px;
+
+  color: rgba(95, 255, 155, .45);
+
+  font-family: var(--font-family-terminal);
+
+  font-size: 12px;
+
+  letter-spacing: .04em;
+
+  user-select: none;
+}
+
+.cursor {
+
+  color: rgba(120, 255, 170, .75);
+
+  animation: cursor-blink .9s infinite;
+}
+
 @media (
 prefers-reduced-motion: reduce
 ) {
-  .session-cursor,
   .terminal-cursor {
     animation: none;
   }
