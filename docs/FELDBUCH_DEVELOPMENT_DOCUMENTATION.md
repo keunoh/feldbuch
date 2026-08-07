@@ -12,14 +12,16 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 사용자 화면은 `frontend/src/views/LoginView.vue`와 `frontend/src/views/ConversationView.vue`를 중심으로 구성합니다.
 
-- 로그인 화면은 터미널 콘셉트의 이메일/비밀번호 로그인 폼과 Google OAuth2 로그인 진입 버튼을 제공합니다.
+- 로그인 화면은 터미널 콘셉트의 `Authenticate` UI로 이메일/비밀번호 로그인, Google OAuth2 로그인 진입 버튼, 인증 진행 로그를 제공합니다.
 - `WorkspaceSidebar`가 왼쪽 고정 영역에서 `대화`와 `지식` 탭을 전환합니다.
+- `WorkspaceSidebar` 하단의 `UserProfilePanel`은 현재 사용자 이름, 이메일, Provider/Role, 인증 상태, 세션 시작 시각, 설정/로그아웃 메뉴를 표시합니다.
 - `대화` 모드에서는 대화 목록, 채팅 메시지, 입력창, 선택 대화의 학습 정보 패널을 렌더링합니다.
 - `지식` 모드에서는 Knowledge 폴더 트리, 선택 폴더의 KnowledgeNote 목록, 선택 노트의 상세 요약과 키워드를 렌더링합니다.
 - Knowledge 폴더는 `KnowledgeRootCategory` 대분류와 `KnowledgeCategory` 세부 카테고리 기준으로 생성됩니다.
 - Knowledge 폴더와 노트 목록은 검색을 지원하고, 검색어는 `SearchHighlight`로 강조합니다.
 - 선택한 사이드바 모드, 대화, Knowledge 폴더, Knowledge 경로, Knowledge 노트는 `localStorage`에 저장해 새로고침 후 복원합니다.
 - 대화 메시지 전송은 사용자 메시지와 빈 Assistant 메시지를 낙관적으로 추가한 뒤 SSE 토큰을 누적 표시하고, 완료 후 상세를 재조회합니다.
+- 첫 사용자 메시지로 생성되는 대화 제목은 전송 직후 짧게 재조회해 사이드바의 새 대화 제목을 빠르게 갱신합니다.
 - 메시지가 저장될 때 Conversation은 ACTIVE 상태와 `lastMessageAt`을 갱신하며, 완료된 대화에 새 메시지가 추가되면 다음 증분 Knowledge 추출을 위해 추출 상태를 다시 `NONE`으로 준비합니다.
 
 ## Screens
@@ -36,8 +38,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 | --- | --- |
 | Language | Java 21 |
 | Framework | Spring Boot 3.5 |
-| Security | Spring Security, JWT |
-| Auth Config | Google OAuth2 client properties |
+| Security | Spring Security, JWT, OAuth2 Client |
+| Auth Config | Google OAuth2/OIDC client properties |
 | Database | MySQL, H2 Test DB |
 | ORM / Query | Spring Data JPA, QueryDSL |
 | AI | OpenAI REST API, OpenAI SSE Streaming |
@@ -63,10 +65,13 @@ flowchart TD
 
 ## Implemented Features
 
-- Spring Security, JWT 로그인, JWT Claims 기반 `userId`, `email`, `role` 저장
+- Spring Security, JWT 로그인, JWT Claims 기반 `userId`, `email`, `role`, `provider` 저장
 - CustomUserDetails, JWT Filter, JWT AuthenticationEntryPoint 401 처리
 - Vite 개발 서버 `http://localhost:5173` CORS 허용
-- 회원가입, 로그인, 클라이언트 로그아웃
+- 회원가입, 이메일/비밀번호 로그인, Google OAuth2 로그인, 클라이언트 로그아웃
+- 현재 로그인 사용자 조회 API `GET /api/auth/me`
+- Google OIDC 사용자 조회, 기존 이메일 계정 연동, 신규 Google 사용자 자동 생성
+- OAuth2 로그인 성공 시 JWT 발급과 `http://localhost:5173/oauth2/success` 리다이렉트
 - RestClient 기반 OpenAI 일반 요청
 - WebClient 기반 OpenAI Chat Completion SSE 스트리밍
 - Conversation Entity, Controller, Command/Query Service
@@ -102,11 +107,12 @@ flowchart TD
 - KnowledgeNote의 Knowledge별/Conversation별/사용자별/타입별 조회 쿼리
 - Knowledge Tree 조회 API, KnowledgeNote 목록/상세 조회 API, Conversation별 통합 노트 조회 API
 - Thymeleaf 기반 로그인/대화 비교 화면
-- Vue 3 + Vite SPA: `LoginView`, `ConversationView`
-- Vue 컴포넌트: `WorkspaceSidebar`, `SidebarHeader`, `SidebarTabs`, `SidebarSectionLabel`, `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`, `KnowledgeSidebar`, `KnowledgeTreeNode`, `KnowledgeWorkspace`, `KnowledgeNoteList`, `KnowledgeNoteDetail`, `SearchHighlight`
+- Vue 3 + Vite SPA: `LoginView`, `OAuth2SuccessView`, `ConversationView`
+- Vue 컴포넌트: `WorkspaceSidebar`, `SidebarHeader`, `SidebarTabs`, `SidebarSectionLabel`, `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`, `UserProfilePanel`, `SettingsModal`, `KnowledgeSidebar`, `KnowledgeTreeNode`, `KnowledgeWorkspace`, `KnowledgeNoteList`, `KnowledgeNoteDetail`, `SearchHighlight`
 - 새 대화 생성, 대화 제목 인라인 수정, 대화 삭제 UI
 - 대화 생성/수정/삭제/메시지 전송 중복 요청 방지 상태
 - 메시지 전송 중 AI 응답 작성 로딩 표시
+- 첫 메시지 전송 후 생성 제목 재조회와 사이드바 제목 갱신
 - 메시지 목록 자동 스크롤
 - AI 응답 Markdown 렌더링, highlight.js 코드 문법 강조, DOMPurify sanitize
 - 코드 블록 언어 표시와 클립보드 COPY 버튼
@@ -135,7 +141,10 @@ flowchart TD
 - Google OAuth2 client-id 설정 키: `GOOGLE_CLIENT_ID`
 - Google OAuth2 client-secret 설정 키: `GOOGLE_CLIENT_SECRET`
 - Google OAuth2 scope: `openid`, `profile`, `email`
-- 현재 Spring Security와 Vue 로그인 흐름은 JWT 폼 로그인 중심이며, OAuth2 인증 플로우는 아직 연결하지 않았습니다.
+- Vue 로그인 화면은 JWT 폼 로그인과 Google OAuth2 로그인 진입점을 함께 제공합니다.
+- Google OAuth2 시작 경로: `/oauth2/authorization/google`
+- Google OAuth2 콜백 경로: `/login/oauth2/code/google`
+- Google OAuth2 성공 리다이렉트: `http://localhost:5173/oauth2/success?token={jwt}&userId={id}`
 - 로컬 Docker 인프라: MySQL, Redis
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
 - Knowledge 추출 스케줄러 간격 설정 키: `batch.knowledge-extraction.fixed-delay`
@@ -241,14 +250,20 @@ flowchart TD
     Browser --> VueApp
     VueApp --> Router
     Router --> LoginView
+    Router --> OAuth2SuccessView
     Router --> ConversationView
     Router --> RouterGuard
     RouterGuard --> AuthUtil
 
     LoginView --> AuthApi
+    LoginView --> GoogleOAuth2
+    OAuth2SuccessView --> AuthUtil
     ConversationView --> WorkspaceSidebar
+    ConversationView --> AuthApi
     WorkspaceSidebar --> ConversationSidebar
     WorkspaceSidebar --> KnowledgeSidebar
+    WorkspaceSidebar --> UserProfilePanel
+    UserProfilePanel --> SettingsModal
     KnowledgeSidebar --> KnowledgeTreeNode
 
     ConversationView --> ConversationApi
@@ -280,6 +295,8 @@ flowchart TD
 - 요청 본문은 JSON을 사용합니다.
 - 일반 응답은 `ApiResponse<T>` 형식으로 통일하고 실제 데이터는 `data` 필드에 담습니다.
 - 로그인 성공 시 `accessToken`, `userId`를 `localStorage`에 저장합니다.
+- Google OAuth2 성공 시 서버가 JWT와 사용자 ID를 Vue 성공 화면으로 전달하고, `OAuth2SuccessView`가 이를 `localStorage`에 저장합니다.
+- `GET /api/auth/me`는 로그인 사용자 프로필 패널의 `email`, `nickname`, `role`, `provider` 값을 제공합니다.
 - Axios Request Interceptor가 `Authorization: Bearer <accessToken>` 헤더를 자동으로 추가합니다.
 - Axios Response Interceptor가 `401 Unauthorized`를 감지하면 `logout()`으로 클라이언트 토큰을 제거하고 `/login`으로 이동합니다.
 - Fetch 기반 SSE 스트리밍 함수는 `Authorization` 헤더를 직접 추가합니다.
@@ -290,6 +307,9 @@ flowchart TD
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/api/auth/login` | 로그인 |
+| `GET` | `/api/auth/me` | 현재 로그인 사용자 조회 |
+| `GET` | `/oauth2/authorization/google` | Google OAuth2 로그인 시작 |
+| `GET` | `/login/oauth2/code/google` | Google OAuth2 인증 콜백 |
 | `POST` | `/api/users/signup` | 회원가입 |
 | `GET` | `/api/users/me` | 내 정보 조회 |
 | `GET` | `/api/conversations` | 대화 목록 조회 |
@@ -406,9 +426,11 @@ frontend/src
 ├── api
 ├── assets
 ├── components
+│   ├── background
 │   ├── chat
 │   ├── common
 │   ├── knowledge
+│   ├── settings
 │   └── sidebar
 ├── constants
 ├── router
@@ -427,6 +449,8 @@ frontend/src
 - 비활성 ACTIVE 대화 자동 완료 후 Knowledge 추출 대상으로 연결
 - `lastExtractedMessageId` 기반 증분 Knowledge 추출
 - 낙관적 사용자 메시지와 스트리밍 Assistant 메시지 렌더링
+- OAuth2 성공 화면에서 JWT 저장 후 대화 워크스페이스로 이동
+- 현재 사용자 조회 결과를 사이드바 사용자 프로필과 설정 모달에 반영
 - Markdown 렌더링과 sanitize 책임을 `markdownRenderer.js`로 분리
 - Knowledge 폴더 트리 자기 참조 모델링
 - 고정 `KnowledgeCategory` 기반 폴더 구조로 AI의 임의 폴더 생성 방지
@@ -443,7 +467,7 @@ frontend/src
 
 ## Roadmap
 
-- OAuth2 로그인 플로우 연결
+- OAuth2 운영 리다이렉트 URL 환경 분리
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
