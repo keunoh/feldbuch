@@ -4,6 +4,7 @@ public record AuthMeResponse(
         Long userId,
         String email,
         String nickname,
-        String role
+        String role,
+        String provider
 ) {
 }

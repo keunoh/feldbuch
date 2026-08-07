@@ -1,6 +1,7 @@
 package io.github.kaltz.feldbuch.auth.oauth2;
 
 import io.github.kaltz.feldbuch.auth.jwt.JwtProvider;
+import io.github.kaltz.feldbuch.user.entity.AuthProvider;
 import io.github.kaltz.feldbuch.user.entity.User;
 import io.github.kaltz.feldbuch.user.reader.UserReader;
 import jakarta.servlet.ServletException;
@@ -37,7 +38,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 jwtProvider.createAccessToken(
                         user.getId(),
                         user.getEmail(),
-                        user.getRole().name()
+                        user.getRole().name(),
+                        AuthProvider.GOOGLE.name()
                 );
 
         String redirectUrl =

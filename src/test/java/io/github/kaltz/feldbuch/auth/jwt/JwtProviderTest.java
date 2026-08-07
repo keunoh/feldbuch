@@ -2,6 +2,7 @@ package io.github.kaltz.feldbuch.auth.jwt;
 
 
 import io.github.kaltz.feldbuch.config.JwtProperties;
+import io.github.kaltz.feldbuch.user.entity.AuthProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,9 +32,10 @@ class JwtProviderTest {
         Long userId = 1L;
         String email = "test@test.com";
         String role = "USER";
+        String provider = AuthProvider.LOCAL.name();
 
         // when
-        String token = jwtProvider.createAccessToken(userId, email, role);
+        String token = jwtProvider.createAccessToken(userId, email, role, provider);
 
         // then
         System.out.println("TOKEN = " + token);
@@ -42,5 +44,6 @@ class JwtProviderTest {
         assertThat(jwtProvider.getUserId(token)).isEqualTo(userId);
         assertThat(jwtProvider.getEmail(token)).isEqualTo(email);
         assertThat(jwtProvider.getRole(token)).isEqualTo(role);
+        assertThat(jwtProvider.getProvider(token)).isEqualTo(provider);
     }
 }

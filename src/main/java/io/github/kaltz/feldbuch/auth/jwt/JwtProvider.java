@@ -27,7 +27,7 @@ public class JwtProvider {
         );
     }
 
-    public String createAccessToken(Long userId, String email, String role) {
+    public String createAccessToken(Long userId, String email, String role, String provider) {
 
         Date now = new Date();
 
@@ -44,6 +44,7 @@ public class JwtProvider {
                 .subject(String.valueOf(userId))
                 .claim("email", email)
                 .claim("role", role)
+                .claim("provider", provider)
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)
@@ -79,5 +80,9 @@ public class JwtProvider {
 
     public String getRole(String token) {
         return parseClaims(token).get("role", String.class);
+    }
+
+    public String getProvider(String token) {
+        return parseClaims(token).get("provider", String.class);
     }
 }

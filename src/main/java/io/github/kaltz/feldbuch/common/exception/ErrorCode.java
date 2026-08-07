@@ -22,6 +22,7 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH-001", "이메일 또는 비밀번호가 올바르지 않습니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "ATUH-002", "접근 권한이 없습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH-003", "로그인이 필요합니다."),
+    TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH-004", "Access Token을 확인할 수 없습니다."),
 
     // Note
     NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTE-001", "노트를 찾을 수 없습니다."),

@@ -6,6 +6,7 @@ import io.github.kaltz.feldbuch.auth.dto.response.LoginResponse;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
 import io.github.kaltz.feldbuch.auth.service.AuthService;
 import io.github.kaltz.feldbuch.common.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,15 +31,14 @@ public class AuthController {
 
     @GetMapping("/me")
     public ApiResponse<AuthMeResponse> me(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request
     ) {
 
         return ApiResponse.success(
-                new AuthMeResponse(
-                        userDetails.getUserId(),
-                        userDetails.getUsername(),
-                        userDetails.getUser().getNickname(),
-                        userDetails.getUser().getRole().name()
+                authService.getCurrentUser(
+                        userDetails,
+                        request
                 )
         );
     }

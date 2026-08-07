@@ -82,6 +82,17 @@ function logout() {
       </span>
     </div>
 
+    <div class="profile-meta">
+        <span class="provider-badge">
+          {{ user.provider }}
+        </span>
+
+      <span class="role-badge">
+          {{ user.role }}
+        </span>
+    </div>
+
+
     <div class="auth-status">
       <span
         class="status-dot"
@@ -260,6 +271,31 @@ function logout() {
 .logout-button:hover
 .logout-prompt {
   color: #58ff99;
+}
+
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.provider-badge,
+.role-badge {
+  padding: 3px 6px;
+  border: 1px solid rgba(96, 255, 157, 0.14);
+  border-radius: 4px;
+  color: rgba(112, 255, 169, 0.72);
+  background: rgba(82, 255, 143, 0.035);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 7px;
+  letter-spacing: 0.05em;
+}
+
+.role-badge {
+  color: rgba(205, 224, 211, 0.42);
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 @keyframes cursor-blink {

@@ -1,9 +1,14 @@
 package io.github.kaltz.feldbuch.auth.service;
 
 import io.github.kaltz.feldbuch.auth.dto.request.LoginRequest;
+import io.github.kaltz.feldbuch.auth.dto.response.AuthMeResponse;
 import io.github.kaltz.feldbuch.auth.dto.response.LoginResponse;
 import io.github.kaltz.feldbuch.auth.jwt.JwtProvider;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
+import io.github.kaltz.feldbuch.common.exception.CustomException;
+import io.github.kaltz.feldbuch.common.exception.ErrorCode;
+import io.github.kaltz.feldbuch.user.entity.AuthProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,7 +40,8 @@ public class AuthService {
                 jwtProvider.createAccessToken(
                         userDetails.getUserId(),
                         userDetails.getUsername(),
-                        userDetails.getUser().getRole().name()
+                        userDetails.getUser().getRole().name(),
+                        AuthProvider.LOCAL.name()
                 );
 
         return new LoginResponse(
@@ -43,5 +49,33 @@ public class AuthService {
                 accessToken,
                 "Bearer"
         );
+    }
+
+    public AuthMeResponse getCurrentUser(
+            CustomUserDetails userDetails,
+            HttpServletRequest request
+    ) {
+        String token = resolveToken(request);
+
+        String provider = jwtProvider.getProvider(token);
+
+        return new AuthMeResponse(
+                userDetails.getUserId(),
+                userDetails.getUsername(),
+                userDetails.getUser().getNickname(),
+                userDetails.getUser().getRole().name(),
+                provider
+        );
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            
+            throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+        }
+
+        return authorization.substring(7);
     }
 }
