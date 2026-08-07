@@ -6,11 +6,13 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ## Screens
 
+![Feldbuch Login Screen](docs/images/screenshots/feldbuch-login-screen.png)
+
 ![Feldbuch Main Chat Screen](docs/images/screenshots/feldbuch-main-chat-screen.png)
 
 ![Feldbuch Knowledge Notes Screen](docs/images/screenshots/feldbuch-knowledge-notes-screen.png)
 
-현재 메인 화면은 `frontend/`의 Vue 3 + Vite SPA입니다. 왼쪽 `WorkspaceSidebar`에서 대화와 지식 폴더 탭을 전환하고, 대화 모드에서는 AI 채팅과 학습 정보 패널을, 지식 모드에서는 Knowledge 폴더의 추출 노트 목록과 상세 요약을 보여줍니다.
+현재 사용자 화면은 `frontend/`의 Vue 3 + Vite SPA입니다. 로그인 화면은 터미널 콘셉트의 폼 로그인과 Google 로그인 진입점을 제공하고, 메인 화면은 왼쪽 `WorkspaceSidebar`에서 대화와 지식 폴더 탭을 전환합니다. 대화 모드에서는 AI 채팅과 학습 정보 패널을, 지식 모드에서는 Knowledge 폴더의 추출 노트 목록과 상세 요약을 보여줍니다.
 
 ## Current Scope
 

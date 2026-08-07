@@ -10,8 +10,9 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ## Current Product Surface
 
-메인 사용자 화면은 `frontend/src/views/ConversationView.vue`입니다.
+사용자 화면은 `frontend/src/views/LoginView.vue`와 `frontend/src/views/ConversationView.vue`를 중심으로 구성합니다.
 
+- 로그인 화면은 터미널 콘셉트의 이메일/비밀번호 로그인 폼과 Google OAuth2 로그인 진입 버튼을 제공합니다.
 - `WorkspaceSidebar`가 왼쪽 고정 영역에서 `대화`와 `지식` 탭을 전환합니다.
 - `대화` 모드에서는 대화 목록, 채팅 메시지, 입력창, 선택 대화의 학습 정보 패널을 렌더링합니다.
 - `지식` 모드에서는 Knowledge 폴더 트리, 선택 폴더의 KnowledgeNote 목록, 선택 노트의 상세 요약과 키워드를 렌더링합니다.
@@ -22,6 +23,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 메시지가 저장될 때 Conversation은 ACTIVE 상태와 `lastMessageAt`을 갱신하며, 완료된 대화에 새 메시지가 추가되면 다음 증분 Knowledge 추출을 위해 추출 상태를 다시 `NONE`으로 준비합니다.
 
 ## Screens
+
+![Feldbuch Login Screen](./images/screenshots/feldbuch-login-screen.png)
 
 ![Feldbuch Main Chat Screen](./images/screenshots/feldbuch-main-chat-screen.png)
 
