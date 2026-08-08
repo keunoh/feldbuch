@@ -1,4 +1,4 @@
-package io.github.kaltz.feldbuch.conversation.scheduler;
+package io.github.kaltz.feldbuch.batch.scheduler;
 
 import io.github.kaltz.feldbuch.conversation.service.ConversationCompletionService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class ConversationCompletionScheduler {
 
     @Scheduled(
             fixedDelayString =
-                    "${conversation.auto-completion.fixed-delay:60000}"
+                    "${conversation.auto-completion.fixed-delay:10m}"
     )
     public void run() {
         try {
