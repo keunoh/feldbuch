@@ -10,9 +10,10 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ## Current Product Surface
 
-사용자 화면은 `frontend/src/views/LoginView.vue`와 `frontend/src/views/ConversationView.vue`를 중심으로 구성합니다.
+사용자 화면은 `frontend/src/views/LoginView.vue`, `frontend/src/views/SignUpView.vue`, `frontend/src/views/ConversationView.vue`를 중심으로 구성합니다.
 
 - 로그인 화면은 터미널 콘셉트의 `Authenticate` UI로 이메일/비밀번호 로그인, Google OAuth2 로그인 진입 버튼, 인증 진행 로그를 제공합니다.
+- 회원가입 화면은 터미널 콘셉트의 `Create Account` UI로 nickname, email, password를 입력받고 가입 성공 후 로그인 화면으로 이동합니다.
 - `WorkspaceSidebar`가 왼쪽 고정 영역에서 `대화`와 `지식` 탭을 전환합니다.
 - `WorkspaceSidebar` 하단의 `UserProfilePanel`은 현재 사용자 이름, 이메일, Provider/Role, 인증 상태, 세션 시작 시각, 설정/로그아웃 메뉴를 표시합니다.
 - `대화` 모드에서는 대화 목록, 채팅 메시지, 입력창, 선택 대화의 학습 정보 패널을 렌더링합니다.
@@ -27,6 +28,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 ## Screens
 
 ![Feldbuch Login Screen](./images/screenshots/feldbuch-login-screen.png)
+
+![Feldbuch Signup Screen](./images/screenshots/feldbuch-signup-screen.png)
 
 ![Feldbuch Main Chat Screen](./images/screenshots/feldbuch-main-chat-screen.png)
 
@@ -69,6 +72,7 @@ flowchart TD
 - CustomUserDetails, JWT Filter, JWT AuthenticationEntryPoint 401 처리
 - Vite 개발 서버 `http://localhost:5173` CORS 허용
 - 회원가입, 이메일/비밀번호 로그인, Google OAuth2 로그인, 클라이언트 로그아웃
+- 회원가입 요청 검증: email 필수/이메일 형식, password 8-20자, nickname 2-20자
 - 현재 로그인 사용자 조회 API `GET /api/auth/me`
 - Google OIDC 사용자 조회, 기존 이메일 계정 연동, 신규 Google 사용자 자동 생성
 - OAuth2 로그인 성공 시 JWT 발급과 `http://localhost:5173/oauth2/success` 리다이렉트
@@ -107,8 +111,9 @@ flowchart TD
 - KnowledgeNote의 Knowledge별/Conversation별/사용자별/타입별 조회 쿼리
 - Knowledge Tree 조회 API, KnowledgeNote 목록/상세 조회 API, Conversation별 통합 노트 조회 API
 - Thymeleaf 기반 로그인/대화 비교 화면
-- Vue 3 + Vite SPA: `LoginView`, `OAuth2SuccessView`, `ConversationView`
+- Vue 3 + Vite SPA: `LoginView`, `SignUpView`, `OAuth2SuccessView`, `ConversationView`
 - Vue 컴포넌트: `WorkspaceSidebar`, `SidebarHeader`, `SidebarTabs`, `SidebarSectionLabel`, `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`, `UserProfilePanel`, `SettingsModal`, `KnowledgeSidebar`, `KnowledgeTreeNode`, `KnowledgeWorkspace`, `KnowledgeNoteList`, `KnowledgeNoteDetail`, `SearchHighlight`
+- 로그인 화면의 회원가입 이동 링크와 회원가입 화면의 로그인 복귀 링크
 - 새 대화 생성, 대화 제목 인라인 수정, 대화 삭제 UI
 - 대화 생성/수정/삭제/메시지 전송 중복 요청 방지 상태
 - 메시지 전송 중 AI 응답 작성 로딩 표시
@@ -142,6 +147,7 @@ flowchart TD
 - Google OAuth2 client-secret 설정 키: `GOOGLE_CLIENT_SECRET`
 - Google OAuth2 scope: `openid`, `profile`, `email`
 - Vue 로그인 화면은 JWT 폼 로그인과 Google OAuth2 로그인 진입점을 함께 제공합니다.
+- Vue 회원가입 화면은 `/signup`에서 제공하며, 가입 성공 후 `/login`으로 이동합니다.
 - Google OAuth2 시작 경로: `/oauth2/authorization/google`
 - Google OAuth2 콜백 경로: `/login/oauth2/code/google`
 - Google OAuth2 성공 리다이렉트: `http://localhost:5173/oauth2/success?token={jwt}&userId={id}`
@@ -250,6 +256,7 @@ flowchart TD
     Browser --> VueApp
     VueApp --> Router
     Router --> LoginView
+    Router --> SignUpView
     Router --> OAuth2SuccessView
     Router --> ConversationView
     Router --> RouterGuard
@@ -257,6 +264,7 @@ flowchart TD
 
     LoginView --> AuthApi
     LoginView --> GoogleOAuth2
+    SignUpView --> AuthApi
     OAuth2SuccessView --> AuthUtil
     ConversationView --> WorkspaceSidebar
     ConversationView --> AuthApi
@@ -294,6 +302,8 @@ flowchart TD
 
 - 요청 본문은 JSON을 사용합니다.
 - 일반 응답은 `ApiResponse<T>` 형식으로 통일하고 실제 데이터는 `data` 필드에 담습니다.
+- 회원가입은 `POST /api/users/signup`으로 수행하며, `email`, `password`, `nickname`을 전송합니다.
+- 회원가입 성공 시 `SignupResponse(id, email, nickname)`를 받고 Vue는 `/login`으로 이동합니다.
 - 로그인 성공 시 `accessToken`, `userId`를 `localStorage`에 저장합니다.
 - Google OAuth2 성공 시 서버가 JWT와 사용자 ID를 Vue 성공 화면으로 전달하고, `OAuth2SuccessView`가 이를 `localStorage`에 저장합니다.
 - `GET /api/auth/me`는 로그인 사용자 프로필 패널의 `email`, `nickname`, `role`, `provider` 값을 제공합니다.
@@ -310,7 +320,7 @@ flowchart TD
 | `GET` | `/api/auth/me` | 현재 로그인 사용자 조회 |
 | `GET` | `/oauth2/authorization/google` | Google OAuth2 로그인 시작 |
 | `GET` | `/login/oauth2/code/google` | Google OAuth2 인증 콜백 |
-| `POST` | `/api/users/signup` | 회원가입 |
+| `POST` | `/api/users/signup` | 회원가입. email, password, nickname 입력 |
 | `GET` | `/api/users/me` | 내 정보 조회 |
 | `GET` | `/api/conversations` | 대화 목록 조회 |
 | `POST` | `/api/conversations` | 새 대화 생성 |
@@ -559,6 +569,7 @@ frontend/src
 - 비활성 ACTIVE 대화 자동 완료 후 Knowledge 추출 대상으로 연결
 - `lastExtractedMessageId` 기반 증분 Knowledge 추출
 - 낙관적 사용자 메시지와 스트리밍 Assistant 메시지 렌더링
+- 회원가입 성공 후 로그인 화면으로 이동해 인증 흐름을 단순하게 유지
 - OAuth2 성공 화면에서 JWT 저장 후 대화 워크스페이스로 이동
 - 현재 사용자 조회 결과를 사이드바 사용자 프로필과 설정 모달에 반영
 - Markdown 렌더링과 sanitize 책임을 `markdownRenderer.js`로 분리

@@ -8,15 +8,18 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ![Feldbuch Login Screen](docs/images/screenshots/feldbuch-login-screen.png)
 
+![Feldbuch Signup Screen](docs/images/screenshots/feldbuch-signup-screen.png)
+
 ![Feldbuch Main Chat Screen](docs/images/screenshots/feldbuch-main-chat-screen.png)
 
 ![Feldbuch Knowledge Notes Screen](docs/images/screenshots/feldbuch-knowledge-notes-screen.png)
 
-현재 사용자 화면은 `frontend/`의 Vue 3 + Vite SPA입니다. 로그인 화면은 터미널 콘셉트의 이메일/비밀번호 인증과 Google OAuth2 로그인을 제공합니다. 메인 화면은 왼쪽 `WorkspaceSidebar`에서 대화와 지식 폴더 탭을 전환하고, 하단 사용자 프로필 패널에서 로그인 사용자, 인증 Provider, 설정/로그아웃 진입점을 보여줍니다. 대화 모드에서는 AI 채팅과 학습 정보 패널을, 지식 모드에서는 Knowledge 폴더의 추출 노트 목록과 상세 요약을 보여줍니다.
+현재 사용자 화면은 `frontend/`의 Vue 3 + Vite SPA입니다. 로그인 화면은 터미널 콘셉트의 이메일/비밀번호 인증과 Google OAuth2 로그인을 제공하고, 회원가입 화면은 nickname/email/password 입력 기반 계정 생성을 제공합니다. 메인 화면은 왼쪽 `WorkspaceSidebar`에서 대화와 지식 폴더 탭을 전환하고, 하단 사용자 프로필 패널에서 로그인 사용자, 인증 Provider, 설정/로그아웃 진입점을 보여줍니다. 대화 모드에서는 AI 채팅과 학습 정보 패널을, 지식 모드에서는 Knowledge 폴더의 추출 노트 목록과 상세 요약을 보여줍니다.
 
 ## Current Scope
 
 - JWT 기반 회원가입, 이메일/비밀번호 로그인, Google OAuth2 로그인, 클라이언트 로그아웃
+- Vue 터미널 스타일 로그인/회원가입 화면과 상호 이동 링크
 - Spring Security 인증/인가와 Vite 개발 서버 CORS 허용
 - 현재 로그인 사용자 조회 API와 Provider/Role 기반 사용자 프로필 패널
 - Conversation 생성, 목록/상세 조회, 제목 수정, 삭제
@@ -72,7 +75,9 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 - 앞으로의 사용자 화면은 `frontend/`의 Vue 3 + Vite SPA를 중심으로 진행합니다.
 - Spring Boot 내부 Thymeleaf 로그인/대화 화면은 비교용 기준 구현으로 유지합니다.
-- Vue Router는 `/login`, `/oauth2/success`, `/conversations` 라우트를 관리하고, 인증이 필요한 화면은 Router Guard로 보호합니다.
+- Vue Router는 `/login`, `/signup`, `/oauth2/success`, `/conversations` 라우트를 관리하고, 인증이 필요한 화면은 Router Guard로 보호합니다.
+- `LoginView`는 이메일/비밀번호 로그인, Google 로그인, 회원가입 이동 링크를 제공합니다.
+- `SignUpView`는 nickname, email, password를 입력받아 `POST /api/users/signup` 호출 후 `/login`으로 이동합니다.
 - `ConversationView`는 화면 조립 지점입니다.
 - `WorkspaceSidebar`는 대화/지식 탭 전환, 사이드바 공통 레이아웃, footer 슬롯 기반 사용자 프로필 영역을 담당합니다.
 - 대화 모드에서는 `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`을 조합합니다.
@@ -88,6 +93,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 - 클라이언트와 백엔드는 JSON 기반 REST API로 통신합니다.
 - 공통 응답은 `ApiResponse<T>` 형식이며, 실제 데이터는 `data` 필드에 담습니다.
+- 회원가입은 `POST /api/users/signup`으로 수행하며, `email`, `password`, `nickname`을 전송합니다.
 - 로그인은 `POST /api/auth/login`으로 수행하고, 응답의 `accessToken`을 `localStorage`에 보관합니다.
 - 현재 사용자 정보는 `GET /api/auth/me`로 조회하며, 응답의 `email`, `nickname`, `role`, `provider`를 사용자 프로필 패널에 사용합니다.
 - Google OAuth2 로그인은 `GET /oauth2/authorization/google`에서 시작하고, 성공 후 서버가 `/oauth2/success` Vue 라우트로 JWT와 사용자 ID를 전달합니다.
@@ -162,7 +168,7 @@ frontend/src
 ├── constants        # localStorage key 등 클라이언트 상수
 ├── router           # Vue Router와 인증 Guard
 ├── utils            # 인증/Markdown 렌더링 유틸리티
-└── views            # LoginView, OAuth2SuccessView, ConversationView
+└── views            # LoginView, SignUpView, OAuth2SuccessView, ConversationView
 ```
 
 ## Documentation
