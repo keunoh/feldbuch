@@ -5,6 +5,7 @@ import {isAuthenticated} from "@/utils/auth.js";
 import LoginView from "@/views/LoginView.vue";
 import ConversationView from "@/views/ConversationView.vue";
 import OAuth2SuccessView from "@/views/OAuth2SuccessView.vue";
+import SignUpView from "@/views/SignUpView.vue";
 
 const routes = [
   {
@@ -15,6 +16,11 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginView,
+  },
+  {
+    path: '/signup',
+    name: 'signup',
+    component: SignUpView,
   },
   {
     path: '/oauth2/success',

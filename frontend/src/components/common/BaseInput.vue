@@ -102,6 +102,14 @@ const inputClasses = computed(() => [
   transition: border-color var(--transition-fast),
   box-shadow var(--transition-fast),
   background var(--transition-fast);
+
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .base-input:hover:not(.disabled) {
@@ -113,8 +121,7 @@ const inputClasses = computed(() => [
 
   background: var(--color-terminal-bg-3);
 
-  box-shadow: var(--shadow-focus-login),
-  0 0 18px var(--color-primary-a040);
+  box-shadow: inset 0 0 0 1px var(--color-primary-a080);
 }
 
 .base-input.error {

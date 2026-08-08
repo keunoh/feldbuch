@@ -399,6 +399,19 @@ async function loginUser() {
             }}
           </BaseButton>
 
+          <div class="signup-navigation">
+            <span>
+              new to feldbuch?
+            </span>
+
+            <RouterLink
+              to="/signup"
+              class="signup-link"
+            >
+              create account
+            </RouterLink>
+          </div>
+
           <footer class="login-footer">
             <span
               class="status-dot"
@@ -675,6 +688,12 @@ async function loginUser() {
   box-shadow: var(--shadow-glow-login-status);
 }
 
+.session-cursor {
+  color: var(--color-login-background-cursor);
+
+  animation: cursor-blink 0.9s infinite;
+}
+
 
 @keyframes cursor-blink {
   0%,
@@ -733,6 +752,32 @@ max-width: 520px
   color: var(--color-login-background-cursor);
 
   animation: cursor-blink .9s infinite;
+}
+
+.signup-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: var(--space-3);
+
+  margin-top: var(--space-9);
+
+  color: var(--color-text-muted);
+
+  font-family: var(--font-family-terminal);
+
+  font-size: var(--font-size-sm);
+}
+
+.signup-link {
+  color: var(--color-terminal-green-text);
+
+  text-decoration: none;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
 }
 
 @media (

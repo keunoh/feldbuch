@@ -54,7 +54,7 @@ const props = defineProps({
 }
 
 .command {
-  flex: 1;
+  display: inline;
 }
 
 .cursor {

@@ -5,6 +5,11 @@ export async function login(request) {
   return response.data;
 }
 
+export async function signup(request) {
+  const response = await apiClient.post('/users/signup', request);
+  return response.data;
+}
+
 export async function getMe() {
   const response = await apiClient.get('/auth/me');
   return response.data;
