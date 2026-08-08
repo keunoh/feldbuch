@@ -286,17 +286,17 @@ onBeforeUnmount(() => {
   width: 50px;
   height: 50px;
   margin-top: 2px;
-  border: 1px solid rgba(66, 245, 123, 0.34);
+  border: 1px solid var(--color-primary-a340);
   border-radius: var(--radius-13);
   color: var(--color-primary);
   background: linear-gradient(
     135deg,
-    rgba(66, 245, 123, 0.11),
-    rgba(66, 245, 123, 0.025)
+    var(--color-primary-a110),
+    var(--color-primary-a025)
   ),
   var(--color-surface);
   box-shadow: var(--shadow-inset-top-medium),
-  0 0 20px rgba(66, 245, 123, 0.07);
+  0 0 20px var(--color-primary-a070);
   overflow: hidden;
 }
 
@@ -320,7 +320,7 @@ onBeforeUnmount(() => {
   right: 7px;
   left: 7px;
   height: 1px;
-  background: rgba(66, 245, 123, 0.16);
+  background: var(--color-primary-a160);
   content: "";
 }
 
@@ -372,7 +372,7 @@ onBeforeUnmount(() => {
 }
 
 .user .message-time {
-  color: rgba(196, 181, 253, 0.7);
+  color: var(--color-purple-text);
 }
 
 .role-name {
@@ -392,10 +392,10 @@ onBeforeUnmount(() => {
 
 .user-symbol {
   padding: 2px 6px;
-  border: 1px solid rgba(139, 92, 246, 0.24);
+  border: 1px solid var(--color-purple-border);
   border-radius: var(--radius-5);
   color: var(--color-accent-purple);
-  background: rgba(139, 92, 246, 0.07);
+  background: var(--color-purple-soft);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -403,10 +403,10 @@ onBeforeUnmount(() => {
 
 .processing-label {
   padding: 2px 6px;
-  border: 1px solid rgba(66, 245, 123, 0.2);
+  border: 1px solid var(--color-primary-a200);
   border-radius: var(--radius-5);
   color: var(--color-primary);
-  background: rgba(66, 245, 123, 0.055);
+  background: var(--color-primary-a055);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -431,9 +431,9 @@ onBeforeUnmount(() => {
 
 .bubble:hover {
   transform: translateY(-1px);
-  border-color: rgba(66, 245, 123, 0.3);
+  border-color: var(--color-primary-a300);
   box-shadow: var(--shadow-sm),
-  0 0 24px rgba(66, 245, 123, 0.05);
+  0 0 24px var(--color-primary-a050);
 }
 
 /* Feldbuch 메시지 */
@@ -442,7 +442,7 @@ onBeforeUnmount(() => {
   border-top-left-radius: 4px;
   background: linear-gradient(
     135deg,
-    rgba(66, 245, 123, 0.035),
+    var(--color-primary-a035),
     transparent 42%
   ),
   var(--color-surface);
@@ -454,12 +454,12 @@ onBeforeUnmount(() => {
   border-bottom-right-radius: 4px;
   background: linear-gradient(
     135deg,
-    rgba(139, 92, 246, 0.16),
-    rgba(66, 245, 123, 0.07)
+    var(--color-purple-medium),
+    var(--color-primary-a070)
   ),
   var(--color-surface-raised);
   box-shadow: var(--shadow-sm),
-  0 0 20px rgba(139, 92, 246, 0.07);
+  0 0 20px var(--color-purple-soft);
 }
 
 /* 메시지 본문 */
@@ -513,7 +513,7 @@ onBeforeUnmount(() => {
   border-left: 3px solid var(--color-accent-cyan);
   border-radius: 0 var(--radius-small) var(--radius-small) 0;
   color: var(--color-text-soft);
-  background: rgba(94, 234, 212, 0.06);
+  background: var(--color-cyan-soft);
 }
 
 .content :deep(code) {
@@ -547,7 +547,7 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--color-border);
   background: linear-gradient(
     90deg,
-    rgba(66, 245, 123, 0.055),
+    var(--color-primary-a055),
     transparent 55%
   ),
   var(--color-surface-raised);
@@ -570,7 +570,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-6);
   color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--color-white-a025);
   font-family: var(--font-family-terminal);
   font-size: 9px;
   font-weight: 700;
@@ -586,17 +586,17 @@ onBeforeUnmount(() => {
 .content :deep(.code-copy-button:hover) {
   transform: translateY(-1px);
   color: var(--color-primary);
-  border-color: rgba(66, 245, 123, 0.38);
-  background: rgba(66, 245, 123, 0.08);
+  border-color: var(--color-primary-a380);
+  background: var(--color-primary-a080);
   box-shadow: var(--shadow-glow-14);
 }
 
 .content :deep(.code-copy-button.copied) {
   color: var(--color-primary);
-  border-color: rgba(66, 245, 123, 0.48);
-  background: rgba(66, 245, 123, 0.12);
+  border-color: var(--color-primary-a480);
+  background: var(--color-primary-a120);
   box-shadow: var(--shadow-inset-glow-soft),
-  0 0 16px rgba(66, 245, 123, 0.1);
+  0 0 16px var(--color-primary-a100);
   text-shadow: var(--text-shadow-primary-soft);
 }
 
@@ -612,7 +612,7 @@ onBeforeUnmount(() => {
   border-radius: 0;
   background: linear-gradient(
     180deg,
-    rgba(66, 245, 123, 0.02),
+    var(--color-primary-a020),
     transparent 35%
   ),
   var(--color-bg-deep);
@@ -654,12 +654,12 @@ onBeforeUnmount(() => {
 }
 
 .content :deep(td) {
-  background: rgba(13, 19, 26, 0.65);
+  background: var(--color-surface-translucent);
 }
 
 .content :deep(a) {
   color: var(--color-accent-cyan);
-  text-decoration-color: rgba(94, 234, 212, 0.45);
+  text-decoration-color: var(--color-cyan-decoration);
   text-underline-offset: 3px;
 }
 
@@ -676,8 +676,8 @@ onBeforeUnmount(() => {
 
 .content :deep(.code-copy-button.copy-failed) {
   color: var(--color-danger);
-  border-color: rgba(248, 113, 113, 0.48);
-  background: rgba(248, 113, 113, 0.1);
+  border-color: var(--color-danger-strong-border);
+  background: var(--color-danger-strong-soft);
   box-shadow: var(--shadow-glow-error);
 }
 
@@ -765,15 +765,15 @@ onBeforeUnmount(() => {
 @keyframes avatarPulse {
   0%,
   100% {
-    border-color: rgba(66, 245, 123, 0.25);
+    border-color: var(--color-primary-a250);
     box-shadow: var(--shadow-inset-top-medium),
-    0 0 12px rgba(66, 245, 123, 0.04);
+    0 0 12px var(--color-primary-a040);
   }
 
   50% {
-    border-color: rgba(66, 245, 123, 0.55);
+    border-color: var(--color-primary-a550);
     box-shadow: var(--shadow-inset-top-medium),
-    0 0 24px rgba(66, 245, 123, 0.13);
+    0 0 24px var(--color-primary-a130);
   }
 }
 

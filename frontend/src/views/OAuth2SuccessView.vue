@@ -245,10 +245,10 @@ onMounted(() => {
   overflow: hidden;
   background: radial-gradient(
     circle at 50% -10%,
-    rgba(56, 255, 137, 0.055),
+    var(--color-oauth-background-glow),
     transparent 42%
   ),
-  #030605;
+  var(--color-terminal-bg-1);
 }
 
 .oauth-success-view {
@@ -268,14 +268,9 @@ onMounted(() => {
     430px
   );
   overflow: hidden;
-  border: 1px solid rgba(104, 255, 164, 0.13);
+  border: 1px solid var(--color-oauth-border);
   border-radius: var(--radius-10);
-  background: rgba(
-    5,
-    10,
-    7,
-    0.93
-  );
+  background: var(--color-terminal-surface-muted);
   box-shadow: var(--shadow-lg),
   0 0 45px rgba(74, 255, 143, 0.035);
   backdrop-filter: blur(12px);
@@ -290,13 +285,8 @@ onMounted(() => {
   align-items: center;
   min-height: 40px;
   padding: 0 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  background: rgba(
-    3,
-    8,
-    5,
-    0.97
-  );
+  border-bottom: 1px solid var(--color-white-a040);
+  background: var(--color-terminal-surface);
 }
 
 .terminal-dots {
@@ -311,15 +301,15 @@ onMounted(() => {
 }
 
 .dot.red {
-  background: #ff5f57;
+  background: var(--color-terminal-red);
 }
 
 .dot.yellow {
-  background: #febc2e;
+  background: var(--color-terminal-yellow);
 }
 
 .dot.green {
-  background: #28c840;
+  background: var(--color-terminal-green);
 }
 
 .terminal-title {
@@ -360,9 +350,9 @@ onMounted(() => {
 
 .terminal-log {
   padding: 15px var(--space-7);
-  border: 1px solid rgba(80, 255, 140, 0.09);
+  border: 1px solid var(--color-login-section-border);
   border-radius: var(--radius-6);
-  background: rgba(1, 4, 2, 0.9);
+  background: var(--color-login-terminal);
   font-family: var(--font-family-terminal);
   font-size: 10px;
   line-height: 1.9;
@@ -385,7 +375,7 @@ onMounted(() => {
 }
 
 .terminal-log-line.success {
-  color: #63ff9f;
+  color: var(--color-terminal-green-success);
 }
 
 .log-symbol {
@@ -396,17 +386,17 @@ onMounted(() => {
 
 .terminal-cursor {
   margin-left: 1px;
-  color: #72ffae;
+  color: var(--color-terminal-green-cursor);
   font-size: 8px;
   animation: cursor-blink 0.7s steps(1) infinite;
 }
 
 .oauth-error {
   padding: 14px var(--space-7);
-  border: 1px solid rgba(255, 92, 92, 0.3);
+  border: 1px solid var(--color-danger-login-border);
   border-radius: var(--radius-6);
-  color: #ff8585;
-  background: rgba(255, 75, 75, 0.055);
+  color: var(--color-danger-login);
+  background: var(--color-danger-login-soft);
   font-family: var(--font-family-terminal);
   font-size: 11px;
   line-height: 1.7;
@@ -423,7 +413,7 @@ onMounted(() => {
 .back-link {
   display: inline-block;
   margin-top: var(--space-6);
-  color: #72ffae;
+  color: var(--color-terminal-green-cursor);
   text-decoration: none;
 }
 

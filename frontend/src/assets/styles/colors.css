@@ -1,0 +1,348 @@
+/*
+ * Feldbuch Color Tokens
+ *
+ * Primitive → Semantic 구조로 관리한다.
+ * 이 파일에서는 자기 자신을 var()로 참조하지 않는다.
+ */
+
+:root {
+  /* =========================================================
+   * Base / Background
+   * ========================================================= */
+
+  --color-bg: #080c11;
+  --color-bg-deep: #05080c;
+
+  --color-surface: #0d131a;
+  --color-surface-raised: #111922;
+  --color-surface-hover: #15202a;
+
+  --color-surface-translucent: rgba(13, 19, 26, 0.65);
+
+  --color-surface-panel: rgba(13, 19, 26, 0.98);
+
+  --color-surface-deep: rgba(5, 8, 12, 0.98);
+
+  /* =========================================================
+   * Primary
+   * ========================================================= */
+
+  --color-primary: #42f57b;
+  --color-primary-strong: #22e864;
+
+  --color-primary-transparent: rgba(66, 245, 123, 0);
+
+  --color-primary-a018: rgba(66, 245, 123, 0.018);
+
+  --color-primary-a020: rgba(66, 245, 123, 0.02);
+
+  --color-primary-a025: rgba(66, 245, 123, 0.025);
+
+  --color-primary-a030: rgba(66, 245, 123, 0.03);
+
+  --color-primary-a035: rgba(66, 245, 123, 0.035);
+
+  --color-primary-a040: rgba(66, 245, 123, 0.04);
+
+  --color-primary-a050: rgba(66, 245, 123, 0.05);
+
+  --color-primary-a055: rgba(66, 245, 123, 0.055);
+
+  --color-primary-a060: rgba(66, 245, 123, 0.06);
+
+  --color-primary-a070: rgba(66, 245, 123, 0.07);
+
+  --color-primary-a080: rgba(66, 245, 123, 0.08);
+
+  --color-primary-a090: rgba(66, 245, 123, 0.09);
+
+  --color-primary-a100: rgba(66, 245, 123, 0.1);
+
+  --color-primary-a110: rgba(66, 245, 123, 0.11);
+
+  --color-primary-a120: rgba(66, 245, 123, 0.12);
+
+  --color-primary-a130: rgba(66, 245, 123, 0.13);
+
+  --color-primary-a150: rgba(66, 245, 123, 0.15);
+
+  --color-primary-a160: rgba(66, 245, 123, 0.16);
+
+  --color-primary-a200: rgba(66, 245, 123, 0.2);
+
+  --color-primary-a250: rgba(66, 245, 123, 0.25);
+
+  --color-primary-a300: rgba(66, 245, 123, 0.3);
+
+  --color-primary-a340: rgba(66, 245, 123, 0.34);
+
+  --color-primary-a380: rgba(66, 245, 123, 0.38);
+
+  --color-primary-a480: rgba(66, 245, 123, 0.48);
+
+  --color-primary-a550: rgba(66, 245, 123, 0.55);
+
+  --color-primary-soft: var(--color-primary-a120);
+
+  --color-primary-glow: var(--color-primary-a250);
+
+  /* =========================================================
+   * Accent
+   * ========================================================= */
+
+  --color-accent-cyan: #5eead4;
+  --color-accent-purple: #8b5cf6;
+
+  --color-cyan-soft: rgba(94, 234, 212, 0.06);
+
+  --color-cyan-surface: rgba(94, 234, 212, 0.08);
+
+  --color-cyan-border: rgba(94, 234, 212, 0.25);
+
+  --color-cyan-decoration: rgba(94, 234, 212, 0.45);
+
+  --color-purple-text: rgba(196, 181, 253, 0.7);
+
+  --color-purple-soft: rgba(139, 92, 246, 0.07);
+
+  --color-purple-medium: rgba(139, 92, 246, 0.16);
+
+  --color-purple-border: rgba(139, 92, 246, 0.24);
+
+  /* =========================================================
+   * Text
+   * ========================================================= */
+
+  --color-text: #e7edf3;
+  --color-text-soft: #c2ccd6;
+  --color-text-muted: #7f8b99;
+  --color-text-disabled: #56616d;
+
+  /* =========================================================
+   * Border
+   * ========================================================= */
+
+  --color-border: #26313c;
+
+  --color-border-soft: rgba(148, 163, 184, 0.14);
+
+  --color-border-primary: var(--color-primary-a550);
+
+  /* =========================================================
+   * Status
+   * ========================================================= */
+
+  --color-success: #42f57b;
+  --color-danger: #fb7185;
+  --color-warning: #facc15;
+
+  --color-danger-soft: rgba(251, 113, 133, 0.09);
+
+  --color-danger-border: rgba(251, 113, 133, 0.24);
+
+  --color-danger-strong-soft: rgba(248, 113, 113, 0.1);
+
+  --color-danger-strong-border: rgba(248, 113, 113, 0.48);
+
+  --color-danger-login: #ff8585;
+
+  --color-danger-login-soft: rgba(255, 75, 75, 0.055);
+
+  --color-danger-login-border: rgba(255, 92, 92, 0.3);
+
+  --color-danger-action-soft: rgba(255, 90, 90, 0.04);
+
+  --color-danger-action-soft-strong: rgba(255, 90, 90, 0.045);
+
+  --color-danger-action-border: rgba(255, 100, 100, 0.18);
+
+  /* =========================================================
+   * White overlays
+   * ========================================================= */
+
+  --color-white: #ffffff;
+
+  --color-white-a012: rgba(255, 255, 255, 0.012);
+
+  --color-white-a015: rgba(255, 255, 255, 0.015);
+
+  --color-white-a020: rgba(255, 255, 255, 0.02);
+
+  --color-white-a025: rgba(255, 255, 255, 0.025);
+
+  --color-white-a035: rgba(255, 255, 255, 0.035);
+
+  --color-white-a040: rgba(255, 255, 255, 0.04);
+
+  --color-white-a045: rgba(255, 255, 255, 0.045);
+
+  --color-white-a050: rgba(255, 255, 255, 0.05);
+
+  --color-white-a055: rgba(255, 255, 255, 0.055);
+
+  --color-white-a060: rgba(255, 255, 255, 0.06);
+
+  --color-white-a065: rgba(255, 255, 255, 0.065);
+
+  --color-white-a095: rgba(255, 255, 255, 0.095);
+
+  --color-white-a100: rgba(255, 255, 255, 0.1);
+
+  /* =========================================================
+   * Terminal Window
+   * ========================================================= */
+
+  --color-terminal-red: #ff5f57;
+  --color-terminal-yellow: #febc2e;
+  --color-terminal-green: #28c840;
+
+  /* =========================================================
+   * Terminal Green
+   * ========================================================= */
+
+  --color-terminal-green-bright: #59ff99;
+
+  --color-terminal-green-text: #6effaa;
+
+  --color-terminal-green-text-alt: #6dffaa;
+
+  --color-terminal-green-text-soft: #75ffaf;
+
+  --color-terminal-green-login: #6fffad;
+
+  --color-terminal-green-button: #77ffb2;
+
+  --color-terminal-green-prompt: #4cff91;
+
+  --color-terminal-green-success: #63ff9f;
+
+  --color-terminal-green-cursor: #72ffae;
+
+  --color-terminal-green-dot: #56ff98;
+
+  /* =========================================================
+   * Terminal Dark Surfaces
+   * ========================================================= */
+
+  --color-terminal-bg-0: #020302;
+
+  --color-terminal-bg-1: #030605;
+
+  --color-terminal-bg-2: #020503;
+
+  --color-terminal-bg-3: #030704;
+
+  --color-terminal-bg-4: #080c09;
+
+  --color-terminal-button-top: #173221;
+
+  --color-terminal-button-bottom: #0d1d13;
+
+  /* =========================================================
+   * Terminal Surface
+   * ========================================================= */
+
+  --color-terminal-surface: rgba(3, 8, 5, 0.97);
+
+  --color-terminal-surface-soft: rgba(8, 13, 10, 0.9);
+
+  --color-terminal-surface-deep: rgba(3, 7, 5, 0.97);
+
+  --color-terminal-surface-muted: rgba(5, 10, 7, 0.93);
+
+  --color-terminal-surface-raised: rgba(4, 9, 6, 0.98);
+
+  --color-terminal-overlay: rgba(0, 3, 1, 0.72);
+
+  /* =========================================================
+   * Terminal Primary Surface
+   * ========================================================= */
+
+  --color-terminal-primary-soft: rgba(82, 255, 143, 0.035);
+
+  --color-terminal-primary-soft-strong: rgba(82, 255, 143, 0.05);
+
+  --color-terminal-primary-hover: rgba(82, 255, 143, 0.045);
+
+  --color-terminal-border: rgba(96, 255, 157, 0.14);
+
+  /* =========================================================
+   * Terminal Text
+   * ========================================================= */
+
+  --color-terminal-text: #dcebe1;
+
+  --color-terminal-title: #f2fff7;
+
+  --color-terminal-text-strong: rgba(240, 247, 242, 0.9);
+
+  --color-terminal-text-soft: rgba(218, 234, 223, 0.75);
+
+  --color-terminal-text-muted: rgba(205, 224, 211, 0.55);
+
+  --color-terminal-text-disabled: rgba(205, 224, 211, 0.42);
+
+  /* =========================================================
+   * Terminal Primary Text
+   * ========================================================= */
+
+  --color-terminal-primary-text: rgba(112, 255, 169, 0.72);
+
+  --color-terminal-primary-text-soft: rgba(112, 255, 169, 0.7);
+
+  --color-terminal-primary-muted: rgba(89, 255, 153, 0.38);
+
+  --color-terminal-primary-disabled: rgba(89, 255, 153, 0.2);
+
+  /* =========================================================
+   * Login
+   * ========================================================= */
+
+  --color-login-bg-start: #050706;
+
+  --color-login-panel: rgba(6, 9, 7, 0.97);
+
+  --color-login-terminal: rgba(1, 4, 2, 0.9);
+
+  --color-login-white: var(--color-white);
+
+  --color-login-caret: #64ffa1;
+
+  --color-login-border: rgba(102, 255, 157, 0.14);
+
+  --color-login-border-hover: rgba(102, 255, 157, 0.23);
+
+  --color-login-border-focus: rgba(91, 255, 151, 0.7);
+
+  --color-login-prefix: rgba(88, 255, 148, 0.82);
+
+  --color-login-button-border: rgba(82, 255, 143, 0.3);
+
+  --color-login-button-border-hover: rgba(82, 255, 143, 0.52);
+
+  --color-login-section-border: rgba(80, 255, 140, 0.09);
+
+  --color-login-background-prompt: rgba(95, 255, 155, 0.45);
+
+  --color-login-background-cursor: rgba(120, 255, 170, 0.75);
+
+  /* =========================================================
+   * OAuth
+   * ========================================================= */
+
+  --color-oauth-background-glow: rgba(56, 255, 137, 0.055);
+
+  --color-oauth-border: rgba(104, 255, 164, 0.13);
+
+  /* =========================================================
+   * Neutral / Utility
+   * ========================================================= */
+
+  --color-neutral-soft: rgba(127, 139, 153, 0.08);
+
+  --color-search-highlight: rgba(255, 214, 10, 0.35);
+
+  --color-knowledge-code-bg: #0b0f14;
+
+  --color-knowledge-code-text: #d7e0ea;
+}

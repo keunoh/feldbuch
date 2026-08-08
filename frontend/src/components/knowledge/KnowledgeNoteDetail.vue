@@ -510,7 +510,7 @@ watch(
   overflow-x: auto;
   border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-10);
-  background: #0b0f14;
+  background: var(--color-knowledge-code-bg);
 }
 
 .markdown-content :deep(pre code) {
@@ -518,7 +518,7 @@ watch(
   min-width: max-content;
   padding: 42px var(--space-8) var(--space-8);
   border: 0;
-  color: #d7e0ea;
+  color: var(--color-knowledge-code-text);
   background: transparent;
   font-size: 13px;
   line-height: 1.7;
@@ -534,7 +534,7 @@ watch(
   border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-5);
   color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--color-white-a040);
   font-family: var(--font-family-terminal);
   font-size: 9px;
   letter-spacing: 0.08em;

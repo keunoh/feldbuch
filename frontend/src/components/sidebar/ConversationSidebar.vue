@@ -261,9 +261,9 @@ function formatConversationTime(conversation) {
   height: 4px;
   border-radius: 50%;
   background: var(--color-primary);
-  box-shadow: -18px -26px 0 rgba(66, 245, 123, 0.2),
-  -42px -8px 0 rgba(66, 245, 123, 0.12),
-  -70px -34px 0 rgba(66, 245, 123, 0.08);
+  box-shadow: -18px -26px 0 var(--color-primary-a200),
+  -42px -8px 0 var(--color-primary-a120),
+  -70px -34px 0 var(--color-primary-a080);
   content: "";
   pointer-events: none;
 }
@@ -285,13 +285,13 @@ function formatConversationTime(conversation) {
   color: var(--color-primary);
   background: linear-gradient(
     135deg,
-    rgba(66, 245, 123, 0.08),
+    var(--color-primary-a080),
     transparent 58%
   ),
   var(--color-surface);
 
   box-shadow: var(--shadow-inset-top),
-  0 0 0 rgba(66, 245, 123, 0);
+  0 0 0 var(--color-primary-transparent);
 
   font-family: var(--font-family-terminal);
   font-size: 13px;
@@ -311,7 +311,7 @@ function formatConversationTime(conversation) {
   border-color: var(--color-primary);
   background: linear-gradient(
     135deg,
-    rgba(66, 245, 123, 0.15),
+    var(--color-primary-a150),
     transparent 62%
   ),
   var(--color-surface-raised);
@@ -376,16 +376,16 @@ function formatConversationTime(conversation) {
 .conversation-item:hover {
   color: var(--color-text-soft);
   border-color: var(--color-border-soft);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--color-white-a025);
 }
 
 .conversation-item.selected {
   color: var(--color-primary);
-  border-color: rgba(66, 245, 123, 0.09);
+  border-color: var(--color-primary-a090);
   background: linear-gradient(
     90deg,
-    rgba(66, 245, 123, 0.13),
-    rgba(66, 245, 123, 0.035)
+    var(--color-primary-a130),
+    var(--color-primary-a035)
   );
   box-shadow: var(--shadow-inset-glow);
 }
@@ -443,7 +443,7 @@ function formatConversationTime(conversation) {
   color: var(--color-text);
   background: var(--color-bg-deep);
   box-shadow: var(--shadow-focus-subtle),
-  0 0 16px rgba(66, 245, 123, 0.06);
+  0 0 16px var(--color-primary-a060);
   font-family: var(--font-family-terminal);
   font-size: 12px;
 }
@@ -506,8 +506,8 @@ function formatConversationTime(conversation) {
 
 .delete-button:hover:not(:disabled) {
   color: var(--color-danger);
-  border-color: rgba(251, 113, 133, 0.24);
-  background: rgba(251, 113, 133, 0.09);
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-soft);
 }
 
 .delete-button:disabled {
@@ -525,7 +525,7 @@ function formatConversationTime(conversation) {
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-medium);
   color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--color-white-a015);
   font-family: var(--font-family-terminal);
   text-align: center;
 }

@@ -74,6 +74,6 @@ const segments = computed(() => {
   padding: 0 2px;
   border-radius: var(--radius-3);
   color: var(--color-text);
-  background: rgba(255, 214, 10, 0.35);
+  background: var(--color-search-highlight);
 }
 </style>

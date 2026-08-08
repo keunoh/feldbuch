@@ -1,6 +1,7 @@
+@import './styles/colors.css';
 @import './styles/typography.css';
 @import './styles/spacing.css';
-@import "./styles/radius.css";
+@import './styles/radius.css';
 @import './styles/shadow.css';
 
 :root {
@@ -16,8 +17,8 @@
   /* Brand */
   --color-primary: #42f57b;
   --color-primary-strong: #22e864;
-  --color-primary-soft: rgba(66, 245, 123, 0.12);
-  --color-primary-glow: rgba(66, 245, 123, 0.25);
+  --color-primary-soft: var(--color-primary-a120);
+  --color-primary-glow: var(--color-primary-a250);
 
   /* Supporting accents */
   --color-accent-cyan: #5eead4;
@@ -32,7 +33,7 @@
   /* Borders */
   --color-border: #26313c;
   --color-border-soft: rgba(148, 163, 184, 0.14);
-  --color-border-primary: rgba(66, 245, 123, 0.55);
+  --color-border-primary: var(--color-primary-a550);
 
   /* Status */
   --color-success: #42f57b;

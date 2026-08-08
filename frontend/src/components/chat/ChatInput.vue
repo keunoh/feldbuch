@@ -107,7 +107,7 @@ input {
 
   background: linear-gradient(
     135deg,
-    rgba(66, 245, 123, .03),
+    var(--color-primary-a030),
     transparent 45%
   ),
   var(--color-surface);
@@ -143,7 +143,7 @@ input:focus {
   border-color: var(--color-border-primary);
 
   box-shadow: var(--shadow-focus-strong),
-  0 0 24px rgba(66, 245, 123, .08);
+  0 0 24px var(--color-primary-a080);
 
   outline: none;
 }

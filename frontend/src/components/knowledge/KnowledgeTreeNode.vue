@@ -150,7 +150,7 @@ function selectNode() {
 }
 
 .node-row:hover {
-  background: rgba(66, 245, 123, 0.055);
+  background: var(--color-primary-a055);
 }
 
 .toggle-button {

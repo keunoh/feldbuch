@@ -204,8 +204,8 @@ function logout() {
   border-top: 1px solid var(--color-border-soft);
   background: linear-gradient(
     180deg,
-    rgba(8, 13, 10, 0.9),
-    rgba(3, 7, 5, 0.97)
+    var(--color-terminal-surface-soft),
+    var(--color-terminal-surface-deep)
   );
   font-family: var(--font-family-terminal);
 }
@@ -227,12 +227,7 @@ function logout() {
 }
 
 .profile-trigger:hover {
-  background: rgba(
-    82,
-    255,
-    143,
-    0.035
-  );
+  background: var(--color-terminal-primary-soft);
 }
 
 .profile-main {
@@ -303,18 +298,18 @@ function logout() {
 .provider-badge,
 .role-badge {
   padding: 3px 6px;
-  border: 1px solid rgba(96, 255, 157, 0.14);
+  border: 1px solid var(--color-terminal-border);
   border-radius: var(--radius-4);
-  color: rgba(112, 255, 169, 0.72);
-  background: rgba(82, 255, 143, 0.035);
+  color: var(--color-terminal-primary-text);
+  background: var(--color-terminal-primary-soft);
   font-size: 7px;
   letter-spacing: 0.05em;
 }
 
 .role-badge {
-  border-color: rgba(255, 255, 255, 0.06);
-  color: rgba(205, 224, 211, 0.42);
-  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--color-white-a060);
+  color: var(--color-terminal-text-disabled);
+  background: var(--color-white-a020);
 }
 
 .auth-status {
@@ -330,7 +325,7 @@ function logout() {
   width: 6px;
   height: 6px;
   border-radius: var(--radius-round);
-  background: #59ff99;
+  background: var(--color-terminal-green-bright);
   box-shadow: var(--shadow-glow-status);
   animation: status-pulse 2.4s ease-in-out infinite;
 }
@@ -360,7 +355,7 @@ function logout() {
   gap: 3px;
   margin-top: var(--space-3);
   padding-top: var(--space-3);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--color-white-a050);
 }
 
 .profile-menu-item {
@@ -372,7 +367,7 @@ function logout() {
   padding: 6px 9px;
   border: 0;
   border-radius: var(--radius-5);
-  color: rgba(205, 224, 211, 0.55);
+  color: var(--color-terminal-text-muted);
   background: transparent;
   font-family: inherit;
   font-size: 9px;
@@ -381,13 +376,13 @@ function logout() {
 }
 
 .profile-menu-item:hover {
-  color: #6effaa;
-  background: rgba(82, 255, 143, 0.045);
+  color: var(--color-terminal-green-text);
+  background: var(--color-terminal-primary-hover);
 }
 
 .profile-menu-item.logout:hover {
-  color: #ff8585;
-  background: rgba(255, 90, 90, 0.045);
+  color: var(--color-danger-login);
+  background: var(--color-danger-action-soft-strong);
 }
 
 .menu-prompt {

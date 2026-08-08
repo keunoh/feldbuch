@@ -304,12 +304,7 @@ function logout() {
   display: grid;
   padding: var(--space-10);
   place-items: center;
-  background: rgba(
-    0,
-    3,
-    1,
-    0.72
-  );
+  background: var(--color-terminal-overlay);
   backdrop-filter: blur(7px);
   box-sizing: border-box;
 }
@@ -327,12 +322,7 @@ function logout() {
   border: 1px solid rgba(102, 255, 157, 0.16);
   border-radius: var(--radius-10);
   color: var(--color-text);
-  background: rgba(
-    4,
-    9,
-    6,
-    0.98
-  );
+  background: var(--color-terminal-surface-raised);
   box-shadow: var(--shadow-modal-strong),
   0 0 50px rgba(65, 255, 139, 0.035);
 }
@@ -359,7 +349,7 @@ function logout() {
   min-height: 42px;
   align-items: center;
   padding: 0 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  border-bottom: 1px solid var(--color-white-a035);
 }
 
 .terminal-dots {
@@ -374,15 +364,15 @@ function logout() {
 }
 
 .dot.red {
-  background: #ff5f57;
+  background: var(--color-terminal-red);
 }
 
 .dot.yellow {
-  background: #febc2e;
+  background: var(--color-terminal-yellow);
 }
 
 .dot.green {
-  background: #28c840;
+  background: var(--color-terminal-green);
 }
 
 .terminal-title {
@@ -410,7 +400,7 @@ function logout() {
 
 .close-button:hover {
   color: var(--color-primary);
-  background: rgba(82, 255, 143, 0.05);
+  background: var(--color-terminal-primary-soft-strong);
 }
 
 .terminal-command {
@@ -428,7 +418,7 @@ function logout() {
 }
 
 .cursor {
-  color: #6dffaa;
+  color: var(--color-terminal-green-text-alt);
   font-size: 7px;
   animation: cursor-blink 0.8s steps(1) infinite;
 }
@@ -439,7 +429,7 @@ function logout() {
 
 .settings-section {
   padding: 27px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--color-white-a050);
 }
 
 .section-header {
@@ -450,7 +440,7 @@ function logout() {
 
 .section-index {
   padding-top: 3px;
-  color: rgba(89, 255, 153, 0.38);
+  color: var(--color-terminal-primary-muted);
   font-family: var(--font-family-terminal);
   font-size: 9px;
 }
@@ -469,14 +459,9 @@ function logout() {
 
 .setting-list {
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--color-white-a055);
   border-radius: var(--radius-7);
-  background: rgba(
-    255,
-    255,
-    255,
-    0.012
-  );
+  background: var(--color-white-a012);
 }
 
 .setting-row {
@@ -487,7 +472,7 @@ function logout() {
   min-height: 43px;
   align-items: center;
   padding: 0 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--color-white-a040);
 }
 
 .setting-row:last-child {
@@ -502,7 +487,7 @@ function logout() {
 
 .setting-value {
   overflow: hidden;
-  color: rgba(218, 234, 223, 0.75);
+  color: var(--color-terminal-text-soft);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -516,17 +501,17 @@ function logout() {
 .terminal-badge {
   display: inline-flex;
   padding: 3px 7px;
-  border: 1px solid rgba(96, 255, 157, 0.14);
+  border: 1px solid var(--color-terminal-border);
   border-radius: var(--radius-4);
-  color: rgba(112, 255, 169, 0.7);
-  background: rgba(82, 255, 143, 0.035);
+  color: var(--color-terminal-primary-text-soft);
+  background: var(--color-terminal-primary-soft);
   font-family: var(--font-family-terminal);
   font-size: 7px;
   letter-spacing: 0.05em;
 }
 
 .terminal-badge.provider {
-  color: #75ffaf;
+  color: var(--color-terminal-green-text-soft);
 }
 
 .auth-status,
@@ -544,7 +529,7 @@ function logout() {
   width: 6px;
   height: 6px;
   border-radius: var(--radius-round);
-  background: #59ff99;
+  background: var(--color-terminal-green-bright);
   box-shadow: var(--shadow-glow-status-soft);
 }
 
@@ -573,25 +558,25 @@ function logout() {
   align-items: center;
   gap: 7px;
   padding: var(--space-3) var(--space-5);
-  border: 1px solid rgba(255, 255, 255, 0.065);
+  border: 1px solid var(--color-white-a065);
   border-radius: var(--radius-6);
   color: rgba(203, 223, 209, 0.55);
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--color-white-a015);
   font-family: var(--font-family-terminal);
   font-size: 9px;
   cursor: pointer;
 }
 
 .close-action-button:hover {
-  border-color: rgba(89, 255, 153, 0.2);
-  color: #6effaa;
+  border-color: var(--color-terminal-primary-disabled);
+  color: var(--color-terminal-green-text);
   background: rgba(82, 255, 143, 0.04);
 }
 
 .logout-button:hover {
-  border-color: rgba(255, 100, 100, 0.18);
-  color: #ff8585;
-  background: rgba(255, 90, 90, 0.04);
+  border-color: var(--color-danger-action-border);
+  color: var(--color-danger-login);
+  background: var(--color-danger-action-soft);
 }
 
 .settings-modal-enter-active,

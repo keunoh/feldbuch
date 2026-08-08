@@ -593,7 +593,7 @@ onMounted(async () => {
   box-sizing: border-box;
   background: radial-gradient(
     circle at 50% 0%,
-    rgba(66, 245, 123, 0.035),
+    var(--color-primary-a035),
     transparent 34%
   ),
   var(--color-bg);

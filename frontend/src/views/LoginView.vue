@@ -452,13 +452,13 @@ async function loginUser() {
 
   background: radial-gradient(
     circle at top,
-    rgba(66, 245, 123, .025),
+    var(--color-primary-a025),
     transparent 45%
   ),
   linear-gradient(
     180deg,
-    #050706 0%,
-    #020302 100%
+    var(--color-login-bg-start) 0%,
+    var(--color-terminal-bg-0) 100%
   );
 }
 
@@ -472,7 +472,7 @@ async function loginUser() {
 
   opacity: .03;
 
-  background-image: radial-gradient(#fff 0.4px, transparent 0.4px);
+  background-image: radial-gradient(var(--color-white) 0.4px, transparent 0.4px);
 
   background-size: 8px 8px;
 }
@@ -490,19 +490,17 @@ async function loginUser() {
 
 .login-shell {
   position: relative;
-
   width: min(100%, 420px);
-
   overflow: hidden;
 
-  border: 1px solid rgba(90, 255, 150, .16);
+  border: 1px solid var(--color-login-border);
 
   border-radius: var(--radius-10);
 
-  background: rgba(6, 9, 7, .97);
+  background: var(--color-login-panel);
 
-  box-shadow: 0 24px 70px rgba(0, 0, 0, .62),
-  0 0 18px rgba(66, 245, 123, .04);
+  box-shadow: var(--shadow-lg),
+  var(--shadow-glow-18);
 }
 
 .login-shell::before {
@@ -516,19 +514,14 @@ async function loginUser() {
 
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, .025),
+    var(--color-white-a025),
     transparent 18%
   );
 }
 
 .terminal-header {
-  border-bottom: 1px solid rgba(80, 255, 140, 0.09);
-  background: rgba(
-    3,
-    8,
-    5,
-    0.97
-  );
+  border-bottom: 1px solid var(--color-login-section-border);
+  background: var(--color-terminal-surface);
 }
 
 .terminal-toolbar {
@@ -540,7 +533,7 @@ async function loginUser() {
   align-items: center;
   min-height: 40px;
   padding: 0 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  border-bottom: 1px solid var(--color-white-a035);
 }
 
 .terminal-dots {
@@ -556,15 +549,15 @@ async function loginUser() {
 }
 
 .dot.red {
-  background: #ff5f57;
+  background: var(--color-terminal-red);
 }
 
 .dot.yellow {
-  background: #febc2e;
+  background: var(--color-terminal-yellow);
 }
 
 .dot.green {
-  background: #28c840;
+  background: var(--color-terminal-green);
 }
 
 .terminal-title {
@@ -633,7 +626,7 @@ async function loginUser() {
 }
 
 .login-command {
-  color: #6fffad;
+  color: var(--color-terminal-green-login);
 
   opacity: .82;
 }
@@ -643,7 +636,7 @@ async function loginUser() {
 
   letter-spacing: .03em;
 
-  color: #f2fff7;
+  color: var(--color-terminal-title);
 }
 
 .login-description {
@@ -680,28 +673,28 @@ async function loginUser() {
   min-height: 43px;
   align-items: center;
   overflow: hidden;
-  border: 1px solid rgba(102, 255, 157, 0.14);
+  border: 1px solid var(--color-login-border);
   border-radius: var(--radius-6);
-  background: #020503;
+  background: var(--color-terminal-bg-2);
   transition: border-color 0.16s ease,
   box-shadow 0.16s ease,
   background 0.16s ease;
 }
 
 .terminal-input:hover {
-  border-color: rgba(102, 255, 157, 0.23);
+  border-color: var(--color-login-border-hover);
 }
 
 .terminal-input:focus-within {
-  border-color: rgba(91, 255, 151, 0.7);
-  background: #030704;
+  border-color: var(--color-login-border-focus);
+  background: var(--color-terminal-bg-3);
   box-shadow: var(--shadow-focus-login),
   0 0 18px rgba(66, 255, 136, 0.035);
 }
 
 .input-prefix {
   padding-left: 13px;
-  color: rgba(88, 255, 148, 0.82);
+  color: var(--color-login-prefix);
   font-family: var(--font-family-terminal);
   font-size: 11px;
   user-select: none;
@@ -712,9 +705,9 @@ async function loginUser() {
   min-width: 0;
   padding: 11px 13px 11px var(--space-3);
   border: 0;
-  color: #dcebe1;
+  color: var(--color-terminal-text);
   background: transparent;
-  caret-color: #64ffa1;
+  caret-color: var(--color-login-caret);
   font-family: var(--font-family-terminal);
   font-size: 12px;
   outline: none;
@@ -741,8 +734,8 @@ async function loginUser() {
 .terminal-input input:-webkit-autofill:hover,
 .terminal-input input:-webkit-autofill:focus,
 .terminal-input input:-webkit-autofill:active {
-  -webkit-text-fill-color: #dcebe1 !important;
-  caret-color: #64ffa1;
+  -webkit-text-fill-color: var(--color-terminal-text) !important;
+  caret-color: var(--color-login-caret);
   box-shadow: var(--shadow-autofill) !important;
   -webkit-box-shadow: var(--shadow-autofill) !important;
   transition: background-color 9999s ease-out 0s;
@@ -751,10 +744,10 @@ async function loginUser() {
 .login-error {
   margin: 0;
   padding: var(--space-4) var(--space-5);
-  border: 1px solid rgba(255, 92, 92, 0.3);
+  border: 1px solid var(--color-danger-login-border);
   border-radius: var(--radius-6);
-  color: #ff8585;
-  background: rgba(255, 75, 75, 0.055);
+  color: var(--color-danger-login);
+  background: var(--color-danger-login-soft);
   font-family: var(--font-family-terminal);
   font-size: 10px;
   line-height: 1.6;
@@ -771,13 +764,13 @@ async function loginUser() {
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
-  border: 1px solid rgba(82, 255, 143, 0.3);
+  border: 1px solid var(--color-login-button-border);
   border-radius: var(--radius-6);
-  color: #77ffb2;
+  color: var(--color-terminal-green-button);
   background: linear-gradient(
     180deg,
-    #173221,
-    #0d1d13
+    var(--color-terminal-button-top),
+    var(--color-terminal-button-bottom)
   );
   font-family: var(--font-family-terminal);
   font-size: 12px;
@@ -790,7 +783,7 @@ async function loginUser() {
 }
 
 .login-button:hover:not(:disabled) {
-  border-color: rgba(82, 255, 143, 0.52);
+  border-color: var(--color-login-button-border-hover);
   box-shadow: var(--shadow-glow-login);
   filter: brightness(1.08);
   transform: translateY(-1px);
@@ -806,15 +799,15 @@ async function loginUser() {
 }
 
 .button-prompt {
-  color: #4cff91;
+  color: var(--color-terminal-green-prompt);
 }
 
 .terminal-log {
   margin-top: 21px;
   padding: 14px 15px;
-  border: 1px solid rgba(80, 255, 140, 0.09);
+  border: 1px solid var(--color-login-section-border);
   border-radius: var(--radius-6);
-  background: rgba(1, 4, 2, 0.9);
+  background: var(--color-login-terminal);
   box-shadow: var(--shadow-login-inset);
   font-family: var(--font-family-terminal);
   font-size: 10px;
@@ -838,7 +831,7 @@ async function loginUser() {
 }
 
 .terminal-log-line.success {
-  color: #63ff9f;
+  color: var(--color-terminal-green-success);
 }
 
 .log-symbol {
@@ -849,7 +842,7 @@ async function loginUser() {
 
 .terminal-cursor {
   margin-left: 1px;
-  color: #72ffae;
+  color: var(--color-terminal-green-cursor);
   font-size: 8px;
   animation: cursor-blink 0.7s steps(1) infinite;
 }
@@ -872,12 +865,7 @@ async function loginUser() {
 .login-divider::before,
 .login-divider::after {
   height: 1px;
-  background: rgba(
-    255,
-    255,
-    255,
-    0.055
-  );
+  background: var(--color-white-a055);
   content: '';
   flex: 1;
 }
@@ -889,25 +877,10 @@ async function loginUser() {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  border: 1px solid rgba(
-    255,
-    255,
-    255,
-    0.095
-  );
+  border: 1px solid var(--color-white-a095);
   border-radius: var(--radius-6);
-  color: rgba(
-    232,
-    242,
-    235,
-    0.88
-  );
-  background: rgba(
-    255,
-    255,
-    255,
-    0.025
-  );
+  color: var(--color-terminal-text);
+  background: var(--color-white-a025);
   box-sizing: border-box;
   font-size: 12px;
   font-weight: 600;
@@ -926,12 +899,7 @@ async function loginUser() {
 }
 
 .google-login-button:hover {
-  border-color: rgba(
-    102,
-    255,
-    157,
-    0.23
-  );
+  border-color: var(--color-login-border-hover);
   background: rgba(
     102,
     255,
@@ -946,20 +914,10 @@ async function loginUser() {
   width: 20px;
   height: 20px;
   place-items: center;
-  border: 1px solid rgba(
-    255,
-    255,
-    255,
-    0.1
-  );
+  border: 1px solid var(--color-white-a100);
   border-radius: var(--radius-5);
-  color: rgba(
-    240,
-    247,
-    242,
-    0.9
-  );
-  background: #080c09;
+  color: var(--color-terminal-text-strong);
+  background: var(--color-terminal-bg-4);
   font-family: var(--font-family-base);
   font-size: 10px;
   font-weight: 700;
@@ -971,12 +929,7 @@ async function loginUser() {
   gap: 7px;
   margin-top: 22px;
   padding-top: 17px;
-  border-top: 1px solid rgba(
-    255,
-    255,
-    255,
-    0.045
-  );
+  border-top: 1px solid var(--color-white-a045);
   color: rgba(
     182,
     205,
@@ -992,7 +945,7 @@ async function loginUser() {
   width: 5px;
   height: 5px;
   border-radius: var(--radius-round);
-  background: #56ff98;
+  background: var(--color-terminal-green-dot);
   box-shadow: var(--shadow-glow-login-status);
 }
 
@@ -1031,10 +984,6 @@ max-width: 520px
     padding: 40px 15px var(--space-10);
   }
 
-  .login-shell {
-    width: 100%;
-  }
-
   .login-content {
     padding: 26px 21px 22px;
   }
@@ -1065,7 +1014,7 @@ max-width: 520px
   top: 34px;
   left: 38px;
 
-  color: rgba(95, 255, 155, .45);
+  color: var(--color-login-background-prompt);
 
   font-family: var(--font-family-terminal);
 
@@ -1078,7 +1027,7 @@ max-width: 520px
 
 .cursor {
 
-  color: rgba(120, 255, 170, .75);
+  color: var(--color-login-background-cursor);
 
   animation: cursor-blink .9s infinite;
 }

@@ -204,13 +204,13 @@ const statusClass = computed(() => {
   color: var(--color-text);
   background: radial-gradient(
     circle at 70% 12%,
-    rgba(66, 245, 123, 0.05),
+    var(--color-primary-a050),
     transparent 25%
   ),
   linear-gradient(
     180deg,
-    rgba(13, 19, 26, 0.98),
-    rgba(5, 8, 12, 0.98)
+    var(--color-surface-panel),
+    var(--color-surface-deep)
   );
   box-shadow: var(--shadow-inset-left);
   overflow: hidden;
@@ -220,12 +220,12 @@ const statusClass = computed(() => {
   position: absolute;
   inset: 0;
   background-image: linear-gradient(
-    rgba(66, 245, 123, 0.018) 1px,
+    var(--color-primary-a018) 1px,
     transparent 1px
   ),
   linear-gradient(
     90deg,
-    rgba(66, 245, 123, 0.018) 1px,
+    var(--color-primary-a018) 1px,
     transparent 1px
   );
   background-size: 24px 24px;
@@ -353,21 +353,21 @@ const statusClass = computed(() => {
 
 .status-badge.active {
   color: var(--color-primary);
-  border-color: rgba(66, 245, 123, 0.25);
-  background: rgba(66, 245, 123, 0.08);
+  border-color: var(--color-primary-a250);
+  background: var(--color-primary-a080);
   box-shadow: var(--shadow-glow-18);
 }
 
 .status-badge.completed {
   color: var(--color-accent-cyan);
-  border-color: rgba(94, 234, 212, 0.25);
-  background: rgba(94, 234, 212, 0.08);
+  border-color: var(--color-cyan-border);
+  background: var(--color-cyan-surface);
 }
 
 .status-badge.archived {
   color: var(--color-text-muted);
   border-color: var(--color-border);
-  background: rgba(127, 139, 153, 0.08);
+  background: var(--color-neutral-soft);
 }
 
 .status-dot {
@@ -415,7 +415,7 @@ const statusClass = computed(() => {
   background: linear-gradient(
     to top,
     var(--color-primary),
-    rgba(66, 245, 123, 0.15)
+    var(--color-primary-a150)
   );
   box-shadow: var(--shadow-glow-soft);
   transform-origin: bottom;
@@ -452,7 +452,7 @@ const statusClass = computed(() => {
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-medium);
   color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--color-white-a015);
   font-family: var(--font-family-terminal);
   text-align: center;
 }

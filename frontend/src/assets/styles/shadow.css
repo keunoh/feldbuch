@@ -3,93 +3,105 @@
  */
 
 :root {
-  /* Elevation */
+  /* =========================================================
+   * Elevation
+   * ========================================================= */
+
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.22);
 
   --shadow-panel: 0 18px 50px rgba(0, 0, 0, 0.35);
 
-  --shadow-modal: var(--shadow-modal);
+  --shadow-modal: 0 24px 80px rgba(0, 0, 0, 0.58);
 
-  /* Focus */
-  --shadow-focus: var(--shadow-focus);
+  --shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.58);
 
-  --shadow-focus-subtle: var(--shadow-focus-subtle);
+  --shadow-modal-strong: 0 30px 100px rgba(0, 0, 0, 0.72);
 
-  --shadow-focus-login: var(--shadow-focus-login);
+  /* =========================================================
+   * Focus
+   * ========================================================= */
 
-  /* Green glow */
-  --shadow-glow-status: var(--shadow-glow-status);
+  --shadow-focus: 0 0 0 3px var(--color-primary-soft);
 
-  --shadow-glow-status-soft: var(--shadow-glow-status-soft);
+  --shadow-focus-subtle: 0 0 0 3px var(--color-primary-a080);
 
-  --shadow-glow-soft: var(--shadow-glow-soft);
+  --shadow-focus-login: 0 0 0 3px rgba(66, 255, 136, 0.06);
 
-  --shadow-glow-medium: var(--shadow-glow-medium);
+  --shadow-focus-strong: 0 0 0 4px var(--color-primary-a080);
 
-  --shadow-glow-14: var(--shadow-glow-14);
+  /* =========================================================
+   * Green Glow
+   * ========================================================= */
 
-  --shadow-glow-18: var(--shadow-glow-18);
+  --shadow-glow-status: 0 0 8px rgba(89, 255, 153, 0.55);
 
-  --shadow-glow-22: var(--shadow-glow-22);
+  --shadow-glow-status-soft: 0 0 8px rgba(89, 255, 153, 0.5);
 
-  /* Inset */
-  --shadow-inset-top: var(--shadow-inset-top);
+  --shadow-glow-soft: 0 0 8px rgba(66, 245, 123, 0.18);
 
-  --shadow-inset-top-medium: var(--shadow-inset-top-medium);
+  --shadow-glow-medium: 0 0 12px var(--color-primary-glow);
 
-  --shadow-inset-left: var(--shadow-inset-left);
+  --shadow-glow-14: 0 0 14px var(--color-primary-a080);
 
-  --shadow-inset-glow: var(--shadow-inset-glow);
+  --shadow-glow-18: 0 0 18px var(--color-primary-a060);
 
-  /* Text glow */
-  --text-shadow-primary: var(--text-shadow-primary);
+  --shadow-glow-22: 0 0 22px var(--color-primary-a100);
 
-  --text-shadow-primary-soft: var(--text-shadow-primary-soft);
+  --shadow-glow-input: 0 0 12px var(--color-primary-a250);
 
-  --text-shadow-primary-medium: var(--text-shadow-primary-medium);
+  --shadow-glow-login: 0 0 22px rgba(82, 255, 143, 0.075);
 
-  --text-shadow-primary-strong: var(--text-shadow-primary-strong);
+  --shadow-glow-login-status: 0 0 7px rgba(86, 255, 152, 0.5);
 
-  /* Decorative / text glow */
-  --text-shadow-watermark: 0 0 30px rgba(70, 255, 130, 0.03);
+  --shadow-glow-error: 0 0 14px rgba(248, 113, 113, 0.08);
 
-  --text-shadow-primary-16: var(--text-shadow-primary-16);
+  --shadow-current-color: 0 0 9px currentColor;
 
-  --text-shadow-primary-soft-16: var(--text-shadow-primary-soft-16);
+  /* =========================================================
+   * Inset
+   * ========================================================= */
 
-  --text-shadow-primary-soft-14: var(--text-shadow-primary-soft-14);
+  --shadow-inset-top: inset 0 1px rgba(255, 255, 255, 0.025);
 
-  --text-shadow-primary-soft-10: var(--text-shadow-primary-soft-10);
+  --shadow-inset-top-soft: inset 0 1px rgba(255, 255, 255, 0.03);
 
-  /* Modal */
-  --shadow-modal-strong: var(--shadow-modal-strong);
+  --shadow-inset-top-medium: inset 0 1px rgba(255, 255, 255, 0.035);
 
-  /* Inset */
-  --shadow-inset-top-soft: var(--shadow-inset-top-soft);
+  --shadow-inset-left: inset 1px 0 rgba(255, 255, 255, 0.015);
 
-  --shadow-inset-glow-soft: var(--shadow-inset-glow-soft);
+  --shadow-inset-glow: inset 0 0 18px rgba(66, 245, 123, 0.025);
 
-  --shadow-login-inset: var(--shadow-login-inset);
+  --shadow-inset-glow-soft: inset 0 0 10px rgba(66, 245, 123, 0.04);
 
-  --shadow-note-active: var(--shadow-note-active);
+  --shadow-login-inset: inset 0 0 18px rgba(60, 255, 130, 0.012);
 
-  /* Glow */
-  --shadow-current-color: var(--shadow-current-color);
+  --shadow-note-active: inset 3px 0 0 var(--color-primary);
 
-  --shadow-glow-error: var(--shadow-glow-error);
+  /* =========================================================
+   * Text Glow
+   * ========================================================= */
 
-  --shadow-glow-input: 0 0 12px rgba(66, 245, 123, 0.25);
+  --text-shadow-primary: 0 0 8px var(--color-primary);
 
-  --shadow-glow-login: var(--shadow-glow-login);
+  --text-shadow-primary-soft: 0 0 8px var(--color-primary-glow);
 
-  --shadow-glow-login-status: var(--shadow-glow-login-status);
+  --text-shadow-primary-medium: 0 0 10px var(--color-primary-glow);
 
-  /* Focus */
-  --shadow-focus-strong: 0 0 0 4px rgba(66, 245, 123, 0.08);
+  --text-shadow-primary-strong: 0 0 14px var(--color-primary-glow);
 
-  /* Warning accent */
-  --shadow-warning-accent: var(--shadow-warning-accent);
+  --text-shadow-primary-16: 0 0 16px var(--color-primary-glow);
 
-  /* Browser autofill */
-  --shadow-autofill: 0 0 0 1000px #020503 inset;
+  --text-shadow-primary-soft-16: 0 0 16px var(--color-primary-a080);
+
+  --text-shadow-primary-soft-14: 0 0 14px var(--color-primary-a150);
+
+  --text-shadow-primary-soft-10: 0 0 10px rgba(66, 245, 123, 0.18);
+
+  /* =========================================================
+   * Special
+   * ========================================================= */
+
+  --shadow-warning-accent: 7px 0 0 var(--color-warning);
+
+  --shadow-autofill: 0 0 0 1000px var(--color-terminal-bg-2) inset;
 }
