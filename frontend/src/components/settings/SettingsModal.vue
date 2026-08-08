@@ -1,4 +1,14 @@
 <script setup>
+import BaseTerminalHeader from "@/components/common/BaseTerminalHeader.vue";
+import BaseButton from "@/components/common/BaseButton.vue";
+import BaseBadge from "@/components/common/BaseBadge.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
+import SettingsSection from "@/components/common/settings/SettingsSection.vue";
+import SettingRow from "@/components/common/settings/SettingRow.vue";
+import SettingsList from "@/components/common/settings/SettingsList.vue";
+import BaseStatusLabel from "@/components/common/BaseStatusLabel.vue";
+import BaseTerminalCommand from "@/components/common/BaseTerminalCommand.vue";
+
 const props = defineProps({
   user: {
     type: Object,
@@ -25,366 +35,154 @@ function logout() {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="settings-modal">
-      <div
-        class="settings-overlay"
-        @click.self="close"
-      >
-        <section
-          class="settings-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Feldbuch 설정"
+  <BaseModal
+    aria-label="Feldbuch 설정"
+    @close="close"
+  >
+    <BaseTerminalHeader
+      class="settings-terminal-header"
+      title="feldbuch://settings"
+    >
+      <template #actions>
+        <button
+          type="button"
+          class="close-button"
+          aria-label="설정 닫기"
+          @click="close"
         >
-          <header class="terminal-header">
-            <div class="terminal-toolbar">
-              <div
-                class="terminal-dots"
-                aria-hidden="true"
-              >
-                <span class="dot red"/>
-                <span class="dot yellow"/>
-                <span class="dot green"/>
-              </div>
+          ×
+        </button>
+      </template>
 
-              <span class="terminal-title">
-                feldbuch://settings
-              </span>
+      <BaseTerminalCommand>
+        feldbuch config --list
+      </BaseTerminalCommand>
+    </BaseTerminalHeader>
 
-              <button
-                type="button"
-                class="close-button"
-                aria-label="설정 닫기"
-                @click="close"
-              >
-                ×
-              </button>
-            </div>
+    <div
+      v-if="props.user"
+      class="settings-content"
+    >
+      <SettingsSection
+        index="01"
+        title="Account"
+        description="Feldbuch 사용자 계정 정보"
+      >
+        <SettingsList>
+          <SettingRow label="nickname">
+            {{ props.user.nickname }}
+          </SettingRow>
 
-            <div class="terminal-command">
-              <span class="prompt">
-                $
-              </span>
+          <SettingRow label="email">
+            {{ props.user.email }}
+          </SettingRow>
 
-              <span>
-                feldbuch config --list
-              </span>
-
-              <span
-                class="cursor"
-                aria-hidden="true"
-              >
-                █
-              </span>
-            </div>
-          </header>
-
-          <div
-            v-if="props.user"
-            class="settings-content"
+          <SettingRow
+            label="user_id"
+            mono
           >
-            <section class="settings-section">
-              <header class="section-header">
-                <span class="section-index">
-                  01
-                </span>
+            {{ props.user.userId }}
+          </SettingRow>
 
-                <div>
-                  <h2>
-                    Account
-                  </h2>
+          <SettingRow label="role">
+            <BaseBadge>
+              {{ props.user.role }}
+            </BaseBadge>
+          </SettingRow>
+        </SettingsList>
+      </SettingsSection>
 
-                  <p>
-                    Feldbuch 사용자 계정 정보
-                  </p>
-                </div>
-              </header>
+      <SettingsSection
+        index="02"
+        title="Authentication"
+        description="현재 세션의 인증 정보"
+      >
+        <SettingsList>
+          <SettingRow label="provider">
+            <BaseBadge variant="success">
+              {{ props.user.provider }}
+            </BaseBadge>
+          </SettingRow>
 
-              <div class="setting-list">
-                <div class="setting-row">
-                  <span class="setting-key">
-                    nickname
-                  </span>
+          <SettingRow label="status">
+            <BaseStatusLabel pulse>
+              authenticated
+            </BaseStatusLabel>
+          </SettingRow>
 
-                  <span class="setting-value">
-                    {{ props.user.nickname }}
-                  </span>
-                </div>
+          <SettingRow
+            label="token_type"
+            mono
+          >
+            Bearer
+          </SettingRow>
+        </SettingsList>
+      </SettingsSection>
 
-                <div class="setting-row">
-                  <span class="setting-key">
-                    email
-                  </span>
+      <SettingsSection
+        index="03"
+        title="Appearance"
+        description="Feldbuch 인터페이스 설정"
+      >
+        <SettingsList>
+          <SettingRow label="theme">
+            <BaseBadge>
+              TERMINAL DARK
+            </BaseBadge>
+          </SettingRow>
 
-                  <span class="setting-value">
-                    {{ props.user.email }}
-                  </span>
-                </div>
+          <SettingRow label="accent">
+            <BaseStatusLabel>
+              feldbuch green
+            </BaseStatusLabel>
+          </SettingRow>
 
-                <div class="setting-row">
-                  <span class="setting-key">
-                    user_id
-                  </span>
+          <SettingRow
+            label="font"
+            mono
+          >
+            JetBrains Mono
+          </SettingRow>
+        </SettingsList>
 
-                  <span class="setting-value mono">
-                    {{ props.user.userId }}
-                  </span>
-                </div>
+        <p class="coming-soon">
+          # appearance customization coming soon
+        </p>
+      </SettingsSection>
 
-                <div class="setting-row">
-                  <span class="setting-key">
-                    role
-                  </span>
 
-                  <span class="setting-value">
-                    <span class="terminal-badge">
-                      {{ props.user.role }}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </section>
+      <footer class="settings-footer">
+        <BaseButton
+          type="button"
+          variant="secondary"
+          size="sm"
+          @click="close"
+        >
+          <template #prefix>
+            ❮
+          </template>
 
-            <section class="settings-section">
-              <header class="section-header">
-                <span class="section-index">
-                  02
-                </span>
+          close
+        </BaseButton>
 
-                <div>
-                  <h2>
-                    Authentication
-                  </h2>
+        <BaseButton
+          type="button"
+          variant="danger"
+          size="sm"
+          @click="logout"
+        >
+          <template #prefix>
+            ❯
+          </template>
 
-                  <p>
-                    현재 세션의 인증 정보
-                  </p>
-                </div>
-              </header>
-
-              <div class="setting-list">
-                <div class="setting-row">
-                  <span class="setting-key">
-                    provider
-                  </span>
-
-                  <span class="setting-value">
-                    <span class="terminal-badge provider">
-                      {{ props.user.provider }}
-                    </span>
-                  </span>
-                </div>
-
-                <div class="setting-row">
-                  <span class="setting-key">
-                    status
-                  </span>
-
-                  <span class="setting-value auth-status">
-                    <span
-                      class="status-dot"
-                      aria-hidden="true"
-                    />
-
-                    authenticated
-                  </span>
-                </div>
-
-                <div class="setting-row">
-                  <span class="setting-key">
-                    token_type
-                  </span>
-
-                  <span class="setting-value mono">
-                    Bearer
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            <section class="settings-section">
-              <header class="section-header">
-                <span class="section-index">
-                  03
-                </span>
-
-                <div>
-                  <h2>
-                    Appearance
-                  </h2>
-
-                  <p>
-                    Feldbuch 인터페이스 설정
-                  </p>
-                </div>
-              </header>
-
-              <div class="setting-list">
-                <div class="setting-row">
-                  <span class="setting-key">
-                    theme
-                  </span>
-
-                  <span class="setting-value">
-                    <span class="terminal-badge">
-                      TERMINAL DARK
-                    </span>
-                  </span>
-                </div>
-
-                <div class="setting-row">
-                  <span class="setting-key">
-                    accent
-                  </span>
-
-                  <span class="setting-value accent-value">
-                    <span
-                      class="accent-dot"
-                      aria-hidden="true"
-                    />
-
-                    feldbuch green
-                  </span>
-                </div>
-
-                <div class="setting-row">
-                  <span class="setting-key">
-                    font
-                  </span>
-
-                  <span class="setting-value mono">
-                    JetBrains Mono
-                  </span>
-                </div>
-              </div>
-
-              <p class="coming-soon">
-                # appearance customization coming soon
-              </p>
-            </section>
-
-            <footer class="settings-footer">
-              <button
-                type="button"
-                class="close-action-button"
-                @click="close"
-              >
-                <span>
-                  ❮
-                </span>
-
-                close
-              </button>
-
-              <button
-                type="button"
-                class="logout-button"
-                @click="logout"
-              >
-                <span>
-                  ❯
-                </span>
-
-                logout
-              </button>
-            </footer>
-          </div>
-        </section>
-      </div>
-    </Transition>
-  </Teleport>
+          logout
+        </BaseButton>
+      </footer>
+    </div>
+  </BaseModal>
 </template>
 
 <style scoped>
-.settings-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: grid;
-  padding: var(--space-10);
-  place-items: center;
-  background: var(--color-terminal-overlay);
-  backdrop-filter: blur(7px);
-  box-sizing: border-box;
-}
-
-.settings-modal {
-  width: min(
-    100%,
-    760px
-  );
-  max-height: min(
-    86vh,
-    820px
-  );
-  overflow-y: auto;
-  border: 1px solid rgba(102, 255, 157, 0.16);
-  border-radius: var(--radius-10);
-  color: var(--color-text);
-  background: var(--color-terminal-surface-raised);
-  box-shadow: var(--shadow-modal-strong),
-  0 0 50px rgba(65, 255, 139, 0.035);
-}
-
-.terminal-header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  border-bottom: 1px solid rgba(80, 255, 140, 0.08);
-  background: rgba(
-    3,
-    8,
-    5,
-    0.985
-  );
-}
-
-.terminal-toolbar {
-  display: grid;
-  grid-template-columns:
-    70px
-    1fr
-    70px;
-  min-height: 42px;
-  align-items: center;
-  padding: 0 14px;
-  border-bottom: 1px solid var(--color-white-a035);
-}
-
-.terminal-dots {
-  display: flex;
-  gap: 7px;
-}
-
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: var(--radius-round);
-}
-
-.dot.red {
-  background: var(--color-terminal-red);
-}
-
-.dot.yellow {
-  background: var(--color-terminal-yellow);
-}
-
-.dot.green {
-  background: var(--color-terminal-green);
-}
-
-.terminal-title {
-  overflow: hidden;
-  color: rgba(222, 238, 227, 0.52);
-  font-family: var(--font-family-terminal);
-  font-size: 10px;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .close-button {
   justify-self: end;
   width: 28px;
@@ -403,138 +201,8 @@ function logout() {
   background: var(--color-terminal-primary-soft-strong);
 }
 
-.terminal-command {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: var(--space-7) 21px;
-  color: rgba(104, 255, 164, 0.72);
-  font-family: var(--font-family-terminal);
-  font-size: 10px;
-}
-
-.prompt {
-  color: var(--color-primary);
-}
-
-.cursor {
-  color: var(--color-terminal-green-text-alt);
-  font-size: 7px;
-  animation: cursor-blink 0.8s steps(1) infinite;
-}
-
 .settings-content {
   padding: 0 27px 27px;
-}
-
-.settings-section {
-  padding: 27px 0;
-  border-bottom: 1px solid var(--color-white-a050);
-}
-
-.section-header {
-  display: flex;
-  gap: 13px;
-  margin-bottom: 19px;
-}
-
-.section-index {
-  padding-top: 3px;
-  color: var(--color-terminal-primary-muted);
-  font-family: var(--font-family-terminal);
-  font-size: 9px;
-}
-
-.section-header h2 {
-  margin: 0;
-  color: var(--color-text);
-  font-size: 15px;
-}
-
-.section-header p {
-  margin: 4px 0 0;
-  color: var(--color-text-muted);
-  font-size: 10px;
-}
-
-.setting-list {
-  overflow: hidden;
-  border: 1px solid var(--color-white-a055);
-  border-radius: var(--radius-7);
-  background: var(--color-white-a012);
-}
-
-.setting-row {
-  display: grid;
-  grid-template-columns:
-    170px
-    1fr;
-  min-height: 43px;
-  align-items: center;
-  padding: 0 14px;
-  border-bottom: 1px solid var(--color-white-a040);
-}
-
-.setting-row:last-child {
-  border-bottom: 0;
-}
-
-.setting-key {
-  color: rgba(105, 255, 165, 0.46);
-  font-family: var(--font-family-terminal);
-  font-size: 9px;
-}
-
-.setting-value {
-  overflow: hidden;
-  color: var(--color-terminal-text-soft);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.setting-value.mono {
-  font-family: var(--font-family-terminal);
-  font-size: 10px;
-}
-
-.terminal-badge {
-  display: inline-flex;
-  padding: 3px 7px;
-  border: 1px solid var(--color-terminal-border);
-  border-radius: var(--radius-4);
-  color: var(--color-terminal-primary-text-soft);
-  background: var(--color-terminal-primary-soft);
-  font-family: var(--font-family-terminal);
-  font-size: 7px;
-  letter-spacing: 0.05em;
-}
-
-.terminal-badge.provider {
-  color: var(--color-terminal-green-text-soft);
-}
-
-.auth-status,
-.accent-value {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: rgba(106, 255, 165, 0.7);
-  font-family: var(--font-family-terminal);
-  font-size: 9px;
-}
-
-.status-dot,
-.accent-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--radius-round);
-  background: var(--color-terminal-green-bright);
-  box-shadow: var(--shadow-glow-status-soft);
-}
-
-.status-dot {
-  animation: status-pulse 2.4s ease-in-out infinite;
 }
 
 .coming-soon {
@@ -551,131 +219,21 @@ function logout() {
   padding-top: var(--space-10);
 }
 
-.close-action-button,
-.logout-button {
-  display: flex;
-  min-height: 35px;
-  align-items: center;
-  gap: 7px;
-  padding: var(--space-3) var(--space-5);
-  border: 1px solid var(--color-white-a065);
-  border-radius: var(--radius-6);
-  color: rgba(203, 223, 209, 0.55);
-  background: var(--color-white-a015);
-  font-family: var(--font-family-terminal);
-  font-size: 9px;
-  cursor: pointer;
-}
-
-.close-action-button:hover {
-  border-color: var(--color-terminal-primary-disabled);
-  color: var(--color-terminal-green-text);
-  background: rgba(82, 255, 143, 0.04);
-}
-
-.logout-button:hover {
-  border-color: var(--color-danger-action-border);
-  color: var(--color-danger-login);
-  background: var(--color-danger-action-soft);
-}
-
-.settings-modal-enter-active,
-.settings-modal-leave-active {
-  transition: opacity 0.18s ease;
-}
-
-.settings-modal-enter-active
-.settings-modal,
-.settings-modal-leave-active
-.settings-modal {
-  transition: transform 0.18s ease,
-  opacity 0.18s ease;
-}
-
-.settings-modal-enter-from,
-.settings-modal-leave-to {
-  opacity: 0;
-}
-
-.settings-modal-enter-from
-.settings-modal,
-.settings-modal-leave-to
-.settings-modal {
-  opacity: 0;
-  transform: translateY(9px) scale(0.985);
-}
-
-@keyframes cursor-blink {
-  0%,
-  48% {
-    opacity: 1;
-  }
-
-  49%,
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes status-pulse {
-  0%,
-  100% {
-    opacity: 0.4;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
 @media (
 max-width: 650px
 ) {
-  .settings-overlay {
-    padding: var(--space-5);
-  }
-
-  .settings-modal {
-    max-height: 92vh;
-  }
-
   .settings-content {
     padding: 0 var(--space-8) var(--space-9);
-  }
-
-  .setting-row {
-    grid-template-columns:
-      1fr;
-    gap: 5px;
-    padding: var(--space-4) var(--space-5);
   }
 
   .settings-footer {
     flex-direction: column;
   }
-
-  .close-action-button,
-  .logout-button {
-    width: 100%;
-    justify-content: center;
-  }
 }
 
-@media (
-prefers-reduced-motion: reduce
-) {
-  .cursor,
-  .status-dot {
-    animation: none;
-  }
-
-  .settings-modal-enter-active,
-  .settings-modal-leave-active,
-  .settings-modal-enter-active
-  .settings-modal,
-  .settings-modal-leave-active
-  .settings-modal {
-    transition: none;
+@media (max-width: 650px) {
+  .settings-footer :deep(.base-button) {
+    width: 100%;
   }
 }
 </style>

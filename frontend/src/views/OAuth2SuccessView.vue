@@ -4,6 +4,8 @@ import {onMounted, ref,} from 'vue'
 import {useRoute, useRouter,} from 'vue-router'
 
 import {saveAccessToken, saveUserId,} from '@/utils/auth.js'
+import BaseTerminalHeader from "@/components/common/BaseTerminalHeader.vue";
+import BaseTerminalCommand from "@/components/common/BaseTerminalCommand.vue";
 
 const route = useRoute()
 const router = useRouter()
@@ -134,30 +136,14 @@ onMounted(() => {
   <div class="oauth-success-page">
     <main class="oauth-success-view">
       <section class="oauth-terminal">
-        <header class="terminal-toolbar">
-          <div
-            class="terminal-dots"
-            aria-hidden="true"
-          >
-            <span class="dot red"/>
-            <span class="dot yellow"/>
-            <span class="dot green"/>
-          </div>
-
-          <span class="terminal-title">
-            feldbuch://auth/oauth2
-          </span>
-
-          <span
-            class="toolbar-spacer"
-            aria-hidden="true"
-          />
-        </header>
+        <BaseTerminalHeader
+          title="feldbuch://auth/oauth2"
+        />
 
         <div class="terminal-content">
-          <p class="terminal-command">
-            $ oauth2 complete
-          </p>
+          <BaseTerminalCommand>
+            oauth2 complete
+          </BaseTerminalCommand>
 
           <template v-if="errorMessage">
             <div class="oauth-error">
@@ -276,64 +262,8 @@ onMounted(() => {
   backdrop-filter: blur(12px);
 }
 
-.terminal-toolbar {
-  display: grid;
-  grid-template-columns:
-    64px
-    1fr
-    64px;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 14px;
-  border-bottom: 1px solid var(--color-white-a040);
-  background: var(--color-terminal-surface);
-}
-
-.terminal-dots {
-  display: flex;
-  gap: 7px;
-}
-
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: var(--radius-round);
-}
-
-.dot.red {
-  background: var(--color-terminal-red);
-}
-
-.dot.yellow {
-  background: var(--color-terminal-yellow);
-}
-
-.dot.green {
-  background: var(--color-terminal-green);
-}
-
-.terminal-title {
-  color: rgba(
-    224,
-    240,
-    230,
-    0.55
-  );
-  font-family: var(--font-family-terminal);
-  font-size: 10px;
-  text-align: center;
-}
-
 .terminal-content {
   padding: 30px 32px;
-}
-
-.terminal-command {
-  margin: 0 0 var(--space-8);
-  color: var(--color-primary);
-  font-family: var(--font-family-terminal);
-  font-size: 11px;
-  font-weight: 700;
 }
 
 .oauth-status h1 {

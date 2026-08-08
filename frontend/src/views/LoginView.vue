@@ -6,6 +6,10 @@ import {useRouter,} from 'vue-router'
 import {login,} from '@/api/authApi.js'
 
 import {saveAccessToken, saveUserId,} from '@/utils/auth.js'
+import BaseButton from "@/components/common/BaseButton.vue";
+import BaseInput from "@/components/common/BaseInput.vue";
+import BaseCard from "@/components/common/BaseCard.vue";
+import BaseTerminalHeader from "@/components/common/BaseTerminalHeader.vue";
 
 const router = useRouter()
 
@@ -207,28 +211,13 @@ async function loginUser() {
         </div>
       </div>
 
-      <section class="login-shell">
-        <header class="terminal-header">
-          <div class="terminal-toolbar">
-            <div
-              class="terminal-dots"
-              aria-hidden="true"
-            >
-              <span class="dot red"/>
-              <span class="dot yellow"/>
-              <span class="dot green"/>
-            </div>
-
-            <span class="terminal-title">
-              feldbuch://auth/login
-            </span>
-
-            <span
-              class="terminal-toolbar-spacer"
-              aria-hidden="true"
-            />
-          </div>
-
+      <BaseCard
+        class="login-shell"
+        variant="terminal"
+      >
+        <BaseTerminalHeader
+          title="feldbuch://auth/login"
+        >
           <div class="terminal-session">
             <p class="session-line">
               <span class="session-label">
@@ -244,15 +233,16 @@ async function loginUser() {
 
             <p class="session-status">
               Authentication required
+
               <span
                 class="session-cursor"
                 aria-hidden="true"
               >
-                █
-              </span>
+              █
+            </span>
             </p>
           </div>
-        </header>
+        </BaseTerminalHeader>
 
         <div class="login-content">
           <header class="login-header">
@@ -274,23 +264,14 @@ async function loginUser() {
                 email
               </span>
 
-              <div class="terminal-input">
-                <span
-                  class="input-prefix"
-                  aria-hidden="true"
-                >
-                  ❯
-                </span>
-
-                <input
-                  v-model="email"
-                  type="email"
-                  autocomplete="email"
-                  placeholder="name@example.com"
-                  :disabled="isSubmitting"
-                  required
-                />
-              </div>
+              <BaseInput
+                v-model="email"
+                type="email"
+                autocomplete="email"
+                placeholder="name@example.com"
+                :disabled="isSubmitting"
+                required
+              />
             </label>
 
             <label class="field">
@@ -298,23 +279,14 @@ async function loginUser() {
                 password
               </span>
 
-              <div class="terminal-input">
-                <span
-                  class="input-prefix"
-                  aria-hidden="true"
-                >
-                  ❯
-                </span>
-
-                <input
-                  v-model="password"
-                  type="password"
-                  autocomplete="current-password"
-                  placeholder="••••••••"
-                  :disabled="isSubmitting"
-                  required
-                />
-              </div>
+              <BaseInput
+                v-model="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="••••••••"
+                :disabled="isSubmitting"
+                required
+              />
             </label>
 
             <p
@@ -329,26 +301,23 @@ async function loginUser() {
               {{ errorMessage }}
             </p>
 
-            <button
-              class="login-button"
+            <BaseButton
               type="submit"
-              :disabled="isSubmitting"
+              variant="primary"
+              size="lg"
+              :loading="isSubmitting"
+              block
             >
-              <span
-                class="button-prompt"
-                aria-hidden="true"
-              >
+              <template #prefix>
                 ❯
-              </span>
+              </template>
 
-              <span>
-                {{
-                  isSubmitting
-                    ? 'Authenticating...'
-                    : 'Run Authentication'
-                }}
-              </span>
-            </button>
+              {{
+                isSubmitting
+                  ? 'Authenticating...'
+                  : 'Run Authentication'
+              }}
+            </BaseButton>
           </form>
 
           <Transition name="terminal-log">
@@ -406,27 +375,29 @@ async function loginUser() {
             </span>
           </div>
 
-          <button
-            class="google-login-button"
+          <BaseButton
             type="button"
-            :disabled="isSubmitting"
+            variant="secondary"
+            size="md"
+            :loading="isSubmitting"
+            block
             @click="loginWithGoogle"
           >
-            <span
-              class="google-mark"
-              aria-hidden="true"
-            >
-              G
-            </span>
+            <template #prefix>
+              <span
+                class="google-mark"
+                aria-hidden="true"
+              >
+                G
+              </span>
+            </template>
 
-            <span>
-              {{
-                isSubmitting
-                  ? 'Connecting...'
-                  : 'Sign in with Google'
-              }}
-            </span>
-          </button>
+            {{
+              isSubmitting
+                ? 'Connecting...'
+                : 'Sign in with Google'
+            }}
+          </BaseButton>
 
           <footer class="login-footer">
             <span
@@ -439,7 +410,7 @@ async function loginUser() {
             </span>
           </footer>
         </div>
-      </section>
+      </BaseCard>
     </main>
   </div>
 </template>
@@ -489,90 +460,7 @@ async function loginUser() {
 }
 
 .login-shell {
-  position: relative;
   width: min(100%, 420px);
-  overflow: hidden;
-
-  border: 1px solid var(--color-login-border);
-
-  border-radius: var(--radius-10);
-
-  background: var(--color-login-panel);
-
-  box-shadow: var(--shadow-lg),
-  var(--shadow-glow-18);
-}
-
-.login-shell::before {
-  content: "";
-
-  position: absolute;
-
-  inset: 0;
-
-  pointer-events: none;
-
-  background: linear-gradient(
-    180deg,
-    var(--color-white-a025),
-    transparent 18%
-  );
-}
-
-.terminal-header {
-  border-bottom: 1px solid var(--color-login-section-border);
-  background: var(--color-terminal-surface);
-}
-
-.terminal-toolbar {
-  display: grid;
-  grid-template-columns:
-    64px
-    1fr
-    64px;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 14px;
-  border-bottom: 1px solid var(--color-white-a035);
-}
-
-.terminal-dots {
-  display: flex;
-  gap: 7px;
-}
-
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: var(--radius-round);
-  opacity: 0.92;
-}
-
-.dot.red {
-  background: var(--color-terminal-red);
-}
-
-.dot.yellow {
-  background: var(--color-terminal-yellow);
-}
-
-.dot.green {
-  background: var(--color-terminal-green);
-}
-
-.terminal-title {
-  overflow: hidden;
-  color: rgba(
-    224,
-    240,
-    230,
-    0.55
-  );
-  font-family: var(--font-family-terminal);
-  font-size: 10px;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .terminal-session {
@@ -625,12 +513,6 @@ async function loginUser() {
   margin-bottom: 25px;
 }
 
-.login-command {
-  color: var(--color-terminal-green-login);
-
-  opacity: .82;
-}
-
 .login-header h1 {
   font-size: 26px;
 
@@ -668,79 +550,6 @@ async function loginUser() {
   font-weight: 600;
 }
 
-.terminal-input {
-  display: flex;
-  min-height: 43px;
-  align-items: center;
-  overflow: hidden;
-  border: 1px solid var(--color-login-border);
-  border-radius: var(--radius-6);
-  background: var(--color-terminal-bg-2);
-  transition: border-color 0.16s ease,
-  box-shadow 0.16s ease,
-  background 0.16s ease;
-}
-
-.terminal-input:hover {
-  border-color: var(--color-login-border-hover);
-}
-
-.terminal-input:focus-within {
-  border-color: var(--color-login-border-focus);
-  background: var(--color-terminal-bg-3);
-  box-shadow: var(--shadow-focus-login),
-  0 0 18px rgba(66, 255, 136, 0.035);
-}
-
-.input-prefix {
-  padding-left: 13px;
-  color: var(--color-login-prefix);
-  font-family: var(--font-family-terminal);
-  font-size: 11px;
-  user-select: none;
-}
-
-.terminal-input input {
-  width: 100%;
-  min-width: 0;
-  padding: 11px 13px 11px var(--space-3);
-  border: 0;
-  color: var(--color-terminal-text);
-  background: transparent;
-  caret-color: var(--color-login-caret);
-  font-family: var(--font-family-terminal);
-  font-size: 12px;
-  outline: none;
-}
-
-.terminal-input input::placeholder {
-  color: rgba(
-    189,
-    210,
-    196,
-    0.25
-  );
-}
-
-.terminal-input input:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-
-/*
- * Chrome / Safari 자동완성 배경 제거
- */
-.terminal-input input:-webkit-autofill,
-.terminal-input input:-webkit-autofill:hover,
-.terminal-input input:-webkit-autofill:focus,
-.terminal-input input:-webkit-autofill:active {
-  -webkit-text-fill-color: var(--color-terminal-text) !important;
-  caret-color: var(--color-login-caret);
-  box-shadow: var(--shadow-autofill) !important;
-  -webkit-box-shadow: var(--shadow-autofill) !important;
-  transition: background-color 9999s ease-out 0s;
-}
-
 .login-error {
   margin: 0;
   padding: var(--space-4) var(--space-5);
@@ -755,51 +564,6 @@ async function loginUser() {
 
 .login-error span {
   font-weight: 700;
-}
-
-.login-button {
-  display: flex;
-  width: 100%;
-  min-height: 45px;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  border: 1px solid var(--color-login-button-border);
-  border-radius: var(--radius-6);
-  color: var(--color-terminal-green-button);
-  background: linear-gradient(
-    180deg,
-    var(--color-terminal-button-top),
-    var(--color-terminal-button-bottom)
-  );
-  font-family: var(--font-family-terminal);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.16s ease,
-  border-color 0.16s ease,
-  box-shadow 0.16s ease,
-  filter 0.16s ease;
-}
-
-.login-button:hover:not(:disabled) {
-  border-color: var(--color-login-button-border-hover);
-  box-shadow: var(--shadow-glow-login);
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-.login-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.login-button:disabled {
-  cursor: wait;
-  opacity: 0.58;
-}
-
-.button-prompt {
-  color: var(--color-terminal-green-prompt);
 }
 
 .terminal-log {
@@ -870,44 +634,6 @@ async function loginUser() {
   flex: 1;
 }
 
-.google-login-button {
-  display: flex;
-  width: 100%;
-  min-height: 43px;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  border: 1px solid var(--color-white-a095);
-  border-radius: var(--radius-6);
-  color: var(--color-terminal-text);
-  background: var(--color-white-a025);
-  box-sizing: border-box;
-  font-size: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: border-color 0.16s ease,
-  background 0.16s ease,
-  transform 0.16s ease;
-
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.google-login-button:disabled {
-  cursor: wait;
-  opacity: 0.58;
-}
-
-.google-login-button:hover {
-  border-color: var(--color-login-border-hover);
-  background: rgba(
-    102,
-    255,
-    157,
-    0.035
-  );
-  transform: translateY(-1px);
-}
 
 .google-mark {
   display: grid;
@@ -949,21 +675,6 @@ async function loginUser() {
   box-shadow: var(--shadow-glow-login-status);
 }
 
-.terminal-log-enter-active,
-.terminal-log-leave-active {
-  transition: opacity 0.22s ease,
-  transform 0.22s ease;
-}
-
-.terminal-log-enter-from {
-  opacity: 0;
-  transform: translateY(5px);
-}
-
-.terminal-log-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
 
 @keyframes cursor-blink {
   0%,
@@ -990,14 +701,6 @@ max-width: 520px
 
   .terminal-session {
     padding: 15px 17px;
-  }
-
-  .terminal-toolbar {
-    grid-template-columns:
-      54px
-      1fr
-      54px;
-    padding: 0 11px;
   }
 }
 
@@ -1037,13 +740,6 @@ prefers-reduced-motion: reduce
 ) {
   .terminal-cursor {
     animation: none;
-  }
-
-  .login-button,
-  .google-login-button,
-  .terminal-log-enter-active,
-  .terminal-log-leave-active {
-    transition: none;
   }
 }
 </style>
