@@ -338,6 +338,116 @@ StreamResponse
 
 ![Feldbuch Entity Relationship Diagram](./images/diagrams/feldbuch-erd.svg)
 
+### Domain Table Schema
+
+Batch 메타 테이블은 제외하고, 서비스 도메인에서 직접 관리하는 테이블만 정리합니다. 컬럼 순서는 `id -> FK -> 핵심 비즈니스 컬럼 -> 상태값 -> 정렬/순서 -> 통계/캐시/메타 정보 -> created_at -> updated_at` 기준을 따릅니다.
+
+#### users
+
+| 순서 | 분류 | 컬럼 | 타입 | Null | 설명 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | PK | `id` | `BIGINT` | N | 사용자 식별자 |
+| 2 | 핵심 비즈니스 컬럼 | `email` | `VARCHAR(100)` | N | 로그인 이메일. `uk_user_email` 유니크 제약 |
+| 3 | 핵심 비즈니스 컬럼 | `password` | `VARCHAR(255)` | N | 암호화된 비밀번호 |
+| 4 | 핵심 비즈니스 컬럼 | `nickname` | `VARCHAR(30)` | N | 화면 표시용 사용자 이름 |
+| 5 | 상태 | `role` | `VARCHAR(20)` | N | 사용자 권한. `USER` 기본값 |
+| 6 | 생성 시각 | `created_at` | `DATETIME` | Y | 생성 시각. JPA Auditing으로 기록 |
+| 7 | 수정 시각 | `updated_at` | `DATETIME` | Y | 마지막 수정 시각. JPA Auditing으로 기록 |
+
+#### user_identities
+
+| 순서 | 분류 | 컬럼 | 타입 | Null | 설명 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | PK | `id` | `BIGINT` | N | 외부 인증 계정 식별자 |
+| 2 | FK | `user_id` | `BIGINT` | N | `users.id` 참조. `fk_user_identity_user` |
+| 3 | 상태 | `provider` | `VARCHAR(20)` | N | 인증 Provider. 현재 `GOOGLE` |
+| 4 | 핵심 비즈니스 컬럼 | `provider_subject` | `VARCHAR(255)` | N | OAuth Provider 사용자 고유 식별자. Google OIDC `sub` |
+| 5 | 핵심 비즈니스 컬럼 | `provider_email` | `VARCHAR(100)` | Y | Provider에서 받은 이메일 |
+| 6 | 생성 시각 | `created_at` | `DATETIME` | Y | 생성 시각. JPA Auditing으로 기록 |
+| 7 | 수정 시각 | `updated_at` | `DATETIME` | Y | 마지막 수정 시각. JPA Auditing으로 기록 |
+
+제약/인덱스:
+
+- `uk_user_identity_provider_subject`: `provider`, `provider_subject`
+- `idx_user_identity_user`: `user_id`
+- `idx_user_identity_provider_email`: `provider`, `provider_email`
+
+#### conversations
+
+| 순서 | 분류 | 컬럼 | 타입 | Null | 설명 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | PK | `id` | `BIGINT` | N | 대화 식별자 |
+| 2 | FK | `user_id` | `BIGINT` | N | `users.id` 참조 |
+| 3 | 핵심 비즈니스 컬럼 | `title` | `VARCHAR(100)` | N | 대화 제목. 기본값은 `새 대화` |
+| 4 | 상태 | `status` | `VARCHAR(255)` | N | 대화 상태. `ACTIVE`, `COMPLETED` |
+| 5 | 상태 | `knowledge_extract_status` | `VARCHAR(20)` | N | Knowledge 추출 상태. `NONE`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| 6 | 통계/캐시/메타 정보 | `last_message_at` | `DATETIME` | Y | 마지막 메시지 저장 시각. 자동 완료 기준 |
+| 7 | 통계/캐시/메타 정보 | `last_extracted_message_id` | `BIGINT` | Y | 마지막 Knowledge 추출 완료 메시지 ID |
+| 8 | 통계/캐시/메타 정보 | `knowledge_extract_retry_count` | `INT` | N | Knowledge 추출 실패 재시도 횟수 |
+| 9 | 통계/캐시/메타 정보 | `knowledge_extract_error_message` | `VARCHAR(1000)` | Y | 마지막 Knowledge 추출 실패 메시지 |
+| 10 | 통계/캐시/메타 정보 | `knowledge_extract_failed_at` | `DATETIME` | Y | 마지막 Knowledge 추출 실패 시각 |
+| 11 | 생성 시각 | `created_at` | `DATETIME` | Y | 생성 시각. JPA Auditing으로 기록 |
+| 12 | 수정 시각 | `updated_at` | `DATETIME` | Y | 마지막 수정 시각. JPA Auditing으로 기록 |
+
+#### conversation_messages
+
+| 순서 | 분류 | 컬럼 | 타입 | Null | 설명 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | PK | `id` | `BIGINT` | N | 대화 메시지 식별자 |
+| 2 | FK | `conversation_id` | `BIGINT` | N | `conversations.id` 참조 |
+| 3 | 핵심 비즈니스 컬럼 | `content` | `LONGTEXT` | N | 사용자 또는 Assistant 메시지 본문 |
+| 4 | 상태 | `role` | `VARCHAR(20)` | N | 메시지 역할. `USER`, `ASSISTANT` |
+| 5 | 정렬/순서 | `sequence` | `INT` | N | 대화 안에서의 메시지 순서 |
+| 6 | 생성 시각 | `created_at` | `DATETIME` | Y | 생성 시각. JPA Auditing으로 기록 |
+| 7 | 수정 시각 | `updated_at` | `DATETIME` | Y | 마지막 수정 시각. JPA Auditing으로 기록 |
+
+#### knowledge
+
+| 순서 | 분류 | 컬럼 | 타입 | Null | 설명 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | PK | `id` | `BIGINT` | N | Knowledge 폴더 식별자 |
+| 2 | FK | `user_id` | `BIGINT` | N | `users.id` 참조. `fk_knowledge_user` |
+| 3 | FK | `parent_id` | `BIGINT` | Y | 상위 `knowledge.id` 참조. 루트 폴더는 `NULL` |
+| 4 | 핵심 비즈니스 컬럼 | `name` | `VARCHAR(100)` | N | 화면에 표시할 Knowledge 폴더 이름 |
+| 5 | 생성 시각 | `created_at` | `DATETIME` | Y | 생성 시각. JPA Auditing으로 기록 |
+| 6 | 수정 시각 | `updated_at` | `DATETIME` | Y | 마지막 수정 시각. JPA Auditing으로 기록 |
+
+인덱스:
+
+- `idx_knowledge_user_parent`: `user_id`, `parent_id`
+- `idx_knowledge_parent`: `parent_id`
+
+#### knowledge_notes
+
+| 순서 | 분류 | 컬럼 | 타입 | Null | 설명 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | PK | `id` | `BIGINT` | N | KnowledgeNote 식별자 |
+| 2 | FK | `user_id` | `BIGINT` | N | `users.id` 참조. `fk_knowledge_note_user` |
+| 3 | FK | `conversation_id` | `BIGINT` | N | 원본 `conversations.id` 참조. `fk_knowledge_note_conversation` |
+| 4 | FK | `knowledge_id` | `BIGINT` | N | 저장 위치 `knowledge.id` 참조. `fk_knowledge_note_knowledge` |
+| 5 | 핵심 비즈니스 컬럼 | `title` | `VARCHAR(200)` | N | AI가 생성한 학습 노트 제목 |
+| 6 | 핵심 비즈니스 컬럼 | `description` | `LONGTEXT` | N | AI가 생성한 한 줄 설명 |
+| 7 | 핵심 비즈니스 컬럼 | `summary` | `LONGTEXT` | N | 대화에서 추출한 학습 요약 |
+| 8 | 상태 | `note_type` | `VARCHAR(20)` | N | 노트 유형. `INCREMENTAL`, `CONSOLIDATED` |
+| 9 | 생성 시각 | `created_at` | `DATETIME` | Y | 생성 시각. JPA Auditing으로 기록 |
+| 10 | 수정 시각 | `updated_at` | `DATETIME` | Y | 마지막 수정 시각. JPA Auditing으로 기록 |
+
+인덱스:
+
+- `idx_knowledge_note_user`: `user_id`
+- `idx_knowledge_note_knowledge`: `knowledge_id`
+- `idx_knowledge_note_conversation`: `conversation_id`
+- `idx_knowledge_note_conversation_type`: `conversation_id`, `note_type`
+
+#### knowledge_note_keywords
+
+`KnowledgeNote.keywords`의 `@ElementCollection` 테이블이며, 별도 PK 컬럼은 두지 않습니다.
+
+| 순서 | 분류 | 컬럼 | 타입 | Null | 설명 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | FK | `knowledge_note_id` | `BIGINT` | N | `knowledge_notes.id` 참조. `fk_knowledge_note_keyword_note` |
+| 2 | 핵심 비즈니스 컬럼 | `keyword` | `VARCHAR(100)` | N | AI가 추출한 검색/복습용 키워드 |
+
 현재 영속 모델은 `users`, `user_identities`, `conversations`, `conversation_messages`, `knowledge`, `knowledge_notes`, `knowledge_note_keywords`를 중심으로 구성합니다.
 
 - `users`: 대화와 Knowledge의 소유자
