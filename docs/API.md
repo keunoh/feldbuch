@@ -4,7 +4,7 @@
 >
 > 인증 방식: `Authorization: Bearer <accessToken>`
 
-현재 서버에 남아 있는 API 표면은 Auth, User, Conversation, Knowledge입니다. 일반 응답은 `ApiResponse<T>` 형식이며, SSE 스트리밍 응답만 `ApiResponse<T>`로 감싸지 않습니다.
+현재 서버에 남아 있는 API 표면은 Auth, User, Conversation, Knowledge입니다. Postman 컬렉션도 같은 그룹으로 정리합니다. 일반 응답은 `ApiResponse<T>` 형식이며, SSE 스트리밍 응답만 `ApiResponse<T>`로 감싸지 않습니다.
 
 ```json
 {
@@ -37,7 +37,59 @@ Content-Type: application/json
   "data": {
     "userId": 1,
     "accessToken": "jwt-token",
+    "refreshToken": "refresh-token",
     "tokenType": "Bearer"
+  }
+}
+```
+
+### Access Token 재발급
+
+```http
+POST /api/auth/refresh
+Content-Type: application/json
+```
+
+인증 헤더 없이 로그인 시 받은 Refresh Token으로 새 Access Token을 발급합니다.
+
+```json
+{
+  "refreshToken": "refresh-token"
+}
+```
+
+응답:
+
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "new-jwt-token",
+    "tokenType": "Bearer"
+  }
+}
+```
+
+### 현재 인증 사용자 조회
+
+```http
+GET /api/auth/me
+Authorization: Bearer <accessToken>
+```
+
+JWT 토큰 기준으로 현재 로그인 사용자와 인증 Provider를 조회합니다.
+
+응답:
+
+```json
+{
+  "success": true,
+  "data": {
+    "userId": 1,
+    "email": "user@example.com",
+    "nickname": "홍길동",
+    "role": "USER",
+    "provider": "LOCAL"
   }
 }
 ```
@@ -59,6 +111,14 @@ Content-Type: application/json
 }
 ```
 
+요청 제약:
+
+| 필드 | 타입 | 필수 | 제약 |
+| --- | --- | --- | --- |
+| `email` | string | Y | 이메일 형식 |
+| `password` | string | Y | 8-20자 |
+| `nickname` | string | Y | 2-20자 |
+
 응답:
 
 ```json
@@ -78,6 +138,8 @@ Content-Type: application/json
 GET /api/users/me
 Authorization: Bearer <accessToken>
 ```
+
+사용자 프로필 정보를 조회합니다. 인증 Provider까지 필요한 화면은 `GET /api/auth/me`를 사용합니다.
 
 응답:
 
@@ -110,6 +172,12 @@ Content-Type: application/json
   "title": "새 대화"
 }
 ```
+
+요청 제약:
+
+| 필드 | 타입 | 필수 | 제약 |
+| --- | --- | --- | --- |
+| `title` | string | Y | 100자 이하 |
 
 응답 `data`는 생성된 Conversation ID입니다.
 
@@ -188,6 +256,12 @@ Content-Type: application/json
 }
 ```
 
+요청 제약:
+
+| 필드 | 타입 | 필수 | 제약 |
+| --- | --- | --- | --- |
+| `title` | string | Y | 100자 이하 |
+
 응답:
 
 ```json
@@ -203,6 +277,8 @@ Content-Type: application/json
 DELETE /api/conversations/{conversationId}
 Authorization: Bearer <accessToken>
 ```
+
+해당 대화와 대화에 속한 메시지를 삭제합니다.
 
 응답:
 
@@ -228,6 +304,13 @@ Content-Type: application/json
 ```
 
 응답 `data`는 생성된 메시지 ID입니다.
+
+```json
+{
+  "success": true,
+  "data": 1
+}
+```
 
 ### 대화 메시지 목록 조회
 
@@ -319,7 +402,7 @@ Authorization: Bearer <accessToken>
   "data": [
     {
       "id": 1,
-      "name": "WEB_DEVELOPMENT",
+      "name": "프로그래밍",
       "children": [
         {
           "id": 2,
@@ -346,10 +429,10 @@ Authorization: Bearer <accessToken>
   "success": true,
   "data": [
     {
-      "id": 10,
-      "title": "Spring Batch 실행 구조",
-      "summary": "Job, Step, Tasklet의 역할을 정리합니다.",
-      "createdAt": "2026-08-06T10:30:00"
+      "id": 1,
+      "title": "Spring Boot 개요",
+      "summary": "핵심 요약 내용",
+      "createdAt": "2026-01-01T00:00:00"
     }
   ]
 }
@@ -368,11 +451,11 @@ Authorization: Bearer <accessToken>
 {
   "success": true,
   "data": {
-    "id": 10,
-    "title": "Spring Batch 실행 구조",
-    "description": "Spring Batch의 주요 실행 단위를 정리한 노트",
-    "summary": "Job은 전체 배치 작업을 나타내고 Step은 실제 처리 단위를 담당합니다.",
-    "keywords": ["Spring Batch", "Job", "Step"]
+    "id": 1,
+    "title": "Spring Boot 개요",
+    "description": "Spring Boot는 ...",
+    "summary": "핵심 요약 내용",
+    "keywords": ["Spring", "Boot", "Java"]
   }
 }
 ```
@@ -385,6 +468,21 @@ Authorization: Bearer <accessToken>
 ```
 
 같은 Conversation에서 누적 병합된 `CONSOLIDATED` KnowledgeNote를 조회합니다.
+
+응답:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "대화 요약 노트",
+    "description": "이 대화에서 다룬 내용 ...",
+    "summary": "핵심 요약",
+    "keywords": ["Spring", "JPA"]
+  }
+}
+```
 
 ## Enum
 
