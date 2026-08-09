@@ -65,11 +65,15 @@ flowchart TD
 ## Implemented Features
 
 - Spring Security, JWT 로그인, JWT Claims 기반 `userId`, `email`, `role`, `provider` 저장
+- Access Token과 Refresh Token 분리 발급
+- Redis 기반 Refresh Token 저장, 조회, 삭제
 - CustomUserDetails, JWT Filter, JWT AuthenticationEntryPoint 401 처리
 - Vite 개발 서버 `http://localhost:5173` CORS 허용
-- 회원가입, 이메일/비밀번호 로그인, Google OAuth2 로그인, 클라이언트 로그아웃
+- 회원가입, 이메일/비밀번호 로그인, Google OAuth2 로그인, Access Token 재발급, 서버 로그아웃
 - 회원가입 요청 검증: email 필수/이메일 형식, password 8-20자, nickname 2-20자
 - 현재 로그인 사용자 조회 API `GET /api/auth/me`
+- Refresh Token 기반 Access Token 재발급 API `POST /api/auth/refresh`
+- Refresh Token 삭제 기반 로그아웃 API `POST /api/auth/logout`
 - Google OIDC 사용자 조회, 기존 이메일 계정 연동, 신규 Google 사용자 자동 생성
 - OAuth2 로그인 성공 시 JWT 발급과 `http://localhost:5173/oauth2/success` 리다이렉트
 - RestClient 기반 OpenAI 일반 요청
@@ -142,12 +146,16 @@ flowchart TD
 - Google OAuth2 client-id 설정 키: `GOOGLE_CLIENT_ID`
 - Google OAuth2 client-secret 설정 키: `GOOGLE_CLIENT_SECRET`
 - Google OAuth2 scope: `openid`, `profile`, `email`
+- JWT Access Token 만료 시간 설정 키: `jwt.access-token-expiration`
+- JWT Refresh Token 만료 시간 설정 키: `jwt.refresh-token-expiration`
 - Vue 로그인 화면은 JWT 폼 로그인과 Google OAuth2 로그인 진입점을 함께 제공합니다.
 - Vue 회원가입 화면은 `/signup`에서 제공하며, 가입 성공 후 `/login`으로 이동합니다.
 - Google OAuth2 시작 경로: `/oauth2/authorization/google`
 - Google OAuth2 콜백 경로: `/login/oauth2/code/google`
 - Google OAuth2 성공 리다이렉트: `http://localhost:5173/oauth2/success?token={jwt}&userId={id}`
 - 로컬 Docker 인프라: MySQL, Redis
+- Refresh Token 저장 Redis Key: `refresh:{userId}`
+- Refresh Token Redis TTL: `jwt.refresh-token-expiration` 기준
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
 - Knowledge 추출 스케줄러 간격 설정 키: `batch.knowledge-extraction.fixed-delay`
 - Knowledge 추출 스케줄러 기본 간격: `1800000` ms, 30분
@@ -189,6 +197,10 @@ flowchart TD
 
     Repository --> MySQL
     Repository --> Redis
+
+    AuthService --> JwtProvider
+    AuthService --> RefreshTokenService
+    RefreshTokenService --> Redis
 ```
 
 ### AI and Conversation
@@ -300,7 +312,10 @@ flowchart TD
 - 일반 응답은 `ApiResponse<T>` 형식으로 통일하고 실제 데이터는 `data` 필드에 담습니다.
 - 회원가입은 `POST /api/users/signup`으로 수행하며, `email`, `password`, `nickname`을 전송합니다.
 - 회원가입 성공 시 `SignupResponse(id, email, nickname)`를 받고 Vue는 `/login`으로 이동합니다.
-- 로그인 성공 시 `accessToken`, `userId`를 `localStorage`에 저장합니다.
+- 로그인 성공 시 서버는 `accessToken`, `refreshToken`, `tokenType`을 반환합니다.
+- 서버는 로그인 시 발급한 Refresh Token을 Redis에 `refresh:{userId}` 키로 저장하고, `jwt.refresh-token-expiration`과 같은 TTL을 적용합니다.
+- Access Token 만료 시 클라이언트는 `POST /api/auth/refresh`로 Refresh Token을 전송해 새 Access Token을 발급받습니다.
+- 로그아웃 시 클라이언트는 `POST /api/auth/logout`을 호출하고, 서버는 Redis의 Refresh Token을 삭제합니다.
 - Google OAuth2 성공 시 서버가 JWT와 사용자 ID를 Vue 성공 화면으로 전달하고, `OAuth2SuccessView`가 이를 `localStorage`에 저장합니다.
 - `GET /api/auth/me`는 로그인 사용자 프로필 패널의 `email`, `nickname`, `role`, `provider` 값을 제공합니다.
 - Axios Request Interceptor가 `Authorization: Bearer <accessToken>` 헤더를 자동으로 추가합니다.
@@ -314,6 +329,8 @@ flowchart TD
 | --- | --- | --- |
 | `POST` | `/api/auth/login` | 로그인 |
 | `GET` | `/api/auth/me` | 현재 로그인 사용자 조회 |
+| `POST` | `/api/auth/refresh` | Refresh Token 기반 Access Token 재발급 |
+| `POST` | `/api/auth/logout` | 현재 사용자 Refresh Token 삭제 기반 로그아웃 |
 | `GET` | `/oauth2/authorization/google` | Google OAuth2 로그인 시작 |
 | `GET` | `/login/oauth2/code/google` | Google OAuth2 인증 콜백 |
 | `POST` | `/api/users/signup` | 회원가입. email, password, nickname 입력 |
@@ -331,6 +348,39 @@ flowchart TD
 | `GET` | `/api/knowledge/{knowledgeId}/notes` | Knowledge 폴더별 노트 목록 조회 |
 | `GET` | `/api/knowledge/notes/{noteId}` | Knowledge 노트 상세 조회 |
 | `GET` | `/api/knowledge/conversations/{conversationId}/consolidated-note` | Conversation별 통합 Knowledge 노트 조회 |
+
+### Refresh Token Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client as Vue Client
+    participant AuthController
+    participant AuthService
+    participant JwtProvider
+    participant Redis as "Redis(refresh:{userId})"
+
+    User->>Client: 이메일/비밀번호 로그인
+    Client->>AuthController: POST /api/auth/login
+    AuthController->>AuthService: login(request)
+    AuthService->>JwtProvider: Access Token 생성
+    AuthService->>JwtProvider: Refresh Token 생성
+    AuthService->>Redis: Refresh Token 저장 + TTL
+    AuthService-->>Client: accessToken, refreshToken, tokenType
+
+    Client->>AuthController: POST /api/auth/refresh
+    AuthController->>AuthService: refresh(refreshToken)
+    AuthService->>JwtProvider: Refresh Token 서명/만료 검증
+    AuthService->>Redis: 저장된 Refresh Token 조회
+    AuthService->>AuthService: 요청 토큰과 저장 토큰 비교
+    AuthService->>JwtProvider: 새 Access Token 생성
+    AuthService-->>Client: accessToken, tokenType
+
+    Client->>AuthController: POST /api/auth/logout
+    AuthController->>AuthService: logout(userDetails)
+    AuthService->>Redis: refresh:{userId} 삭제
+    AuthService-->>Client: data null
+```
 
 SSE 이벤트 계약:
 
@@ -566,6 +616,8 @@ frontend/src
 - `lastExtractedMessageId` 기반 증분 Knowledge 추출
 - 낙관적 사용자 메시지와 스트리밍 Assistant 메시지 렌더링
 - 회원가입 성공 후 로그인 화면으로 이동해 인증 흐름을 단순하게 유지
+- Access Token과 Refresh Token 수명을 분리해 짧은 인증 토큰과 긴 세션 유지 토큰을 구분
+- Refresh Token은 Redis에 서버 측 상태로 저장해 재발급 검증과 로그아웃 무효화를 처리
 - OAuth2 성공 화면에서 JWT 저장 후 대화 워크스페이스로 이동
 - 현재 사용자 조회 결과를 사이드바 사용자 프로필과 설정 모달에 반영
 - Markdown 렌더링과 sanitize 책임을 `markdownRenderer.js`로 분리

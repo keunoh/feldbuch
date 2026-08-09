@@ -14,7 +14,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ## Current Scope
 
-- JWT 기반 회원가입, 이메일/비밀번호 로그인, Google OAuth2 로그인, 클라이언트 로그아웃
+- JWT 기반 회원가입, 이메일/비밀번호 로그인, Google OAuth2 로그인, Refresh Token 재발급, 서버 로그아웃
 - Vue 터미널 스타일 로그인/회원가입 화면과 상호 이동 링크
 - Spring Security 인증/인가와 Vite 개발 서버 CORS 허용
 - 현재 로그인 사용자 조회 API와 Provider/Role 기반 사용자 프로필 패널
@@ -40,6 +40,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 선택한 사이드바 모드, 대화, Knowledge 폴더, Knowledge 노트 localStorage 복원
 - 요청별 UUID `requestId`와 `X-Request-Id` 응답 헤더
 - Google OAuth2 로그인 시작, Google OIDC 사용자 연동, JWT 발급 후 Vue OAuth2 성공 화면 리다이렉트
+- Redis 기반 Refresh Token 저장, 검증, 삭제
 
 ## Tech Stack
 
@@ -48,7 +49,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 | Backend | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, QueryDSL, Spring Batch, WebFlux WebClient |
 | Database / Infra | MySQL, H2 Test DB, Redis, Docker Compose |
 | AI | OpenAI Chat Completion, SSE Streaming, structured Knowledge summary/merge parsing |
-| Auth Config | JWT, Spring Security OAuth2 Client, Google OIDC |
+| Auth Config | JWT Access/Refresh Token, Spring Security OAuth2 Client, Google OIDC |
 | Frontend | Vue 3, Vite, Vue Router, Axios, Fetch SSE, marked, highlight.js, DOMPurify |
 | View Legacy | Thymeleaf, static CSS/JS comparison screens |
 | Test | JUnit 5, MockMvc, Spring Security Test, Spring Batch Test |
@@ -60,8 +61,10 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 로컬/운영 환경별 DB, JWT, OpenAI Key는 `application-local.yml`, `application-prod.yml`에서 분리합니다.
 - OpenAI 기본 모델은 `openai.model` 값으로 선택하며 현재 기본값은 `gpt-4.1-nano`입니다.
 - Google OAuth2 client 값은 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 환경 변수로 주입합니다.
+- JWT 만료 시간은 `jwt.access-token-expiration`, `jwt.refresh-token-expiration` 값으로 분리합니다.
 - Vue 로그인 화면은 JWT 폼 로그인과 Google OAuth2 로그인 진입점을 함께 제공합니다.
 - Google OAuth2 성공 시 서버가 JWT를 발급하고 `http://localhost:5173/oauth2/success`로 리다이렉트하며, Vue 성공 화면이 토큰과 사용자 ID를 저장한 뒤 `/conversations`로 이동합니다.
+- Refresh Token은 Redis에 `refresh:{userId}` 키로 저장하고 Refresh Token 만료 시간과 같은 TTL을 적용합니다.
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
 - Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 기본값은 30분(`1800000` ms)입니다.
@@ -90,7 +93,9 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 클라이언트와 백엔드는 JSON 기반 REST API로 통신합니다.
 - 공통 응답은 `ApiResponse<T>` 형식이며, 실제 데이터는 `data` 필드에 담습니다.
 - 회원가입은 `POST /api/users/signup`으로 수행하며, `email`, `password`, `nickname`을 전송합니다.
-- 로그인은 `POST /api/auth/login`으로 수행하고, 응답의 `accessToken`을 `localStorage`에 보관합니다.
+- 로그인은 `POST /api/auth/login`으로 수행하고, 응답의 `accessToken`, `refreshToken`, `tokenType`을 클라이언트 인증 상태에 사용합니다.
+- Access Token 만료 시 `POST /api/auth/refresh`로 Refresh Token을 전송해 새 Access Token을 발급받습니다.
+- 로그아웃은 `POST /api/auth/logout`으로 수행하며, 서버는 Redis에 저장된 현재 사용자의 Refresh Token을 삭제합니다.
 - 현재 사용자 정보는 `GET /api/auth/me`로 조회하며, 응답의 `email`, `nickname`, `role`, `provider`를 사용자 프로필 패널에 사용합니다.
 - Google OAuth2 로그인은 `GET /oauth2/authorization/google`에서 시작하고, 성공 후 서버가 `/oauth2/success` Vue 라우트로 JWT와 사용자 ID를 전달합니다.
 - Axios Request Interceptor가 `Authorization: Bearer <accessToken>` 헤더를 자동으로 추가합니다.
@@ -100,6 +105,34 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Knowledge 화면은 `GET /api/knowledge/tree`, `GET /api/knowledge/{knowledgeId}/notes`, `GET /api/knowledge/notes/{noteId}`를 사용합니다.
 - Conversation별 통합 Knowledge 노트는 `GET /api/knowledge/conversations/{conversationId}/consolidated-note`로 조회합니다.
 - 서버는 모든 요청에 UUID 기반 `requestId`를 생성하고 `X-Request-Id` 응답 헤더로 내려줍니다.
+
+### Refresh Token Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client as Vue Client
+    participant Auth as Auth API
+    participant Jwt as JwtProvider
+    participant Redis as Redis
+
+    User->>Client: 로그인 요청
+    Client->>Auth: POST /api/auth/login
+    Auth->>Jwt: Access Token + Refresh Token 생성
+    Auth->>Redis: refresh:{userId} = refreshToken 저장(TTL)
+    Auth-->>Client: accessToken, refreshToken, tokenType
+
+    Client->>Auth: POST /api/auth/refresh
+    Auth->>Jwt: Refresh Token 서명/만료 검증
+    Auth->>Redis: 저장된 Refresh Token 조회
+    Redis-->>Auth: refresh:{userId}
+    Auth->>Jwt: 새 Access Token 생성
+    Auth-->>Client: accessToken, tokenType
+
+    Client->>Auth: POST /api/auth/logout
+    Auth->>Redis: refresh:{userId} 삭제
+    Auth-->>Client: 로그아웃 완료
+```
 
 ## Architecture Summary
 
@@ -115,6 +148,9 @@ flowchart TD
     QueryService --> QueryDSL
     Repository --> MySQL
     Repository --> Redis
+    AuthService --> JwtProvider
+    AuthService --> RefreshTokenService
+    RefreshTokenService --> Redis
 
     ConversationView --> WorkspaceSidebar
     WorkspaceSidebar --> ConversationSidebar
@@ -148,7 +184,7 @@ flowchart TD
 ```text
 src/main/java/io.github.kaltz.feldbuch
 ├── ai               # OpenAI 연동, 대화 응답, Knowledge 요약/병합
-├── auth             # 로그인, JWT 인증, Google OAuth2/OIDC 인증
+├── auth             # 로그인, JWT Access/Refresh Token, Google OAuth2/OIDC 인증
 ├── batch            # Knowledge 추출 Batch 파이프라인과 스케줄러
 ├── common           # 공통 응답, 예외, requestId 로깅
 ├── config           # Security, Redis, OpenAI, Batch 설정
