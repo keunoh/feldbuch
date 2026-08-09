@@ -6,10 +6,6 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ## Screens
 
-![Feldbuch Login Screen](docs/images/screenshots/feldbuch-login-screen.png)
-
-![Feldbuch Signup Screen](docs/images/screenshots/feldbuch-signup-screen.png)
-
 ![Feldbuch Main Chat Screen](docs/images/screenshots/feldbuch-main-chat-screen.png)
 
 ![Feldbuch Knowledge Notes Screen](docs/images/screenshots/feldbuch-knowledge-notes-screen.png)
