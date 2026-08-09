@@ -11,7 +11,7 @@ import {
   updateConversationTitle
 } from "@/api/conversationApi.js";
 
-import {logout} from "@/utils/auth.js";
+import {logout} from "@/utils/tokenStorage.js";
 
 import ChatInput from '@/components/chat/ChatInput.vue'
 import MessageList from '@/components/chat/MessageList.vue'

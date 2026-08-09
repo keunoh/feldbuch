@@ -3,7 +3,7 @@ import {onMounted, ref,} from 'vue'
 
 import {useRoute, useRouter,} from 'vue-router'
 
-import {saveAccessToken, saveUserId,} from '@/utils/auth.js'
+import {saveAccessToken, saveUserId,} from '@/utils/tokenStorage.js'
 import BaseTerminalHeader from "@/components/common/BaseTerminalHeader.vue";
 import BaseTerminalCommand from "@/components/common/BaseTerminalCommand.vue";
 

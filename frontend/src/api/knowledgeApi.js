@@ -1,4 +1,4 @@
-import apiClient from "@/api/apiClient.js";
+import apiClient from "@/api/common/apiClient.js";
 
 export async function getKnowledgeTree() {
   const response = await apiClient.get(

@@ -5,7 +5,7 @@ import {useRouter,} from 'vue-router'
 
 import {login,} from '@/api/authApi.js'
 
-import {saveAccessToken, saveUserId,} from '@/utils/auth.js'
+import {saveAccessToken, saveRefreshToken, saveUserId,} from '@/utils/tokenStorage.js'
 import BaseButton from "@/components/common/BaseButton.vue";
 import BaseInput from "@/components/common/BaseInput.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
@@ -168,8 +168,14 @@ async function loginUser() {
         password.value,
       })
 
+    console.log("user:", response);
+
     saveAccessToken(
       response.data.accessToken,
+    )
+
+    saveRefreshToken(
+      response.data.refreshToken,
     )
 
     saveUserId(

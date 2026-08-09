@@ -1,5 +1,5 @@
-import apiClient from "@/api/apiClient.js";
-import {logout} from "@/utils/auth.js";
+import apiClient from "@/api/common/apiClient.js";
+import {logout} from "@/utils/tokenStorage.js";
 import router from "@/router/index.js";
 
 /**

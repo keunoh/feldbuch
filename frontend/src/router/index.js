@@ -1,6 +1,6 @@
 import {createRouter, createWebHistory} from 'vue-router'
 
-import {isAuthenticated} from "@/utils/auth.js";
+import {isAuthenticated} from "@/utils/tokenStorage.js";
 
 import LoginView from "@/views/LoginView.vue";
 import ConversationView from "@/views/ConversationView.vue";
