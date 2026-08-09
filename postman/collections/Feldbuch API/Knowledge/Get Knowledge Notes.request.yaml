@@ -1,0 +1,33 @@
+$kind: http-request
+description: |-
+  특정 지식 카테고리에 속한 노트 목록을 조회합니다.
+
+  **인증**: Bearer Token 필요
+
+  **Path Variables**
+  | 변수 | 설명 |
+  |------|------|
+  | knowledgeId | 조회할 지식 카테고리 ID |
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": [
+      {
+        "id": 1,
+        "title": "Spring Boot 개요",
+        "summary": "핵심 요약 내용",
+        "createdAt": "2026-01-01T00:00:00"
+      }
+    ]
+  }
+  ```
+url: '{{baseUrl}}/api/knowledge/{{knowledgeId}}/notes'
+method: GET
+pathVariables:
+  knowledgeId: '{{knowledgeId}}'
+auth:
+  type: bearer
+  credentials:
+    token: '{{accessToken}}'
+order: 3000

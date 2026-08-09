@@ -1,22 +1,41 @@
 $kind: http-request
-name: Create Conversation Chat
+description: |-
+  AI에게 메시지를 전송하고 응답을 받습니다. 사용자 메시지와 AI 응답이 대화에 저장됩니다.
+
+  **인증**: Bearer Token 필요
+
+  **Path Variables**
+  | 변수 | 설명 |
+  |------|------|
+  | conversationId | 채팅할 대화 ID |
+
+  **Request Body**
+  | 필드 | 타입 | 필수 | 설명 |
+  |------|------|------|------|
+  | message | string | ✅ | AI에게 전송할 메시지 |
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": {
+      "content": "Spring Boot는 ..."
+    }
+  }
+  ```
+url: "{{baseUrl}}/api/conversations/{{conversationId}}/chat"
 method: POST
-url: '{{baseUrl}}/api/conversations/{{conversationId}}/chat'
-order: 6000
 headers:
-  - key: Content-Type
-    value: application/json
-auth:
-  type: bearer
-  credentials:
-    - key: token
-      value: '{{accessToken}}'
+  Content-Type: application/json
 pathVariables:
-  - key: conversationId
-    value: '{{conversationId}}'
+  conversationId: "{{conversationId}}"
 body:
   type: json
   content: |-
     {
       "message": "Spring Boot에 대해 설명해주세요."
     }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 8000

@@ -1,13 +1,35 @@
 $kind: http-request
-name: Get Conversation Messages
+description: |-
+  대화의 전체 메시지 목록을 조회합니다.
+
+  **인증**: Bearer Token 필요
+
+  **Path Variables**
+  | 변수 | 설명 |
+  |------|------|
+  | conversationId | 조회할 대화 ID |
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": [
+      {
+        "id": 1,
+        "role": "USER",
+        "content": "안녕하세요",
+        "createdAt": "2026-01-01T00:00:00"
+      }
+    ]
+  }
+  ```
+
+  `role` 값: `USER` | `ASSISTANT`
+url: "{{baseUrl}}/api/conversations/{{conversationId}}/messages"
 method: GET
-url: '{{baseUrl}}/api/conversations/{{conversationId}}/messages'
-order: 5000
+pathVariables:
+  conversationId: "{{conversationId}}"
 auth:
   type: bearer
   credentials:
-    - key: token
-      value: '{{accessToken}}'
-pathVariables:
-  - key: conversationId
-    value: '{{conversationId}}'
+    token: "{{accessToken}}"
+order: 7000

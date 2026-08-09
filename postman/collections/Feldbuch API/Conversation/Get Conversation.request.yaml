@@ -1,0 +1,36 @@
+$kind: http-request
+description: |-
+  특정 대화의 상세 정보와 메시지 목록을 조회합니다.
+
+  **인증**: Bearer Token 필요
+
+  **Path Variables**
+  | 변수 | 설명 |
+  |------|------|
+  | conversationId | 조회할 대화 ID |
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": {
+      "id": 1,
+      "title": "Spring Boot 학습",
+      "status": "ACTIVE",
+      "createdAt": "2026-01-01T00:00:00",
+      "updatedAt": "2026-01-01T00:00:00",
+      "messages": [],
+      "messageCount": 0
+    }
+  }
+  ```
+
+  `status` 값: `ACTIVE` | `COMPLETED`
+url: "{{baseUrl}}/api/conversations/{{conversationId}}"
+method: GET
+pathVariables:
+  conversationId: "{{conversationId}}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 2000

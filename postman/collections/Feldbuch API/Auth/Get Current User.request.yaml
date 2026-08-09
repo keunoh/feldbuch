@@ -1,0 +1,23 @@
+$kind: http-request
+description: |-
+  현재 로그인된 사용자의 인증 정보를 조회합니다. JWT 토큰 기반으로 사용자를 식별하며, 로그인 방식(일반/OAuth2)도 함께 반환합니다.
+
+  **인증**: Bearer Token 필요
+
+  **Response** `200 OK`
+  ```json
+  {
+    "userId": 1,
+    "email": "user@example.com",
+    "nickname": "홍길동",
+    "role": "USER",
+    "provider": "LOCAL"
+  }
+  ```
+url: '{{baseUrl}}/api/auth/me'
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: '{{accessToken}}'
+order: 3000

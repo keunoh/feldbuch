@@ -1,13 +1,26 @@
 $kind: http-request
-name: Delete Conversation
+description: |-
+  대화를 삭제합니다. 해당 대화에 속한 메시지도 함께 삭제됩니다.
+
+  **인증**: Bearer Token 필요
+
+  **Path Variables**
+  | 변수 | 설명 |
+  |------|------|
+  | conversationId | 삭제할 대화 ID |
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": null
+  }
+  ```
+url: "{{baseUrl}}/api/conversations/{{conversationId}}"
 method: DELETE
-url: '{{baseUrl}}/api/conversations/{{conversationId}}'
-order: 4500
+pathVariables:
+  conversationId: "{{conversationId}}"
 auth:
   type: bearer
   credentials:
-    - key: token
-      value: '{{accessToken}}'
-pathVariables:
-  - key: conversationId
-    value: '{{conversationId}}'
+    token: "{{accessToken}}"
+order: 6000

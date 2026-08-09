@@ -1,0 +1,32 @@
+$kind: http-request
+description: |-
+  특정 지식 노트의 상세 내용을 조회합니다. 제목, 설명, AI 요약, 키워드를 포함합니다.
+
+  **인증**: Bearer Token 필요
+
+  **Path Variables**
+  | 변수 | 설명 |
+  |------|------|
+  | noteId | 조회할 지식 노트 ID |
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": {
+      "id": 1,
+      "title": "Spring Boot 개요",
+      "description": "Spring Boot는 ...",
+      "summary": "핵심 요약 내용",
+      "keywords": ["Spring", "Boot", "Java"]
+    }
+  }
+  ```
+url: '{{baseUrl}}/api/knowledge/notes/{{noteId}}'
+method: GET
+pathVariables:
+  noteId: '{{noteId}}'
+auth:
+  type: bearer
+  credentials:
+    token: '{{accessToken}}'
+order: 2000

@@ -1,13 +1,8 @@
 $kind: http-request
 description: |-
-  대화 제목을 수정합니다.
+  새 대화를 생성합니다. 생성된 대화의 ID를 반환합니다.
 
   **인증**: Bearer Token 필요
-
-  **Path Variables**
-  | 변수 | 설명 |
-  |------|------|
-  | conversationId | 수정할 대화 ID |
 
   **Request Body**
   | 필드 | 타입 | 필수 | 제약 |
@@ -17,23 +12,21 @@ description: |-
   **Response** `200 OK`
   ```json
   {
-    "data": null
+    "data": 1
   }
   ```
-url: "{{baseUrl}}/api/conversations/{{conversationId}}"
-method: PATCH
+url: "{{baseUrl}}/api/conversations"
+method: POST
 headers:
   Content-Type: application/json
-pathVariables:
-  conversationId: "{{conversationId}}"
 body:
   type: json
   content: |-
     {
-      "title": "수정된 대화 제목"
+      "title": "새 대화"
     }
 auth:
   type: bearer
   credentials:
     token: "{{accessToken}}"
-order: 4000
+order: 1000

@@ -1,11 +1,28 @@
 $kind: http-request
-name: Signup
+description: |-
+  신규 사용자를 등록합니다.
+
+  **인증**: 불필요
+
+  **Request Body**
+  | 필드 | 타입 | 필수 | 제약 |
+  |------|------|------|------|
+  | email | string | ✅ | 이메일 형식 |
+  | password | string | ✅ | 8~20자 |
+  | nickname | string | ✅ | 2~20자 |
+
+  **Response** `200 OK`
+  ```json
+  {
+    "id": 1,
+    "email": "user@example.com",
+    "nickname": "testuser"
+  }
+  ```
+url: "{{baseUrl}}/api/users/signup"
 method: POST
-url: '{{baseUrl}}/api/users/signup'
-order: 1000
 headers:
-  - key: Content-Type
-    value: application/json
+  Content-Type: application/json
 body:
   type: json
   content: |-
@@ -14,3 +31,4 @@ body:
       "password": "password123",
       "nickname": "testuser"
     }
+order: 1000

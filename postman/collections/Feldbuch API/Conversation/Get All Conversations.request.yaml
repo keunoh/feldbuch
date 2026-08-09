@@ -1,0 +1,28 @@
+$kind: http-request
+description: |-
+  현재 사용자의 모든 대화 목록을 조회합니다.
+
+  **인증**: Bearer Token 필요
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": [
+      {
+        "id": 1,
+        "title": "Spring Boot 학습",
+        "status": "ACTIVE",
+        "createdAt": "2026-01-01T00:00:00"
+      }
+    ]
+  }
+  ```
+
+  `status` 값: `ACTIVE` | `COMPLETED`
+url: "{{baseUrl}}/api/conversations"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 3000

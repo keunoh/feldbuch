@@ -1,0 +1,31 @@
+$kind: http-request
+description: |-
+  사용자의 지식 트리 구조를 조회합니다. 대화에서 추출된 지식이 카테고리별로 계층 구조로 반환됩니다.
+
+  **인증**: Bearer Token 필요
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": [
+      {
+        "id": 1,
+        "name": "프로그래밍",
+        "children": [
+          {
+            "id": 2,
+            "name": "Spring Boot",
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+  ```
+url: '{{baseUrl}}/api/knowledge/tree'
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: '{{accessToken}}'
+order: 1000

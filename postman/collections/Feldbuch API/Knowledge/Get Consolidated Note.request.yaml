@@ -1,0 +1,32 @@
+$kind: http-request
+description: |-
+  특정 대화에서 추출된 통합 지식 노트를 조회합니다. 대화 완료 후 AI가 생성한 요약 노트입니다.
+
+  **인증**: Bearer Token 필요
+
+  **Path Variables**
+  | 변수 | 설명 |
+  |------|------|
+  | conversationId | 조회할 대화 ID |
+
+  **Response** `200 OK`
+  ```json
+  {
+    "data": {
+      "id": 1,
+      "title": "대화 요약 노트",
+      "description": "이 대화에서 다룬 내용 ...",
+      "summary": "핵심 요약",
+      "keywords": ["Spring", "JPA"]
+    }
+  }
+  ```
+url: '{{baseUrl}}/api/knowledge/conversations/{{conversationId}}/consolidated-note'
+method: GET
+pathVariables:
+  conversationId: '{{conversationId}}'
+auth:
+  type: bearer
+  credentials:
+    token: '{{accessToken}}'
+order: 4000

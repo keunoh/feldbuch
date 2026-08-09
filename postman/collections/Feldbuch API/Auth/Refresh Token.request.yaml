@@ -1,25 +1,22 @@
 $kind: http-request
 description: |-
-  이메일과 비밀번호로 로그인합니다.
+  Refresh Token을 사용해 새로운 Access Token을 발급합니다.
 
   **인증**: 불필요
 
   **Request Body**
   | 필드 | 타입 | 필수 | 설명 |
   |------|------|------|------|
-  | email | string | ✅ | 이메일 형식 |
-  | password | string | ✅ | 비밀번호 |
+  | refreshToken | string | ✅ | 로그인 시 발급된 Refresh Token |
 
   **Response** `200 OK`
   ```json
   {
-    "userId": 1,
     "accessToken": "eyJ...",
-    "refreshToken": "eyJ...",
     "tokenType": "Bearer"
   }
   ```
-url: "{{baseUrl}}/api/auth/login"
+url: '{{baseUrl}}/api/auth/refresh'
 method: POST
 headers:
   Content-Type: application/json
@@ -27,7 +24,6 @@ body:
   type: json
   content: |-
     {
-      "email": "test@example.com",
-      "password": "password123"
+      "refreshToken": "{{refreshToken}}"
     }
-order: 1000
+order: 2000

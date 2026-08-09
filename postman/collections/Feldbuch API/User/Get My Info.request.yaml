@@ -1,0 +1,22 @@
+$kind: http-request
+description: |-
+  현재 로그인된 사용자의 프로필 정보를 조회합니다.
+
+  **인증**: Bearer Token 필요
+
+  **Response** `200 OK`
+  ```json
+  {
+    "id": 1,
+    "email": "user@example.com",
+    "nickname": "홍길동",
+    "role": "USER"
+  }
+  ```
+url: "{{baseUrl}}/api/users/me"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 2000
