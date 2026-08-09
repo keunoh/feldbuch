@@ -61,6 +61,7 @@ public class SecurityConfig {
 
                                 "/api/users/signup",
                                 "/api/auth/login",
+                                "/api/auth/refresh",
 
                                 /**
                                  * Google OAuth2 로그인 시작 경로
