@@ -27,7 +27,7 @@ public class JwtProvider {
         );
     }
 
-    public String createRefreshToken(Long userId) {
+    public String createRefreshToken(Long userId, String provider) {
 
         Date now = new Date();
 
@@ -38,6 +38,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
+                .claim("provider", provider)
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)

@@ -52,7 +52,8 @@ public class AuthService {
 
         String refreshToken =
                 jwtProvider.createRefreshToken(
-                        userDetails.getUserId()
+                        userDetails.getUserId(),
+                        AuthProvider.LOCAL.name()
                 );
 
         refreshTokenService.save(
@@ -104,7 +105,7 @@ public class AuthService {
 
         if (!jwtProvider.validateToken(refreshToken)) {
             throw new CustomException(
-                    ErrorCode.INVALID_TOKEN
+                    ErrorCode.INVALID_REFRESH_TOKEN
             );
         }
 
@@ -123,24 +124,38 @@ public class AuthService {
                         || !savedRefreshToken.equals(refreshToken)
         ) {
             throw new CustomException(
-                    ErrorCode.INVALID_TOKEN
+                    ErrorCode.INVALID_REFRESH_TOKEN
             );
         }
 
         User user =
                 userReader.get(userId);
 
+        String provider =
+                jwtProvider.getProvider(
+                        refreshToken
+                );
+
+
         String accessToken =
                 jwtProvider.createAccessToken(
                         user.getId(),
                         user.getEmail(),
                         user.getRole().name(),
-                        AuthProvider.LOCAL.name()
+                        provider
                 );
 
         return new RefreshTokenResponse(
                 accessToken,
                 "Bearer"
+        );
+    }
+
+    public void logout(
+            CustomUserDetails userDetails
+    ) {
+        refreshTokenService.delete(
+                userDetails.getUserId()
         );
     }
 }

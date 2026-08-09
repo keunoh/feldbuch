@@ -55,4 +55,18 @@ public class AuthController {
                 authService.refresh(request)
         );
     }
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails
+    ) {
+        authService.logout(
+                userDetails
+        );
+
+        return ApiResponse.success(
+                null
+        );
+    }
 }

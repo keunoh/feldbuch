@@ -1,5 +1,6 @@
 package io.github.kaltz.feldbuch.auth.service;
 
+import io.github.kaltz.feldbuch.auth.jwt.JwtProvider;
 import io.github.kaltz.feldbuch.config.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -15,6 +16,7 @@ public class RefreshTokenService {
 
     private final StringRedisTemplate redisTemplate;
     private final JwtProperties jwtProperties;
+    private final JwtProvider jwtProvider;
 
     public void save(
             Long userId,
@@ -40,5 +42,4 @@ public class RefreshTokenService {
                 KEY_PREFIX + userId
         );
     }
-
 }
