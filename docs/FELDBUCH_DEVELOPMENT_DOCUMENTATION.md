@@ -314,7 +314,7 @@ flowchart TD
 - 회원가입 성공 시 `SignupResponse(id, email, nickname)`를 받고 Vue는 `/login`으로 이동합니다.
 - 로그인 성공 시 서버는 `accessToken`, `refreshToken`, `tokenType`을 반환합니다.
 - 서버는 로그인 시 발급한 Refresh Token을 Redis에 `refresh:{userId}` 키로 저장하고, `jwt.refresh-token-expiration`과 같은 TTL을 적용합니다.
-- Access Token 만료 시 클라이언트는 `POST /api/auth/refresh`로 Refresh Token을 전송해 새 Access Token을 발급받습니다.
+- Access Token 만료 시 클라이언트는 인증 헤더 없이 `POST /api/auth/refresh`로 Refresh Token을 전송해 새 Access Token을 발급받습니다.
 - 로그아웃 시 클라이언트는 `POST /api/auth/logout`을 호출하고, 서버는 Redis의 Refresh Token을 삭제합니다.
 - Google OAuth2 성공 시 서버가 JWT와 사용자 ID를 Vue 성공 화면으로 전달하고, `OAuth2SuccessView`가 이를 `localStorage`에 저장합니다.
 - `GET /api/auth/me`는 로그인 사용자 프로필 패널의 `email`, `nickname`, `role`, `provider` 값을 제공합니다.

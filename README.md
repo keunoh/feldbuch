@@ -94,7 +94,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 공통 응답은 `ApiResponse<T>` 형식이며, 실제 데이터는 `data` 필드에 담습니다.
 - 회원가입은 `POST /api/users/signup`으로 수행하며, `email`, `password`, `nickname`을 전송합니다.
 - 로그인은 `POST /api/auth/login`으로 수행하고, 응답의 `accessToken`, `refreshToken`, `tokenType`을 클라이언트 인증 상태에 사용합니다.
-- Access Token 만료 시 `POST /api/auth/refresh`로 Refresh Token을 전송해 새 Access Token을 발급받습니다.
+- Access Token 만료 시 인증 헤더 없이 `POST /api/auth/refresh`로 Refresh Token을 전송해 새 Access Token을 발급받습니다.
 - 로그아웃은 `POST /api/auth/logout`으로 수행하며, 서버는 Redis에 저장된 현재 사용자의 Refresh Token을 삭제합니다.
 - 현재 사용자 정보는 `GET /api/auth/me`로 조회하며, 응답의 `email`, `nickname`, `role`, `provider`를 사용자 프로필 패널에 사용합니다.
 - Google OAuth2 로그인은 `GET /oauth2/authorization/google`에서 시작하고, 성공 후 서버가 `/oauth2/success` Vue 라우트로 JWT와 사용자 ID를 전달합니다.
