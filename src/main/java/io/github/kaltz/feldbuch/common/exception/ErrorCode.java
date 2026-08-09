@@ -16,6 +16,7 @@ public enum ErrorCode {
 
     // Auth
     INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "AUTH-001", "비밀번호가 일치하지 않습니다."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH-002", "토큰이 검증되지 않았습니다."),
 
     // JWT
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USER-001", "이미 가입된 이메일입니다."),

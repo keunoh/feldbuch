@@ -1,8 +1,10 @@
 package io.github.kaltz.feldbuch.auth.controller;
 
 import io.github.kaltz.feldbuch.auth.dto.request.LoginRequest;
+import io.github.kaltz.feldbuch.auth.dto.request.RefreshTokenRequest;
 import io.github.kaltz.feldbuch.auth.dto.response.AuthMeResponse;
 import io.github.kaltz.feldbuch.auth.dto.response.LoginResponse;
+import io.github.kaltz.feldbuch.auth.dto.response.RefreshTokenResponse;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
 import io.github.kaltz.feldbuch.auth.service.AuthService;
 import io.github.kaltz.feldbuch.common.response.ApiResponse;
@@ -40,6 +42,17 @@ public class AuthController {
                         userDetails,
                         request
                 )
+        );
+    }
+
+    @PostMapping("/refresh")
+    public ApiResponse<RefreshTokenResponse> refresh(
+            @Valid
+            @RequestBody
+            RefreshTokenRequest request
+    ) {
+        return ApiResponse.success(
+                authService.refresh(request)
         );
     }
 }

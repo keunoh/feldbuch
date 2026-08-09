@@ -27,6 +27,23 @@ public class JwtProvider {
         );
     }
 
+    public String createRefreshToken(Long userId) {
+
+        Date now = new Date();
+
+        Date expiration = new Date(
+                now.getTime()
+                        + jwtProperties.getRefreshTokenExpiration()
+        );
+
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(secretKey)
+                .compact();
+    }
+
     public String createAccessToken(Long userId, String email, String role, String provider) {
 
         Date now = new Date();
