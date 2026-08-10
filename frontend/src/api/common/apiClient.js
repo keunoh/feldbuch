@@ -5,7 +5,7 @@ import {getAccessToken, getRefreshToken, logout, saveAccessToken,} from '@/utils
 import {router} from '@/router/index.js';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,7 +16,7 @@ const apiClient = axios.create({
  * apiClient interceptor를 타지 않는다.
  */
 const refreshClient = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },

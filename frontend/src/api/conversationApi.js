@@ -105,7 +105,7 @@ export async function streamMessage(
   const token = localStorage.getItem('accessToken');
 
   const response = await fetch(
-    `http://localhost:8080/api/conversations/${conversationId}/chat/stream`,
+    `/api/conversations/${conversationId}/chat/stream`,
     {
       method: "POST",
       headers: {
