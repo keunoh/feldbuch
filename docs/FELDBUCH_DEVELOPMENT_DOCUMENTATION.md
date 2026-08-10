@@ -44,6 +44,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 | AI | OpenAI REST API, OpenAI SSE Streaming |
 | Batch / Infra | Spring Batch, Redis, Docker Compose |
 | Frontend | Vue 3, Vite, Vue Router, Axios, Fetch SSE, marked, highlight.js, DOMPurify |
+| Deployment | GitHub Actions, GHCR, Docker, Nginx, AWS Lightsail, AWS RDS MySQL |
 | Legacy View | Thymeleaf, static CSS/JS |
 | Test | JUnit 5, MockMvc, Spring Security Test, Spring Batch Test |
 
@@ -165,6 +166,125 @@ flowchart TD
 - Conversation 자동 완료 스케줄러 기본 간격: `60000` ms
 - Conversation 자동 완료 비활성 시간 설정 키: `conversation.auto-completion.inactivity-timeout`
 - Conversation 자동 완료 기본 비활성 시간: `30m`
+
+## Deployment and Operations
+
+현재 배포는 Lightsail에서 직접 빌드하지 않고 GitHub Actions가 Docker 이미지를 빌드한 뒤 GHCR에 push하는 구조입니다. Lightsail은 이미지를 pull해 실행만 담당합니다. 작은 Lightsail 인스턴스에서 Gradle/JDK/Docker build를 직접 수행하면 CPU 부하로 SSH가 끊길 수 있어, 빌드 서버와 실행 서버 역할을 분리했습니다.
+
+### Deployment Pipeline
+
+```mermaid
+flowchart TD
+    Local["IntelliJ 로컬"] --> GitHub["GitHub push"]
+    GitHub --> Actions["GitHub Actions"]
+    Actions --> BackendBuild["Spring Boot Docker Build"]
+    Actions --> FrontendBuild["Vue Frontend Docker Build"]
+    BackendBuild --> BackendImage["ghcr.io/keunoh/feldbuch:latest"]
+    FrontendBuild --> FrontendImage["ghcr.io/keunoh/feldbuch-frontend:latest"]
+    BackendImage --> Lightsail["AWS Lightsail"]
+    FrontendImage --> Lightsail
+    Lightsail --> Frontend["feldbuch-frontend<br/>Nginx + Vue"]
+    Lightsail --> App["feldbuch-app<br/>Spring Boot"]
+    Lightsail --> Redis["feldbuch-redis"]
+    App --> RDS["AWS RDS MySQL"]
+    App --> OpenAI["OpenAI API"]
+```
+
+### Runtime Request Flow
+
+```mermaid
+flowchart TD
+    Browser["사용자 브라우저"] --> StaticIP["Lightsail Static IP :80"]
+    StaticIP --> Nginx["feldbuch-frontend Nginx"]
+    Nginx -->|"/, /login, /conversations"| Vue["Vue SPA"]
+    Nginx -->|"/api/*"| App["feldbuch-app:8080"]
+    App --> Redis["feldbuch-redis"]
+    App --> RDS["AWS RDS MySQL"]
+    App --> OpenAI["OpenAI API"]
+```
+
+### GitHub Actions and Images
+
+- Backend workflow: `.github/workflows/docker-publish.yml`
+- Frontend workflow: `.github/workflows/frontend-docker-publish.yml`
+- Backend image: `ghcr.io/keunoh/feldbuch:latest`
+- Frontend image: `ghcr.io/keunoh/feldbuch-frontend:latest`
+- Backend Dockerfile: 루트 `Dockerfile`. `eclipse-temurin:21-jdk` builder에서 `./gradlew clean bootJar -x test` 실행 후 `eclipse-temurin:21-jre` 런타임 이미지로 jar를 복사합니다.
+- Frontend Dockerfile: `frontend/Dockerfile`. `node:24-alpine`에서 `npm ci`, `npm run build` 실행 후 `nginx:alpine`에 `dist`와 `nginx.conf`를 복사합니다.
+- Backend workflow는 `main` push마다 실행합니다.
+- Frontend workflow는 `main` push 중 `frontend/**` 또는 frontend workflow 변경이 있을 때 실행합니다.
+
+### Lightsail Runtime
+
+- Lightsail Ubuntu 인스턴스에 Static IP를 연결했습니다.
+- Docker를 설치하고 `docker ps`로 런타임 동작을 확인했습니다.
+- 컨테이너는 `feldbuch-network` Docker Network 안에서 실행합니다.
+- 실행 컨테이너: `feldbuch-frontend`, `feldbuch-app`, `feldbuch-redis`
+- `feldbuch-app`은 외부에 직접 공개하지 않고 `127.0.0.1:8080` 바인딩 또는 Docker Network 내부 접근을 기준으로 운영합니다.
+- 외부 HTTP 요청은 `feldbuch-frontend` Nginx가 80 포트에서 받습니다.
+- Redis는 Lightsail 내부 Docker 컨테이너로 실행하며 외부 포트를 공개하지 않습니다.
+- Spring Boot는 Redis를 `REDIS_HOST=feldbuch-redis`로 접근합니다.
+
+### Nginx Frontend Proxy
+
+`frontend/nginx.conf`는 Vue SPA와 API 프록시를 함께 담당합니다.
+
+- `location /`: Vue Router history mode를 위해 `try_files $uri $uri/ /index.html`로 처리합니다.
+- `location /api/`: `proxy_pass http://feldbuch-app:8080`로 Spring Boot에 전달합니다.
+- SSE 스트리밍을 위해 `proxy_buffering off`, `proxy_cache off`를 적용합니다.
+- 운영 브라우저에서 `localhost`가 사용자 PC를 가리키는 문제를 피하기 위해 공통 API 클라이언트와 SSE 요청은 `/api` 상대경로를 기준으로 동작합니다.
+
+### Production Configuration
+
+운영 설정은 `src/main/resources/application-prod.yml`을 사용합니다. 실제 값은 Git에 올리지 않는 Lightsail의 `.env.prod`에서 주입합니다.
+
+```yaml
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+
+jwt:
+  secret: ${JWT_SECRET}
+
+openai:
+  api-key: ${OPENAI_API_KEY}
+```
+
+### RDS MySQL
+
+- MySQL은 Lightsail 컨테이너가 아니라 AWS RDS로 분리했습니다.
+- RDS Database: `feldbuch`
+- RDS Master User: `feldbuch_admin`
+- RDS Port: `3306`
+- Public access: `No`
+- Lightsail과 Default VPC는 VPC Peering으로 연결했습니다.
+- RDS Security Group은 최초 `0.0.0.0/0`에서 Lightsail 인스턴스 IP 단위 접근으로 제한했습니다.
+- Lightsail에서 `nc -vz <RDS_ENDPOINT> 3306`로 연결 성공을 확인했습니다.
+
+### Current Deployment State
+
+| Area | State |
+| --- | --- |
+| GitHub Actions backend image build | Done |
+| GitHub Actions frontend image build | Done |
+| GHCR backend/frontend image push | Done |
+| Lightsail Static IP and Docker runtime | Done |
+| Vue + Nginx frontend container | Done |
+| Spring Boot backend container | Done |
+| Redis container | Done |
+| AWS RDS MySQL | Done |
+| Lightsail VPC Peering to RDS VPC | Done |
+| RDS Security Group restriction | Done |
+| External HTTP access | Done |
+| Frontend to backend API proxy | Done |
+| Domain and HTTPS | Pending |
+| GitHub Actions to Lightsail CD restart | Pending |
 
 ## Architecture
 
@@ -636,13 +756,14 @@ frontend/src
 
 ## Roadmap
 
+- 도메인과 HTTPS 적용
+- GitHub Actions에서 Lightsail까지 자동 배포하는 CD 단계 구성
 - OAuth2 운영 리다이렉트 URL 환경 분리
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
 - Postman Knowledge 요청 파일 보강
 - AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
-- Docker Compose 운영 구성 정리
 - 테스트 커버리지 확장
 - Monitoring
 

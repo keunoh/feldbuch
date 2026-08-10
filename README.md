@@ -51,6 +51,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 | AI | OpenAI Chat Completion, SSE Streaming, structured Knowledge summary/merge parsing |
 | Auth Config | JWT Access/Refresh Token, Spring Security OAuth2 Client, Google OIDC |
 | Frontend | Vue 3, Vite, Vue Router, Axios, Fetch SSE, marked, highlight.js, DOMPurify |
+| Deployment | GitHub Actions, GHCR, Docker, Nginx, AWS Lightsail, AWS RDS MySQL |
 | View Legacy | Thymeleaf, static CSS/JS comparison screens |
 | Test | JUnit 5, MockMvc, Spring Security Test, Spring Batch Test |
 
@@ -69,6 +70,44 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
 - Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 기본값은 30분(`1800000` ms)입니다.
 - Conversation 자동 완료 스케줄러는 `conversation.auto-completion.fixed-delay` 기본 60초마다 실행되고, `conversation.auto-completion.inactivity-timeout` 기본 30분을 기준으로 비활성 ACTIVE 대화를 COMPLETED로 전환합니다.
+
+## Deployment
+
+현재 운영 배포는 로컬에서 직접 서버 빌드를 수행하지 않고, GitHub Actions가 Docker 이미지를 빌드해 GitHub Container Registry에 저장한 뒤 AWS Lightsail에서 이미지를 pull해 실행하는 구조입니다.
+
+```mermaid
+flowchart TD
+    Local["IntelliJ 로컬"] --> GitHub["GitHub push"]
+    GitHub --> Actions["GitHub Actions"]
+    Actions --> BackendBuild["Spring Boot Docker Build"]
+    Actions --> FrontendBuild["Vue Frontend Docker Build"]
+    BackendBuild --> GHCRBackend["ghcr.io/keunoh/feldbuch:latest"]
+    FrontendBuild --> GHCRFrontend["ghcr.io/keunoh/feldbuch-frontend:latest"]
+    GHCRBackend --> Lightsail["AWS Lightsail"]
+    GHCRFrontend --> Lightsail
+    Lightsail --> Frontend["feldbuch-frontend<br/>Nginx + Vue"]
+    Lightsail --> App["feldbuch-app<br/>Spring Boot"]
+    Lightsail --> Redis["feldbuch-redis"]
+    App --> RDS["AWS RDS MySQL"]
+    App --> OpenAI["OpenAI API"]
+```
+
+외부 요청은 Lightsail Static IP의 80 포트로 들어와 `feldbuch-frontend` Nginx가 처리합니다. Vue SPA 라우트는 `try_files $uri $uri/ /index.html`로 전달하고, `/api/*` 요청은 Docker Network 내부의 `feldbuch-app:8080`으로 프록시합니다. SSE 스트리밍을 위해 Nginx API 프록시에 `proxy_buffering off`를 적용합니다.
+
+```mermaid
+flowchart TD
+    Browser["사용자 브라우저"] --> StaticIP["Lightsail Static IP :80"]
+    StaticIP --> Nginx["feldbuch-frontend Nginx"]
+    Nginx -->|"/, /login, /conversations"| Vue["Vue SPA"]
+    Nginx -->|"/api/*"| App["feldbuch-app:8080"]
+    App --> Redis["feldbuch-redis"]
+    App --> RDS["AWS RDS MySQL"]
+    App --> OpenAI["OpenAI API"]
+```
+
+운영 설정은 `application-prod.yml`에서 환경 변수로 주입합니다. 실제 운영 값은 Git에 올리지 않는 Lightsail의 `.env.prod`에서 관리합니다. Redis는 Lightsail 내부 Docker 컨테이너로 실행하고 외부 포트는 공개하지 않습니다. MySQL은 AWS RDS로 분리했으며, Lightsail VPC Peering과 RDS Security Group을 통해 Lightsail 인스턴스에서만 3306 접근을 허용합니다.
+
+현재 자동화 범위는 GitHub Actions의 Backend/Frontend Docker 이미지 빌드와 GHCR push까지입니다. Lightsail의 `docker pull`과 컨테이너 재시작은 아직 수동 단계이며, 다음 큰 작업은 도메인/HTTPS와 Lightsail 배포 자동화입니다.
 
 ## Frontend Direction
 
@@ -212,13 +251,14 @@ frontend/src
 
 ## Roadmap
 
+- 도메인과 HTTPS 적용
+- GitHub Actions에서 Lightsail까지 자동 배포하는 CD 단계 구성
 - OAuth2 운영 리다이렉트 URL 환경 분리
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
 - Postman Knowledge 요청 파일 보강
 - AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
-- Docker Compose 운영 구성 정리
 - 테스트 커버리지와 모니터링 확장
 
 ## 삭제 로그
