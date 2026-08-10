@@ -50,18 +50,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ## Development Flow
 
-```mermaid
-flowchart TD
-    A[JWT 인증] --> B[Conversation 도메인]
-    B --> C[대화형 AI 일반/SSE 응답]
-    C --> D[대화 활동 시각 갱신]
-    D --> E[비활성 Conversation 자동 완료]
-    E --> F[Knowledge 추출 Batch]
-    F --> G[INCREMENTAL KnowledgeNote 생성]
-    G --> H[CONSOLIDATED KnowledgeNote 생성/병합]
-    H --> I[Knowledge 트리와 노트 조회]
-    I --> J[Vue Workspace 렌더링]
-```
+<img src="./images/diagrams/feldbuch-development-flow-visual.svg" alt="Feldbuch development flow" width="720">
 
 ## Implemented Features
 

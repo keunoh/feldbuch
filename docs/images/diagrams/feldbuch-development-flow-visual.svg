@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="420" viewBox="0 0 920 420" role="img" aria-labelledby="title desc">
+  <title id="title">Feldbuch development flow</title>
+  <desc id="desc">JWT authentication starts the conversation domain, AI responses update conversation activity, inactive conversations complete automatically, batch extraction creates incremental and consolidated knowledge notes, and Vue renders the workspace.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#f5b301"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#0f172a" flood-opacity="0.14"/>
+    </filter>
+    <style>
+      .bg{fill:#f8fafc}.title{font:700 22px Arial,sans-serif;fill:#0f172a}.stage{font:700 13px Arial,sans-serif;fill:#475569}.label{font:700 15px Arial,sans-serif;fill:#111827}.sub{font:500 12px Arial,sans-serif;fill:#64748b}.box{fill:#fff;stroke:#cbd5e1;stroke-width:1.5;filter:url(#shadow)}.auth{fill:#f0fdfa;stroke:#10a37f}.conv{fill:#eef2ff;stroke:#6366f1}.ai{fill:#fff7ed;stroke:#fb923c}.batch{fill:#fefce8;stroke:#eab308}.knowledge{fill:#eff6ff;stroke:#38bdf8}.vue{fill:#ecfdf5;stroke:#22c55e}.edge{fill:none;stroke:#f5b301;stroke-width:4;stroke-linecap:round;marker-end:url(#arrow)}.chip{font:700 12px Arial,sans-serif;fill:#fff}
+    </style>
+  </defs>
+  <rect class="bg" width="920" height="420" rx="24"/>
+  <text class="title" x="34" y="42">Feldbuch Development Flow</text>
+
+  <rect class="box auth" x="42" y="92" width="144" height="72" rx="16"/>
+  <circle cx="72" cy="124" r="18" fill="#10a37f"/>
+  <text class="chip" x="61" y="129">JWT</text>
+  <text class="label" x="100" y="120">JWT 인증</text>
+  <text class="sub" x="100" y="144">security context</text>
+
+  <path class="edge" d="M186 128 H245"/>
+  <rect class="box conv" x="250" y="92" width="158" height="72" rx="16"/>
+  <circle cx="280" cy="124" r="18" fill="#4f46e5"/>
+  <text class="chip" x="269" y="129">CV</text>
+  <text class="label" x="308" y="120">Conversation</text>
+  <text class="sub" x="308" y="144">domain workflow</text>
+
+  <path class="edge" d="M408 128 H467"/>
+  <rect class="box ai" x="472" y="92" width="178" height="72" rx="16"/>
+  <circle cx="502" cy="124" r="18" fill="#f97316"/>
+  <text class="chip" x="492" y="129">AI</text>
+  <text class="label" x="530" y="120">AI 응답</text>
+  <text class="sub" x="530" y="144">normal + SSE</text>
+
+  <path class="edge" d="M650 128 H709"/>
+  <rect class="box conv" x="714" y="92" width="164" height="72" rx="16"/>
+  <circle cx="744" cy="124" r="18" fill="#4f46e5"/>
+  <text class="chip" x="733" y="129">TS</text>
+  <text class="label" x="772" y="120">활동 시각 갱신</text>
+  <text class="sub" x="772" y="144">last activity</text>
+
+  <path class="edge" d="M796 164 V218"/>
+  <rect class="box conv" x="696" y="224" width="182" height="72" rx="16"/>
+  <circle cx="726" cy="256" r="18" fill="#4f46e5"/>
+  <text class="chip" x="715" y="261">AC</text>
+  <text class="label" x="754" y="252">자동 완료</text>
+  <text class="sub" x="754" y="276">inactive conversation</text>
+
+  <path class="edge" d="M696 260 H637"/>
+  <rect class="box batch" x="450" y="224" width="182" height="72" rx="16"/>
+  <circle cx="480" cy="256" r="18" fill="#ca8a04"/>
+  <text class="chip" x="469" y="261">BT</text>
+  <text class="label" x="508" y="252">Knowledge Batch</text>
+  <text class="sub" x="508" y="276">scheduled extraction</text>
+
+  <path class="edge" d="M450 260 H391"/>
+  <rect class="box knowledge" x="228" y="224" width="158" height="72" rx="16"/>
+  <circle cx="258" cy="256" r="18" fill="#0ea5e9"/>
+  <text class="chip" x="247" y="261">IN</text>
+  <text class="label" x="286" y="252">INCREMENTAL</text>
+  <text class="sub" x="286" y="276">new notes</text>
+
+  <path class="edge" d="M228 260 H169"/>
+  <rect class="box knowledge" x="42" y="224" width="122" height="72" rx="16"/>
+  <circle cx="72" cy="256" r="18" fill="#0ea5e9"/>
+  <text class="chip" x="61" y="261">CO</text>
+  <text class="label" x="100" y="252">통합/병합</text>
+  <text class="sub" x="100" y="276">consolidated</text>
+
+  <path class="edge" d="M103 296 V340 H245"/>
+  <rect class="box knowledge" x="250" y="326" width="176" height="62" rx="16"/>
+  <text class="label" x="280" y="354">Knowledge 조회</text>
+  <text class="sub" x="280" y="374">tree and note detail</text>
+
+  <path class="edge" d="M426 357 H485"/>
+  <rect class="box vue" x="490" y="326" width="174" height="62" rx="16"/>
+  <circle cx="520" cy="357" r="18" fill="#22c55e"/>
+  <text class="chip" x="511" y="362">V</text>
+  <text class="label" x="548" y="354">Vue Workspace</text>
+  <text class="sub" x="548" y="374">render user view</text>
+</svg>
