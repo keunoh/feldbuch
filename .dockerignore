@@ -1,0 +1,17 @@
+.git
+.gitignore
+.gradle
+build
+out
+.idea
+*.iml
+
+.DS_Store
+
+frontend/node_modules
+frontend/dist
+
+h2
+postman
+.postman
+docs
