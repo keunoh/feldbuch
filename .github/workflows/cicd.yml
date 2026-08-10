@@ -73,59 +73,59 @@ jobs:
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
-deploy:
-  needs:
-    - build-backend
-    - build-frontend
+  deploy:
+    needs:
+      - build-backend
+      - build-frontend
 
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Prepare SSH key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/feldbuch_deploy
-        chmod 600 ~/.ssh/feldbuch_deploy
-        ssh-keyscan -H "${{ secrets.LIGHTSAIL_HOST }}" >> ~/.ssh/known_hosts
+    steps:
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/feldbuch_deploy
+          chmod 600 ~/.ssh/feldbuch_deploy
+          ssh-keyscan -H "${{ secrets.LIGHTSAIL_HOST }}" >> ~/.ssh/known_hosts
 
-    - name: Deploy to Lightsail
-      run: |
-        ssh \
-          -i ~/.ssh/feldbuch_deploy \
-          "${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}" << 'EOF'
-        
-        set -e
-        
-        cd ~/apps/feldbuch
-        
-        echo "== Pull images =="
-        docker pull ghcr.io/keunoh/feldbuch:latest
-        docker pull ghcr.io/keunoh/feldbuch-frontend:latest
-        
-        echo "== Restart backend =="
-        docker stop feldbuch-app || true
-        docker rm feldbuch-app || true
-        
-        docker run -d \
-          --name feldbuch-app \
-          --network feldbuch-network \
-          --restart unless-stopped \
-          --env-file .env.prod \
-          -p 127.0.0.1:8080:8080 \
-          ghcr.io/keunoh/feldbuch:latest
-        
-        echo "== Restart frontend =="
-        docker stop feldbuch-frontend || true
-        docker rm feldbuch-frontend || true
-        
-        docker run -d \
-          --name feldbuch-frontend \
-          --network feldbuch-network \
-          --restart unless-stopped \
-          -p 127.0.0.1:8081:80 \
-          ghcr.io/keunoh/feldbuch-frontend:latest
-        
-        echo "== Running containers =="
-        docker ps
-        
-        EOF
+      - name: Deploy to Lightsail
+        run: |
+          ssh \
+            -i ~/.ssh/feldbuch_deploy \
+            "${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}" << 'EOF'
+
+          set -e
+
+          cd ~/apps/feldbuch
+
+          echo "== Pull images =="
+          docker pull ghcr.io/keunoh/feldbuch:latest
+          docker pull ghcr.io/keunoh/feldbuch-frontend:latest
+
+          echo "== Restart backend =="
+          docker stop feldbuch-app || true
+          docker rm feldbuch-app || true
+
+          docker run -d \
+            --name feldbuch-app \
+            --network feldbuch-network \
+            --restart unless-stopped \
+            --env-file .env.prod \
+            -p 127.0.0.1:8080:8080 \
+            ghcr.io/keunoh/feldbuch:latest
+
+          echo "== Restart frontend =="
+          docker stop feldbuch-frontend || true
+          docker rm feldbuch-frontend || true
+
+          docker run -d \
+            --name feldbuch-frontend \
+            --network feldbuch-network \
+            --restart unless-stopped \
+            -p 127.0.0.1:8081:80 \
+            ghcr.io/keunoh/feldbuch-frontend:latest
+
+          echo "== Running containers =="
+          docker ps
+
+          EOF
