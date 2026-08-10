@@ -173,35 +173,11 @@ flowchart TD
 
 ### Deployment Pipeline
 
-```mermaid
-flowchart TD
-    Local["IntelliJ 로컬"] --> GitHub["GitHub push"]
-    GitHub --> Actions["GitHub Actions"]
-    Actions --> BackendBuild["Spring Boot Docker Build"]
-    Actions --> FrontendBuild["Vue Frontend Docker Build"]
-    BackendBuild --> BackendImage["ghcr.io/keunoh/feldbuch:latest"]
-    FrontendBuild --> FrontendImage["ghcr.io/keunoh/feldbuch-frontend:latest"]
-    BackendImage --> Lightsail["AWS Lightsail"]
-    FrontendImage --> Lightsail
-    Lightsail --> Frontend["feldbuch-frontend<br/>Nginx + Vue"]
-    Lightsail --> App["feldbuch-app<br/>Spring Boot"]
-    Lightsail --> Redis["feldbuch-redis"]
-    App --> RDS["AWS RDS MySQL"]
-    App --> OpenAI["OpenAI API"]
-```
+<img src="./images/diagrams/feldbuch-deployment-pipeline-visual.svg" alt="Feldbuch deployment pipeline" width="760">
 
 ### Runtime Request Flow
 
-```mermaid
-flowchart TD
-    Browser["사용자 브라우저"] --> StaticIP["Lightsail Static IP :80"]
-    StaticIP --> Nginx["feldbuch-frontend Nginx"]
-    Nginx -->|"/, /login, /conversations"| Vue["Vue SPA"]
-    Nginx -->|"/api/*"| App["feldbuch-app:8080"]
-    App --> Redis["feldbuch-redis"]
-    App --> RDS["AWS RDS MySQL"]
-    App --> OpenAI["OpenAI API"]
-```
+<img src="./images/diagrams/feldbuch-runtime-request-flow-visual.svg" alt="Feldbuch runtime request flow" width="700">
 
 ### GitHub Actions and Images
 
@@ -294,34 +270,7 @@ openai:
 
 Spring Boot는 인증, REST API, AI 호출, Batch 처리를 담당합니다. Vue SPA는 독립 프론트엔드로 개발하며, Thymeleaf 화면은 전환 과정의 비교용 구현으로 남겨둡니다.
 
-```mermaid
-flowchart TD
-    Browser --> VueSPA
-    Browser --> ThymeleafView
-
-    VueSPA --> ApiClient
-    ThymeleafView --> StaticJS
-    StaticJS --> Api
-    ApiClient --> Api
-
-    Api --> RequestIdFilter
-    RequestIdFilter --> Security
-    Security --> Controller
-
-    Controller --> CommandService
-    Controller --> QueryService
-    CommandService --> Reader
-    QueryService --> QueryDSL
-    Reader --> Repository
-    QueryDSL --> Repository
-
-    Repository --> MySQL
-    Repository --> Redis
-
-    AuthService --> JwtProvider
-    AuthService --> RefreshTokenService
-    RefreshTokenService --> Redis
-```
+<img src="./images/diagrams/feldbuch-system-overview-visual.svg" alt="Feldbuch system overview" width="760">
 
 ### AI and Conversation
 

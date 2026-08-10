@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="430" viewBox="0 0 980 430" role="img" aria-labelledby="title desc">
+  <title id="title">Feldbuch deployment pipeline</title>
+  <desc id="desc">Local development pushes to GitHub, GitHub Actions builds backend and frontend Docker images, GHCR stores them, and AWS Lightsail runs frontend, backend, and Redis while the backend connects to RDS MySQL and OpenAI.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M2 2 L10 6 L2 10 Z" fill="#f5b301"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.14"/></filter>
+    <style>
+      .bg{fill:#f8fafc}.title{font:700 22px Arial,sans-serif;fill:#0f172a}.label{font:700 15px Arial,sans-serif;fill:#111827}.sub{font:500 12px Arial,sans-serif;fill:#64748b}.box{fill:#fff;stroke:#cbd5e1;stroke-width:1.5;filter:url(#shadow)}.aws{fill:#fff7ed;stroke:#fb923c}.container{fill:#ecfdf5;stroke:#22c55e}.registry{fill:#eef2ff;stroke:#6366f1}.build{fill:#fefce8;stroke:#eab308}.arrow{fill:none;stroke:#f5b301;stroke-width:5;stroke-linecap:round;marker-end:url(#arrow)}.thin{stroke-width:3.5}.pillText{font:700 13px Arial,sans-serif;fill:#fff}
+    </style>
+  </defs>
+  <rect class="bg" width="980" height="430" rx="24"/>
+  <text class="title" x="36" y="42">Feldbuch CI/CD Deployment Flow</text>
+  <rect class="box" x="36" y="82" width="140" height="94" rx="16"/><circle cx="68" cy="114" r="20" fill="#2563eb"/><text class="pillText" x="55" y="119">IDE</text><text class="label" x="96" y="112">IntelliJ</text><text class="sub" x="96" y="136">local source</text>
+  <path class="arrow" d="M176 129 H239"/>
+  <rect class="box" x="244" y="82" width="140" height="94" rx="16"/><circle cx="276" cy="114" r="20" fill="#111827"/><text class="pillText" x="266" y="119">GH</text><text class="label" x="304" y="112">GitHub</text><text class="sub" x="304" y="136">push main</text>
+  <path class="arrow" d="M384 129 H447"/>
+  <rect class="box build" x="452" y="64" width="172" height="130" rx="18"/><circle cx="488" cy="106" r="22" fill="#f97316"/><text class="pillText" x="476" y="111">CI</text><text class="label" x="524" y="100">GitHub Actions</text><text class="sub" x="524" y="124">Docker build</text><text class="sub" x="524" y="146">backend + frontend</text>
+  <path class="arrow" d="M624 129 H686"/>
+  <rect class="box registry" x="692" y="82" width="160" height="94" rx="16"/><circle cx="726" cy="114" r="20" fill="#4f46e5"/><text class="pillText" x="707" y="119">GHCR</text><text class="label" x="758" y="108">Container</text><text class="label" x="758" y="128">Registry</text>
+  <path class="arrow" d="M772 176 V232"/>
+  <rect class="box aws" x="610" y="238" width="304" height="140" rx="20"/><text class="label" x="634" y="270">AWS Lightsail</text><text class="sub" x="634" y="292">docker pull and run</text>
+  <rect class="container" x="634" y="312" width="78" height="40" rx="10"/><text class="sub" x="653" y="337">Nginx</text>
+  <rect class="container" x="732" y="312" width="78" height="40" rx="10"/><text class="sub" x="758" y="337">App</text>
+  <rect class="container" x="830" y="312" width="60" height="40" rx="10"/><text class="sub" x="844" y="337">Redis</text>
+  <rect class="box" x="124" y="264" width="152" height="82" rx="16"/><circle cx="154" cy="297" r="18" fill="#0ea5e9"/><text class="pillText" x="141" y="302">RDS</text><text class="label" x="184" y="294">AWS RDS</text><text class="sub" x="184" y="318">MySQL private</text>
+  <rect class="box" x="342" y="264" width="152" height="82" rx="16"/><circle cx="372" cy="297" r="18" fill="#10a37f"/><text class="pillText" x="361" y="302">AI</text><text class="label" x="402" y="294">OpenAI API</text><text class="sub" x="402" y="318">external call</text>
+  <path class="arrow thin" d="M732 332 C560 398 406 374 494 310"/>
+  <path class="arrow thin" d="M732 332 C522 416 282 386 276 310"/>
+</svg>

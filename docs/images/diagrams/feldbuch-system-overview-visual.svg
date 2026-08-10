@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="470" viewBox="0 0 980 470" role="img" aria-labelledby="title desc">
+  <title id="title">Feldbuch system overview</title>
+  <desc id="desc">Feldbuch clients call API endpoints through request ID and security filters, controllers delegate to command and query services, repositories access MySQL and Redis, and authentication issues JWT and refresh tokens.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M2 2 L10 6 L2 10 Z" fill="#f5b301"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#0f172a" flood-opacity="0.12"/></filter>
+    <style>
+      .bg{fill:#f8fafc}.title{font:700 22px Arial,sans-serif;fill:#0f172a}.groupTitle{font:700 13px Arial,sans-serif;fill:#475569}.label{font:700 14px Arial,sans-serif;fill:#111827}.sub{font:500 11px Arial,sans-serif;fill:#64748b}.lane{fill:#fff;stroke:#dbe3ef;stroke-width:1.4;filter:url(#shadow)}.node{fill:#fff;stroke:#cbd5e1;stroke-width:1.4}.client{fill:#ecfdf5;stroke:#22c55e}.api{fill:#eef2ff;stroke:#6366f1}.service{fill:#fff7ed;stroke:#fb923c}.data{fill:#eff6ff;stroke:#38bdf8}.auth{fill:#f0fdfa;stroke:#10a37f}.edge{fill:none;stroke:#f5b301;stroke-width:3.5;stroke-linecap:round;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect class="bg" width="980" height="470" rx="24"/>
+  <text class="title" x="34" y="42">Feldbuch Application Architecture</text>
+  <rect class="lane" x="34" y="76" width="168" height="256" rx="18"/><text class="groupTitle" x="58" y="106">CLIENTS</text>
+  <rect class="node client" x="58" y="130" width="120" height="48" rx="12"/><text class="label" x="82" y="160">Browser</text>
+  <rect class="node client" x="58" y="206" width="120" height="48" rx="12"/><text class="label" x="82" y="236">Vue SPA</text>
+  <rect class="node client" x="58" y="282" width="120" height="48" rx="12"/><text class="label" x="72" y="312">Thymeleaf</text>
+  <rect class="lane" x="238" y="76" width="174" height="256" rx="18"/><text class="groupTitle" x="262" y="106">FRONTEND ACCESS</text>
+  <rect class="node client" x="266" y="172" width="118" height="48" rx="12"/><text class="label" x="294" y="202">API Client</text>
+  <rect class="node client" x="266" y="248" width="118" height="48" rx="12"/><text class="label" x="297" y="278">Static JS</text>
+  <rect class="lane" x="448" y="76" width="170" height="256" rx="18"/><text class="groupTitle" x="472" y="106">API BOUNDARY</text>
+  <rect class="node api" x="476" y="126" width="114" height="44" rx="12"/><text class="label" x="519" y="154">API</text>
+  <rect class="node api" x="476" y="192" width="114" height="44" rx="12"/><text class="label" x="495" y="220">Request ID</text>
+  <rect class="node api" x="476" y="258" width="114" height="44" rx="12"/><text class="label" x="503" y="286">Security</text>
+  <rect class="lane" x="654" y="76" width="170" height="256" rx="18"/><text class="groupTitle" x="678" y="106">APPLICATION</text>
+  <rect class="node service" x="682" y="126" width="114" height="44" rx="12"/><text class="label" x="700" y="154">Controller</text>
+  <rect class="node service" x="682" y="192" width="114" height="44" rx="12"/><text class="label" x="692" y="220">Command</text>
+  <rect class="node service" x="682" y="258" width="114" height="44" rx="12"/><text class="label" x="708" y="286">Query</text>
+  <rect class="lane" x="858" y="76" width="88" height="256" rx="18"/><text class="groupTitle" x="876" y="106">DATA</text>
+  <rect class="node data" x="874" y="138" width="56" height="44" rx="12"/><text class="label" x="884" y="166">Repo</text>
+  <rect class="node data" x="874" y="212" width="56" height="44" rx="12"/><text class="label" x="884" y="240">SQL</text>
+  <rect class="node data" x="874" y="282" width="56" height="36" rx="10"/><text class="sub" x="887" y="304">Redis</text>
+  <rect class="lane" x="238" y="360" width="708" height="74" rx="18"/><text class="groupTitle" x="262" y="390">AUTHENTICATION</text>
+  <rect class="node auth" x="384" y="376" width="108" height="42" rx="12"/><text class="label" x="402" y="403">AuthService</text>
+  <rect class="node auth" x="546" y="376" width="102" height="42" rx="12"/><text class="label" x="568" y="403">JWT</text>
+  <rect class="node auth" x="704" y="376" width="134" height="42" rx="12"/><text class="label" x="724" y="403">Refresh Token</text>
+  <path class="edge" d="M178 154 H266"/><path class="edge" d="M178 230 H266"/><path class="edge" d="M178 306 H266"/>
+  <path class="edge" d="M384 196 H476"/><path class="edge" d="M384 272 C420 272 430 148 476 148"/>
+  <path class="edge" d="M533 170 V192"/><path class="edge" d="M533 236 V258"/><path class="edge" d="M590 280 H682"/>
+  <path class="edge" d="M796 148 H874"/><path class="edge" d="M796 214 H874"/><path class="edge" d="M796 280 H874"/><path class="edge" d="M902 182 V212"/><path class="edge" d="M902 256 V282"/>
+  <path class="edge" d="M492 397 H546"/><path class="edge" d="M648 397 H704"/><path class="edge" d="M838 397 C888 397 902 354 902 318"/>
+</svg>

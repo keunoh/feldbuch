@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="390" viewBox="0 0 860 390" role="img" aria-labelledby="title desc">
+  <title id="title">Feldbuch runtime request flow</title>
+  <desc id="desc">Browser traffic enters the Lightsail static IP on port 80. Nginx serves Vue routes and proxies API requests to Spring Boot, which connects to Redis, RDS MySQL, and OpenAI.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M2 2 L10 6 L2 10 Z" fill="#f5b301"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#0f172a" flood-opacity="0.14"/></filter>
+    <style>
+      .bg{fill:#f8fafc}.title{font:700 22px Arial,sans-serif;fill:#0f172a}.label{font:700 15px Arial,sans-serif;fill:#111827}.sub{font:500 12px Arial,sans-serif;fill:#64748b}.box{fill:#fff;stroke:#cbd5e1;stroke-width:1.5;filter:url(#shadow)}.edge{fill:none;stroke:#f5b301;stroke-width:5;stroke-linecap:round;marker-end:url(#arrow)}.thin{stroke-width:3.5}.frontend{fill:#ecfdf5;stroke:#22c55e}.backend{fill:#eef2ff;stroke:#6366f1}.data{fill:#eff6ff;stroke:#38bdf8}.external{fill:#f0fdfa;stroke:#10a37f}.chip{font:700 13px Arial,sans-serif;fill:#fff}
+    </style>
+  </defs>
+  <rect class="bg" width="860" height="390" rx="24"/>
+  <text class="title" x="34" y="42">External Request Flow</text>
+  <rect class="box" x="34" y="96" width="134" height="84" rx="16"/><circle cx="66" cy="128" r="19" fill="#2563eb"/><text class="chip" x="52" y="133">WEB</text><text class="label" x="94" y="124">Browser</text><text class="sub" x="94" y="148">user request</text>
+  <path class="edge" d="M168 138 H233"/>
+  <rect class="box" x="238" y="96" width="140" height="84" rx="16"/><circle cx="270" cy="128" r="19" fill="#f97316"/><text class="chip" x="260" y="133">80</text><text class="label" x="298" y="124">Static IP</text><text class="sub" x="298" y="148">Lightsail :80</text>
+  <path class="edge" d="M378 138 H443"/>
+  <rect class="box frontend" x="448" y="82" width="154" height="112" rx="18"/><circle cx="482" cy="122" r="20" fill="#16a34a"/><text class="chip" x="463" y="127">NGINX</text><text class="label" x="516" y="114">Frontend</text><text class="sub" x="516" y="138">Nginx + Vue</text><text class="sub" x="516" y="160">SPA fallback</text>
+  <path class="edge thin" d="M526 194 V254"/>
+  <rect class="box backend" x="448" y="260" width="154" height="82" rx="16"/><circle cx="482" cy="292" r="19" fill="#4f46e5"/><text class="chip" x="470" y="297">API</text><text class="label" x="516" y="288">Spring Boot</text><text class="sub" x="516" y="312">feldbuch-app:8080</text>
+  <path class="edge thin" d="M602 300 H664"/>
+  <rect class="box data" x="670" y="248" width="142" height="52" rx="14"/><text class="label" x="696" y="280">Redis</text><text class="sub" x="696" y="296">token cache</text>
+  <rect class="box data" x="670" y="318" width="142" height="52" rx="14"/><text class="label" x="696" y="350">RDS MySQL</text><text class="sub" x="696" y="366">persistent data</text>
+  <rect class="box external" x="670" y="96" width="142" height="52" rx="14"/><text class="label" x="696" y="128">OpenAI API</text><text class="sub" x="696" y="144">AI response</text>
+  <path class="edge thin" d="M602 282 C638 282 638 274 664 274"/>
+  <path class="edge thin" d="M602 318 C638 318 638 344 664 344"/>
+  <path class="edge thin" d="M602 274 C652 230 640 122 664 122"/>
+  <text class="sub" x="624" y="122">/api/* proxy</text>
+  <text class="sub" x="618" y="184">/, /login, /conversations</text>
+</svg>

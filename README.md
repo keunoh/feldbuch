@@ -75,35 +75,11 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 현재 운영 배포는 로컬에서 직접 서버 빌드를 수행하지 않고, GitHub Actions가 Docker 이미지를 빌드해 GitHub Container Registry에 저장한 뒤 AWS Lightsail에서 이미지를 pull해 실행하는 구조입니다.
 
-```mermaid
-flowchart TD
-    Local["IntelliJ 로컬"] --> GitHub["GitHub push"]
-    GitHub --> Actions["GitHub Actions"]
-    Actions --> BackendBuild["Spring Boot Docker Build"]
-    Actions --> FrontendBuild["Vue Frontend Docker Build"]
-    BackendBuild --> GHCRBackend["ghcr.io/keunoh/feldbuch:latest"]
-    FrontendBuild --> GHCRFrontend["ghcr.io/keunoh/feldbuch-frontend:latest"]
-    GHCRBackend --> Lightsail["AWS Lightsail"]
-    GHCRFrontend --> Lightsail
-    Lightsail --> Frontend["feldbuch-frontend<br/>Nginx + Vue"]
-    Lightsail --> App["feldbuch-app<br/>Spring Boot"]
-    Lightsail --> Redis["feldbuch-redis"]
-    App --> RDS["AWS RDS MySQL"]
-    App --> OpenAI["OpenAI API"]
-```
+<img src="docs/images/diagrams/feldbuch-deployment-pipeline-visual.svg" alt="Feldbuch deployment pipeline" width="760">
 
 외부 요청은 Lightsail Static IP의 80 포트로 들어와 `feldbuch-frontend` Nginx가 처리합니다. Vue SPA 라우트는 `try_files $uri $uri/ /index.html`로 전달하고, `/api/*` 요청은 Docker Network 내부의 `feldbuch-app:8080`으로 프록시합니다. SSE 스트리밍을 위해 Nginx API 프록시에 `proxy_buffering off`를 적용합니다.
 
-```mermaid
-flowchart TD
-    Browser["사용자 브라우저"] --> StaticIP["Lightsail Static IP :80"]
-    StaticIP --> Nginx["feldbuch-frontend Nginx"]
-    Nginx -->|"/, /login, /conversations"| Vue["Vue SPA"]
-    Nginx -->|"/api/*"| App["feldbuch-app:8080"]
-    App --> Redis["feldbuch-redis"]
-    App --> RDS["AWS RDS MySQL"]
-    App --> OpenAI["OpenAI API"]
-```
+<img src="docs/images/diagrams/feldbuch-runtime-request-flow-visual.svg" alt="Feldbuch runtime request flow" width="700">
 
 운영 설정은 `application-prod.yml`에서 환경 변수로 주입합니다. 실제 운영 값은 Git에 올리지 않는 Lightsail의 `.env.prod`에서 관리합니다. Redis는 Lightsail 내부 Docker 컨테이너로 실행하고 외부 포트는 공개하지 않습니다. MySQL은 AWS RDS로 분리했으며, Lightsail VPC Peering과 RDS Security Group을 통해 Lightsail 인스턴스에서만 3306 접근을 허용합니다.
 
@@ -175,48 +151,7 @@ sequenceDiagram
 
 ## Architecture Summary
 
-```mermaid
-flowchart TD
-    VueSPA --> ApiClient
-    ApiClient --> RequestIdFilter
-    RequestIdFilter --> Security
-    Security --> Controller
-    Controller --> CommandService
-    Controller --> QueryService
-    CommandService --> Repository
-    QueryService --> QueryDSL
-    Repository --> MySQL
-    Repository --> Redis
-    AuthService --> JwtProvider
-    AuthService --> RefreshTokenService
-    RefreshTokenService --> Redis
-
-    ConversationView --> WorkspaceSidebar
-    WorkspaceSidebar --> ConversationSidebar
-    WorkspaceSidebar --> KnowledgeSidebar
-    WorkspaceSidebar --> UserProfilePanel
-    UserProfilePanel --> SettingsModal
-    ConversationView --> KnowledgeWorkspace
-    ConversationView --> MessageList
-    ConversationView --> ChatInput
-    ConversationView --> StudyInfoPanel
-    KnowledgeWorkspace --> KnowledgeNoteList
-    KnowledgeWorkspace --> KnowledgeNoteDetail
-
-    ConversationChatService --> ChatContextBuilder
-    ConversationChatService --> OpenAiWebClient
-    OpenAiWebClient --> OpenAI
-
-    ConversationCompletionScheduler --> ConversationCompletionService
-    ConversationCompletionService --> ConversationRepository
-    KnowledgeExtractionScheduler --> KnowledgeExtractionJob
-    KnowledgeExtractionJob --> KnowledgeExtractionTasklet
-    KnowledgeExtractionTasklet --> KnowledgeExtractionService
-    KnowledgeExtractionService --> OpenAiKnowledgeSummaryService
-    KnowledgeExtractionService --> OpenAiKnowledgeMergeService
-    KnowledgeExtractionService --> KnowledgeNoteCommandService
-    KnowledgeNoteCommandService --> KnowledgeCategoryResolver
-```
+<img src="docs/images/diagrams/feldbuch-system-overview-visual.svg" alt="Feldbuch system overview" width="760">
 
 ## Project Structure
 
