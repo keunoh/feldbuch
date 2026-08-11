@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private static final String FRONTEND_LOGIN_SUCCESS_URL = "http://localhost:5173/oauth2/success";
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     private final JwtProvider jwtProvider;
 
@@ -45,7 +47,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String redirectUrl =
                 UriComponentsBuilder
                         .fromUriString(
-                                FRONTEND_LOGIN_SUCCESS_URL
+                                frontendUrl + "/oauth2/success"
                         )
                         .queryParam(
                                 "token",
