@@ -45,6 +45,7 @@ server:
   servlet:
     session:
       persistent: false
+  forward-headers-strategy: framework
 
 management:
   endpoints:
