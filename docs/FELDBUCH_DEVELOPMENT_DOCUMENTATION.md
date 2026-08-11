@@ -65,7 +65,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Refresh Token 기반 Access Token 재발급 API `POST /api/auth/refresh`
 - Refresh Token 삭제 기반 로그아웃 API `POST /api/auth/logout`
 - Google OIDC 사용자 조회, 기존 이메일 계정 연동, 신규 Google 사용자 자동 생성
-- OAuth2 로그인 성공 시 JWT 발급과 `http://localhost:5173/oauth2/success` 리다이렉트
+- OAuth2 로그인 성공 시 JWT 발급과 `app.frontend-url` 기준 `/oauth2/success` 리다이렉트
 - RestClient 기반 OpenAI 일반 요청
 - WebClient 기반 OpenAI Chat Completion SSE 스트리밍
 - Conversation Entity, Controller, Command/Query Service
@@ -142,7 +142,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Vue 회원가입 화면은 `/signup`에서 제공하며, 가입 성공 후 `/login`으로 이동합니다.
 - Google OAuth2 시작 경로: `/oauth2/authorization/google`
 - Google OAuth2 콜백 경로: `/login/oauth2/code/google`
-- Google OAuth2 성공 리다이렉트: `http://localhost:5173/oauth2/success?token={jwt}&userId={id}`
+- Google OAuth2 성공 리다이렉트: `{app.frontend-url}/oauth2/success?token={jwt}&userId={id}`
 - 로컬 Docker 인프라: MySQL, Redis
 - Refresh Token 저장 Redis Key: `refresh:{userId}`
 - Refresh Token Redis TTL: `jwt.refresh-token-expiration` 기준
@@ -158,7 +158,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ## Deployment and Operations
 
-현재 배포는 Lightsail에서 직접 빌드하지 않고 GitHub Actions가 Docker 이미지를 빌드한 뒤 GHCR에 push하는 구조입니다. Lightsail은 이미지를 pull해 실행만 담당합니다. 작은 Lightsail 인스턴스에서 Gradle/JDK/Docker build를 직접 수행하면 CPU 부하로 SSH가 끊길 수 있어, 빌드 서버와 실행 서버 역할을 분리했습니다.
+현재 배포는 Lightsail에서 직접 빌드하지 않고 GitHub Actions가 Docker 이미지를 빌드한 뒤 GHCR에 push하고, Lightsail에 SSH로 접속해 이미지를 pull한 뒤 컨테이너를 재시작하는 구조입니다. 작은 Lightsail 인스턴스에서 Gradle/JDK/Docker build를 직접 수행하면 CPU 부하로 SSH가 끊길 수 있어, 빌드 서버와 실행 서버 역할을 분리했습니다.
 
 ### Deployment Pipeline
 
@@ -170,14 +170,19 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ### GitHub Actions and Images
 
-- Backend workflow: `.github/workflows/docker-publish.yml`
-- Frontend workflow: `.github/workflows/frontend-docker-publish.yml`
+- CI/CD workflow: `.github/workflows/cicd.yml`
+- Manual deploy workflow: `.github/workflows/deploy.yml`
 - Backend image: `ghcr.io/keunoh/feldbuch:latest`
 - Frontend image: `ghcr.io/keunoh/feldbuch-frontend:latest`
+- 각 image는 `latest`와 commit SHA 태그로 GHCR에 push합니다.
 - Backend Dockerfile: 루트 `Dockerfile`. `eclipse-temurin:21-jdk` builder에서 `./gradlew clean bootJar -x test` 실행 후 `eclipse-temurin:21-jre` 런타임 이미지로 jar를 복사합니다.
 - Frontend Dockerfile: `frontend/Dockerfile`. `node:24-alpine`에서 `npm ci`, `npm run build` 실행 후 `nginx:alpine`에 `dist`와 `nginx.conf`를 복사합니다.
-- Backend workflow는 `main` push마다 실행합니다.
-- Frontend workflow는 `main` push 중 `frontend/**` 또는 frontend workflow 변경이 있을 때 실행합니다.
+- `cicd.yml`은 `main` push마다 backend/frontend 이미지를 빌드하고, 둘 다 성공하면 Lightsail 배포 job을 실행합니다.
+- Lightsail 배포 job은 `LIGHTSAIL_SSH_KEY`, `LIGHTSAIL_HOST`, `LIGHTSAIL_USER` GitHub Secrets를 사용해 서버에 접속합니다.
+- backend 배포는 기존 `feldbuch-app` 이미지 ID를 저장한 뒤 새 이미지를 실행하고, `http://127.0.0.1:8080/actuator/health`가 `200`을 반환하는지 최대 40회 확인합니다.
+- frontend 배포는 기존 `feldbuch-frontend` 이미지 ID를 저장한 뒤 새 이미지를 실행하고, `http://127.0.0.1:8081/`이 `200`을 반환하는지 확인합니다.
+- 새 컨테이너 헬스체크가 실패하면 직전 이미지 ID로 rollback합니다.
+- `deploy.yml`은 `workflow_dispatch` 기반 수동 재배포용 workflow입니다.
 
 ### Lightsail Runtime
 
@@ -186,6 +191,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 컨테이너는 `feldbuch-network` Docker Network 안에서 실행합니다.
 - 실행 컨테이너: `feldbuch-frontend`, `feldbuch-app`, `feldbuch-redis`
 - `feldbuch-app`은 외부에 직접 공개하지 않고 `127.0.0.1:8080` 바인딩 또는 Docker Network 내부 접근을 기준으로 운영합니다.
+- GitHub Actions 자동 배포 시 backend 컨테이너는 `/var/log/feldbuch:/var/log/feldbuch` volume을 마운트해 운영 로그를 host에 남깁니다.
 - 외부 HTTP 요청은 `feldbuch-frontend` Nginx가 80 포트에서 받습니다.
 - Redis는 Lightsail 내부 Docker 컨테이너로 실행하며 외부 포트를 공개하지 않습니다.
 - Spring Boot는 Redis를 `REDIS_HOST=feldbuch-redis`로 접근합니다.
@@ -219,7 +225,66 @@ jwt:
 
 openai:
   api-key: ${OPENAI_API_KEY}
+
+server:
+  servlet:
+    session:
+      persistent: false
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  file:
+    name: /var/log/feldbuch/app.log
+
+app:
+  frontend-url: https://feldbuch.duckdns.org
 ```
+
+### Monitoring and Alerts
+
+2026-08-11 기준으로 AWS CloudWatch 기반 운영 모니터링을 구성하고 실제 알림 수신까지 검증했습니다.
+
+| Area | Configuration | Verified |
+| --- | --- | --- |
+| Backend log collection | CloudWatch Agent가 `/var/log/feldbuch/app.log`를 `/feldbuch/backend` 로그 그룹으로 전송 | Done |
+| Backend ERROR metric | CloudWatch Metric Filter가 `ERROR` 로그를 `Feldbuch/Application` namespace의 `BackendErrorCount`로 집계 | Done |
+| Backend ERROR alarm | `feldbuch-backend-error`, 300초 period에서 `BackendErrorCount >= 1`이면 ALARM | Done |
+| Notification | SNS topic `feldbuch-alerts`를 통해 이메일 알림 전송 | Done |
+| Memory alarm | Lightsail 메모리 80% 기준 경보 | Done |
+| Swap alarm | Lightsail Swap 60% 기준 경보 | Done |
+
+검증 흐름은 다음과 같습니다.
+
+```text
+Spring Boot ERROR log
+    -> /var/log/feldbuch/app.log
+    -> CloudWatch Agent
+    -> /feldbuch/backend
+    -> ERROR Metric Filter
+    -> BackendErrorCount
+    -> feldbuch-backend-error
+    -> SNS feldbuch-alerts
+    -> Email notification
+```
+
+실제 테스트에서는 `ERROR Feldbuch CloudWatch alarm test` 로그가 `BackendErrorCount = 1.0`으로 집계되었고, `feldbuch-backend-error`가 `OK -> ALARM`으로 전환되며 이메일 알림이 수신되었습니다. 알림 조건은 300초 동안 1개 datapoint가 threshold `1.0` 이상일 때입니다.
+
+### OpenAI Runtime Verification
+
+- Lightsail의 `feldbuch-app` 컨테이너 내부에서 OpenAI Chat Completion SSE 요청을 직접 실행해 `200 OK`, `text/event-stream`, `[DONE]`까지 정상 수신되는 것을 확인했습니다.
+- 애플리케이션에서도 짧은 프롬프트인 `HTTP에 대해 간단하게 설명해줘` 요청에 대해 OpenAI 스트리밍 응답이 정상 반환되는 것을 확인했습니다.
+- 이전에 관찰한 `reactor.netty.http.client.PrematureCloseException: Connection prematurely closed BEFORE response`는 API Key, DNS, outbound network 자체보다는 긴 스트리밍 연결과 작은 Lightsail 인스턴스의 메모리/swap 압박이 겹쳤을 가능성이 큽니다.
+- 긴 답변 테스트 시에는 `watch -n 1 'free -h; echo; docker stats --no-stream'`로 JVM, Docker, swap 상태를 함께 확인합니다.
+- 다음 운영 보강 대상은 backend 프로세스가 조용히 죽는 상황을 잡는 가용성/헬스체크 경보입니다.
 
 ### RDS MySQL
 
@@ -248,8 +313,16 @@ openai:
 | RDS Security Group restriction | Done |
 | External HTTP access | Done |
 | Frontend to backend API proxy | Done |
+| GitHub Actions to Lightsail CD restart | Done |
+| Backend deployment health check | Done |
+| Frontend deployment health check | Done |
+| Deployment rollback by previous image ID | Done |
+| CloudWatch backend log collection | Done |
+| Backend ERROR metric and alarm | Done |
+| SNS email notification | Done |
+| Memory and Swap alarms | Done |
 | Domain and HTTPS | Pending |
-| GitHub Actions to Lightsail CD restart | Pending |
+| Backend availability alarm | Pending |
 
 ## Architecture
 
@@ -695,15 +768,14 @@ frontend/src
 ## Roadmap
 
 - 도메인과 HTTPS 적용
-- GitHub Actions에서 Lightsail까지 자동 배포하는 CD 단계 구성
-- OAuth2 운영 리다이렉트 URL 환경 분리
+- backend 애플리케이션 가용성/헬스체크 경보 추가
+- Lightsail 인스턴스 리소스 증설 또는 컨테이너 메모리 튜닝 검토
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
 - Postman Knowledge 요청 파일 보강
 - AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
 - 테스트 커버리지 확장
-- Monitoring
 
 ## 삭제 로그
 

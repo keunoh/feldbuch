@@ -64,7 +64,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Google OAuth2 client 값은 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 환경 변수로 주입합니다.
 - JWT 만료 시간은 `jwt.access-token-expiration`, `jwt.refresh-token-expiration` 값으로 분리합니다.
 - Vue 로그인 화면은 JWT 폼 로그인과 Google OAuth2 로그인 진입점을 함께 제공합니다.
-- Google OAuth2 성공 시 서버가 JWT를 발급하고 `http://localhost:5173/oauth2/success`로 리다이렉트하며, Vue 성공 화면이 토큰과 사용자 ID를 저장한 뒤 `/conversations`로 이동합니다.
+- Google OAuth2 성공 시 서버가 JWT를 발급하고 `app.frontend-url` 기준 `/oauth2/success`로 리다이렉트하며, Vue 성공 화면이 토큰과 사용자 ID를 저장한 뒤 `/conversations`로 이동합니다.
 - Refresh Token은 Redis에 `refresh:{userId}` 키로 저장하고 Refresh Token 만료 시간과 같은 TTL을 적용합니다.
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
@@ -73,7 +73,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 ## Deployment
 
-현재 운영 배포는 로컬에서 직접 서버 빌드를 수행하지 않고, GitHub Actions가 Docker 이미지를 빌드해 GitHub Container Registry에 저장한 뒤 AWS Lightsail에서 이미지를 pull해 실행하는 구조입니다.
+현재 운영 배포는 로컬에서 직접 서버 빌드를 수행하지 않고, GitHub Actions가 Docker 이미지를 빌드해 GitHub Container Registry에 저장한 뒤 AWS Lightsail에 SSH로 접속해 이미지를 pull하고 컨테이너를 재시작하는 구조입니다.
 
 <img src="docs/images/diagrams/feldbuch-deployment-pipeline-visual.svg" alt="Feldbuch deployment pipeline" width="760">
 
@@ -83,7 +83,18 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 운영 설정은 `application-prod.yml`에서 환경 변수로 주입합니다. 실제 운영 값은 Git에 올리지 않는 Lightsail의 `.env.prod`에서 관리합니다. Redis는 Lightsail 내부 Docker 컨테이너로 실행하고 외부 포트는 공개하지 않습니다. MySQL은 AWS RDS로 분리했으며, Lightsail VPC Peering과 RDS Security Group을 통해 Lightsail 인스턴스에서만 3306 접근을 허용합니다.
 
-현재 자동화 범위는 GitHub Actions의 Backend/Frontend Docker 이미지 빌드와 GHCR push까지입니다. Lightsail의 `docker pull`과 컨테이너 재시작은 아직 수동 단계이며, 다음 큰 작업은 도메인/HTTPS와 Lightsail 배포 자동화입니다.
+`cicd.yml`은 `main` push 시 Backend/Frontend 이미지를 빌드해 `latest`와 commit SHA 태그로 GHCR에 push하고, Lightsail에서 `feldbuch-app`, `feldbuch-frontend`를 재기동합니다. 배포 중 `/actuator/health`와 frontend root 응답을 확인하며 실패하면 직전 이미지 ID로 롤백합니다. `deploy.yml`은 필요할 때 수동으로 동일 이미지를 Lightsail에 재배포하는 workflow입니다.
+
+## Operations
+
+- Spring Boot 운영 로그는 `logging.file.name=/var/log/feldbuch/app.log`로 기록하고, backend 컨테이너는 해당 경로를 host volume으로 마운트합니다.
+- CloudWatch Agent가 `/var/log/feldbuch/app.log`를 `/feldbuch/backend` 로그 그룹으로 수집하도록 구성했습니다.
+- `ERROR` 로그는 CloudWatch Metric Filter를 통해 `Feldbuch/Application` namespace의 `BackendErrorCount` 지표로 변환합니다.
+- `feldbuch-backend-error` CloudWatch Alarm은 5분 기간에 `BackendErrorCount >= 1`이면 ALARM 상태로 전환하고, SNS topic `feldbuch-alerts`로 이메일 알림을 전송합니다.
+- 2026-08-11 테스트에서 `ERROR Feldbuch CloudWatch alarm test` 로그가 `BackendErrorCount = 1.0`으로 집계되어 `OK -> ALARM` 전환과 SNS 이메일 수신까지 검증했습니다.
+- 메모리 80% 경보와 Swap 60% 경보를 함께 구성해 작은 Lightsail 인스턴스의 리소스 압박을 관찰합니다.
+- Lightsail 컨테이너 내부에서 OpenAI Chat Completion SSE 요청이 `200 OK`와 `[DONE]`까지 정상 수신되는 것을 확인했고, 앱에서도 짧은 OpenAI 스트리밍 응답을 검증했습니다.
+- 긴 OpenAI 스트리밍 응답은 작은 Lightsail 메모리와 swap 사용량에 영향을 받을 수 있어 `free -h`, `docker stats --no-stream`, CloudWatch 경보를 함께 보며 확인합니다.
 
 ## Frontend Direction
 
@@ -187,14 +198,14 @@ frontend/src
 ## Roadmap
 
 - 도메인과 HTTPS 적용
-- GitHub Actions에서 Lightsail까지 자동 배포하는 CD 단계 구성
-- OAuth2 운영 리다이렉트 URL 환경 분리
+- backend 애플리케이션 가용성/헬스체크 경보 추가
+- Lightsail 인스턴스 리소스 증설 또는 컨테이너 메모리 튜닝 검토
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
 - Postman Knowledge 요청 파일 보강
 - AI 태그 생성, 코드 리뷰, 학습 퀴즈 생성, 학습 로드맵 추천
-- 테스트 커버리지와 모니터링 확장
+- 테스트 커버리지 확장
 
 ## 삭제 로그
 
