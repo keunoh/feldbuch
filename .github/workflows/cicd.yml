@@ -102,7 +102,112 @@ jobs:
           docker pull ghcr.io/keunoh/feldbuch:latest
           docker pull ghcr.io/keunoh/feldbuch-frontend:latest
 
-          echo "== Restart backend =="
+          # ========================================
+          # Backend candidate health check
+          # ========================================
+
+          echo "== Start backend candidate =="
+
+          docker rm -f feldbuch-app-candidate 2>/dev/null || true
+
+          docker run -d \
+            --name feldbuch-app-candidate \
+            --network feldbuch-network \
+            --env-file .env.prod \
+            ghcr.io/keunoh/feldbuch:latest
+
+          echo "== Check backend health =="
+
+          BACKEND_HEALTHY=false
+
+          for i in $(seq 1 30); do
+
+            STATUS=$(docker run --rm \
+              --network feldbuch-network \
+              curlimages/curl:8.12.1 \
+              -s -o /dev/null \
+              -w "%{http_code}" \
+              http://feldbuch-app-candidate:8080/actuator/health || true)
+
+            if [ "$STATUS" = "200" ]; then
+              BACKEND_HEALTHY=true
+              echo "Backend candidate is healthy."
+              break
+            fi
+
+            echo "Waiting for backend... ($i/30)"
+            sleep 5
+          done
+
+          if [ "$BACKEND_HEALTHY" != "true" ]; then
+            echo "Backend candidate health check failed."
+            docker logs feldbuch-app-candidate
+            docker rm -f feldbuch-app-candidate
+            exit 1
+          fi
+
+          # ========================================
+          # Frontend candidate health check
+          # ========================================
+
+          echo "== Start frontend candidate =="
+
+          docker rm -f feldbuch-frontend-candidate 2>/dev/null || true
+
+          docker run -d \
+            --name feldbuch-frontend-candidate \
+            --network feldbuch-network \
+            ghcr.io/keunoh/feldbuch-frontend:latest
+
+          echo "== Check frontend =="
+
+          FRONTEND_HEALTHY=false
+
+          for i in $(seq 1 10); do
+
+            STATUS=$(docker run --rm \
+              --network feldbuch-network \
+              curlimages/curl:8.12.1 \
+              -s -o /dev/null \
+              -w "%{http_code}" \
+              http://feldbuch-frontend-candidate/ || true)
+
+            if [ "$STATUS" = "200" ]; then
+              FRONTEND_HEALTHY=true
+              echo "Frontend candidate is healthy."
+              break
+            fi
+
+            echo "Waiting for frontend... ($i/10)"
+            sleep 2
+          done
+
+          if [ "$FRONTEND_HEALTHY" != "true" ]; then
+            echo "Frontend candidate health check failed."
+
+            docker logs feldbuch-frontend-candidate
+
+            docker rm -f feldbuch-app-candidate
+            docker rm -f feldbuch-frontend-candidate
+
+            exit 1
+          fi
+
+          # ========================================
+          # Candidates passed
+          # ========================================
+
+          echo "== Candidate checks passed =="
+
+          docker rm -f feldbuch-app-candidate
+          docker rm -f feldbuch-frontend-candidate
+
+          # ========================================
+          # Replace backend
+          # ========================================
+
+          echo "== Replace backend =="
+
           docker stop feldbuch-app || true
           docker rm feldbuch-app || true
 
@@ -114,7 +219,12 @@ jobs:
             -p 127.0.0.1:8080:8080 \
             ghcr.io/keunoh/feldbuch:latest
 
-          echo "== Restart frontend =="
+          # ========================================
+          # Replace frontend
+          # ========================================
+
+          echo "== Replace frontend =="
+
           docker stop feldbuch-frontend || true
           docker rm feldbuch-frontend || true
 
@@ -125,7 +235,7 @@ jobs:
             -p 127.0.0.1:8081:80 \
             ghcr.io/keunoh/feldbuch-frontend:latest
 
-          echo "== Running containers =="
+          echo "== Deployment completed =="
           docker ps
 
           EOF

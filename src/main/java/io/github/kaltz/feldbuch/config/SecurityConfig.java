@@ -70,7 +70,9 @@ public class SecurityConfig {
                                 /**
                                  * Google 인증 후 Spring Security 콜백 경로
                                  */
-                                "/login/oauth2/code/**"
+                                "/login/oauth2/code/**",
+
+                                "/actuator/health"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
