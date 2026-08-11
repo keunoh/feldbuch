@@ -55,3 +55,7 @@ management:
   endpoint:
     health:
       show-details: never
+
+logging:
+  file:
+    name: /var/log/feldbuch/app.log
