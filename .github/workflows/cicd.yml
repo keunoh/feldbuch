@@ -98,118 +98,29 @@ jobs:
 
           cd ~/apps/feldbuch
 
-          echo "== Pull images =="
+          echo "== Save current image IDs =="
+
+          OLD_BACKEND_IMAGE=$(docker inspect -f '{{.Image}}' feldbuch-app)
+          OLD_FRONTEND_IMAGE=$(docker inspect -f '{{.Image}}' feldbuch-frontend)
+
+          echo "Old backend: $OLD_BACKEND_IMAGE"
+          echo "Old frontend: $OLD_FRONTEND_IMAGE"
+
+          echo "== Pull new images =="
+
           docker pull ghcr.io/keunoh/feldbuch:latest
           docker pull ghcr.io/keunoh/feldbuch-frontend:latest
 
           # ========================================
-          # Backend candidate health check
+          # Backend deployment
           # ========================================
 
-          echo "== Start backend candidate =="
+          echo "== Stop old backend =="
 
-          docker rm -f feldbuch-app-candidate 2>/dev/null || true
+          docker stop feldbuch-app
+          docker rm feldbuch-app
 
-          docker run -d \
-            --name feldbuch-app-candidate \
-            --network feldbuch-network \
-            --env-file .env.prod \
-            ghcr.io/keunoh/feldbuch:latest
-
-          echo "== Check backend health =="
-
-          BACKEND_HEALTHY=false
-
-          for i in $(seq 1 30); do
-
-            STATUS=$(docker run --rm \
-              --network feldbuch-network \
-              curlimages/curl:8.12.1 \
-              -s -o /dev/null \
-              -w "%{http_code}" \
-              http://feldbuch-app-candidate:8080/actuator/health || true)
-
-            if [ "$STATUS" = "200" ]; then
-              BACKEND_HEALTHY=true
-              echo "Backend candidate is healthy."
-              break
-            fi
-
-            echo "Waiting for backend... ($i/30)"
-            sleep 5
-          done
-
-          if [ "$BACKEND_HEALTHY" != "true" ]; then
-            echo "Backend candidate health check failed."
-            docker logs feldbuch-app-candidate
-            docker rm -f feldbuch-app-candidate
-            exit 1
-          fi
-
-          # ========================================
-          # Frontend candidate health check
-          # ========================================
-
-          echo "== Start frontend candidate =="
-
-          docker rm -f feldbuch-frontend-candidate 2>/dev/null || true
-
-          docker run -d \
-            --name feldbuch-frontend-candidate \
-            --network feldbuch-network \
-            ghcr.io/keunoh/feldbuch-frontend:latest
-
-          echo "== Check frontend =="
-
-          FRONTEND_HEALTHY=false
-
-          for i in $(seq 1 10); do
-
-            STATUS=$(docker run --rm \
-              --network feldbuch-network \
-              curlimages/curl:8.12.1 \
-              -s -o /dev/null \
-              -w "%{http_code}" \
-              http://feldbuch-frontend-candidate/ || true)
-
-            if [ "$STATUS" = "200" ]; then
-              FRONTEND_HEALTHY=true
-              echo "Frontend candidate is healthy."
-              break
-            fi
-
-            echo "Waiting for frontend... ($i/10)"
-            sleep 2
-          done
-
-          if [ "$FRONTEND_HEALTHY" != "true" ]; then
-            echo "Frontend candidate health check failed."
-
-            docker logs feldbuch-frontend-candidate
-
-            docker rm -f feldbuch-app-candidate
-            docker rm -f feldbuch-frontend-candidate
-
-            exit 1
-          fi
-
-          # ========================================
-          # Candidates passed
-          # ========================================
-
-          echo "== Candidate checks passed =="
-
-          docker rm -f feldbuch-app-candidate
-          docker rm -f feldbuch-frontend-candidate
-
-          # ========================================
-          # Replace backend
-          # ========================================
-
-          echo "== Replace backend =="
-
-          docker stop feldbuch-app || true
-          docker rm feldbuch-app || true
+          echo "== Start new backend =="
 
           docker run -d \
             --name feldbuch-app \
@@ -219,14 +130,61 @@ jobs:
             -p 127.0.0.1:8080:8080 \
             ghcr.io/keunoh/feldbuch:latest
 
+          echo "== Check backend health =="
+
+          BACKEND_HEALTHY=false
+
+          for i in $(seq 1 40); do
+            STATUS=$(curl \
+              -s \
+              -o /dev/null \
+              -w "%{http_code}" \
+              http://127.0.0.1:8080/actuator/health \
+              || true)
+
+            echo "Waiting for backend... ($i/40, status=$STATUS)"
+
+            if [ "$STATUS" = "200" ]; then
+              BACKEND_HEALTHY=true
+              echo "Backend is healthy."
+              break
+            fi
+
+            sleep 5
+          done
+
+          if [ "$BACKEND_HEALTHY" != "true" ]; then
+            echo "Backend health check failed."
+            echo "== New backend logs =="
+
+            docker logs feldbuch-app || true
+
+            echo "== Rollback backend =="
+
+            docker rm -f feldbuch-app || true
+
+            docker run -d \
+              --name feldbuch-app \
+              --network feldbuch-network \
+              --restart unless-stopped \
+              --env-file .env.prod \
+              -p 127.0.0.1:8080:8080 \
+              "$OLD_BACKEND_IMAGE"
+
+            echo "Backend rollback completed."
+            exit 1
+          fi
+
           # ========================================
-          # Replace frontend
+          # Frontend deployment
           # ========================================
 
-          echo "== Replace frontend =="
+          echo "== Stop old frontend =="
 
-          docker stop feldbuch-frontend || true
-          docker rm feldbuch-frontend || true
+          docker stop feldbuch-frontend
+          docker rm feldbuch-frontend
+
+          echo "== Start new frontend =="
 
           docker run -d \
             --name feldbuch-frontend \
@@ -235,7 +193,63 @@ jobs:
             -p 127.0.0.1:8081:80 \
             ghcr.io/keunoh/feldbuch-frontend:latest
 
+          echo "== Check frontend health =="
+
+          FRONTEND_HEALTHY=false
+
+          for i in $(seq 1 10); do
+            STATUS=$(curl \
+              -s \
+              -o /dev/null \
+              -w "%{http_code}" \
+              http://127.0.0.1:8081/ \
+              || true)
+
+            echo "Waiting for frontend... ($i/10, status=$STATUS)"
+
+            if [ "$STATUS" = "200" ]; then
+              FRONTEND_HEALTHY=true
+              echo "Frontend is healthy."
+              break
+            fi
+
+            sleep 2
+          done
+
+          if [ "$FRONTEND_HEALTHY" != "true" ]; then
+            echo "Frontend health check failed."
+
+            docker logs feldbuch-frontend || true
+
+            echo "== Rollback frontend =="
+
+            docker rm -f feldbuch-frontend || true
+
+            docker run -d \
+              --name feldbuch-frontend \
+              --network feldbuch-network \
+              --restart unless-stopped \
+              -p 127.0.0.1:8081:80 \
+              "$OLD_FRONTEND_IMAGE"
+
+            echo "== Rollback backend for version consistency =="
+
+            docker rm -f feldbuch-app || true
+
+            docker run -d \
+              --name feldbuch-app \
+              --network feldbuch-network \
+              --restart unless-stopped \
+              --env-file .env.prod \
+              -p 127.0.0.1:8080:8080 \
+              "$OLD_BACKEND_IMAGE"
+
+            echo "Deployment rolled back."
+            exit 1
+          fi
+
           echo "== Deployment completed =="
+
           docker ps
 
           EOF
