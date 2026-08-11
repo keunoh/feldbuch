@@ -24,7 +24,7 @@ const showTerminalLogs = ref(false)
 const loginLogs = ref([])
 
 const googleLoginUrl =
-  'http://localhost:8080/oauth2/authorization/google'
+  '/oauth2/authorization/google'
 
 async function loginWithGoogle() {
   if (isSubmitting.value) {
