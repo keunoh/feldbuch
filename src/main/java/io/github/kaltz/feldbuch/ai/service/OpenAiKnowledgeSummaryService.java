@@ -85,20 +85,36 @@ public class OpenAiKnowledgeSummaryService
     private ChatCompletionRequest createRequest(
             String conversation
     ) {
+        String systemPrompt =
+                KnowledgeSummaryPrompt
+                        .systemPrompt();
+
+        String userPrompt =
+                KnowledgeSummaryPrompt
+                        .userPrompt(
+                                conversation
+                        );
+
+        log.info(
+                "{} Request started. conversationLength={}, systemPromptLength={}, userPromptLength={}, totalPromptLength={}",
+                SUMMARY_LOG,
+                conversation.length(),
+                systemPrompt.length(),
+                userPrompt.length(),
+                systemPrompt.length()
+                        + userPrompt.length()
+        );
+
         return new ChatCompletionRequest(
                 properties.getModel(),
                 List.of(
                         new Message(
                                 "system",
-                                KnowledgeSummaryPrompt
-                                        .systemPrompt()
+                                systemPrompt
                         ),
                         new Message(
                                 "user",
-                                KnowledgeSummaryPrompt
-                                        .userPrompt(
-                                                conversation
-                                        )
+                                userPrompt
                         )
                 )
         );
