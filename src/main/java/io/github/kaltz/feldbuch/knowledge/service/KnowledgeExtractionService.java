@@ -16,6 +16,7 @@ import io.github.kaltz.feldbuch.user.reader.UserReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -40,7 +41,9 @@ public class KnowledgeExtractionService {
 
     private final KnowledgeNoteRepository knowledgeNoteRepository;
 
-    @Transactional
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW
+    )
     public KnowledgeNote extract(
             Long userId,
             Long conversationId
