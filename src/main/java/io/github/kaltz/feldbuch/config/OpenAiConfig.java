@@ -6,13 +6,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.time.Duration;
 
 @Configuration
 @RequiredArgsConstructor
 @EnableConfigurationProperties(OpenAiProperties.class)
 public class OpenAiConfig {
+
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(120);
 
     private final OpenAiProperties properties;
 
@@ -21,6 +27,12 @@ public class OpenAiConfig {
     // 주입 가능하다.
     @Bean
     public RestClient openAiRestClient() {
+
+        SimpleClientHttpRequestFactory requestFactory =
+                new SimpleClientHttpRequestFactory();
+
+        requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
+        requestFactory.setReadTimeout(READ_TIMEOUT);
 
         return RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
@@ -32,6 +44,7 @@ public class OpenAiConfig {
                         HttpHeaders.CONTENT_TYPE,
                         MediaType.APPLICATION_JSON_VALUE
                 )
+                .requestFactory(requestFactory)
                 .build();
     }
 

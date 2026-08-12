@@ -134,6 +134,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - OpenAI Base URL: `https://api.openai.com/v1`
 - OpenAI 모델 설정 키: `openai.model`
 - 현재 기본 모델: `gpt-4.1-nano`
+- OpenAI `RestClient` connect timeout: 10초
+- OpenAI `RestClient` read timeout: 120초
 - Google OAuth2 client-id 설정 키: `GOOGLE_CLIENT_ID`
 - Google OAuth2 client-secret 설정 키: `GOOGLE_CLIENT_SECRET`
 - Google OAuth2 scope: `openid`, `profile`, `email`
@@ -287,6 +289,7 @@ Spring Boot ERROR log
 
 - Lightsail의 `feldbuch-app` 컨테이너 내부에서 OpenAI Chat Completion SSE 요청을 직접 실행해 `200 OK`, `text/event-stream`, `[DONE]`까지 정상 수신되는 것을 확인했습니다.
 - 애플리케이션에서도 짧은 프롬프트인 `HTTP에 대해 간단하게 설명해줘` 요청에 대해 OpenAI 스트리밍 응답이 정상 반환되는 것을 확인했습니다.
+- OpenAI 일반 요청용 `RestClient`는 10초 connect timeout과 120초 read timeout을 적용해 외부 API 연결 지연 시 무기한 대기를 피합니다.
 - 이전에 관찰한 `reactor.netty.http.client.PrematureCloseException: Connection prematurely closed BEFORE response`는 API Key, DNS, outbound network 자체보다는 긴 스트리밍 연결과 작은 Lightsail 인스턴스의 메모리/swap 압박이 겹쳤을 가능성이 큽니다.
 - 긴 답변 테스트 시에는 `watch -n 1 'free -h; echo; docker stats --no-stream'`로 JVM, Docker, swap 상태를 함께 확인합니다.
 - 다음 운영 보강 대상은 backend 프로세스가 조용히 죽는 상황을 잡는 가용성/헬스체크 경보입니다.
