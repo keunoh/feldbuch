@@ -28,6 +28,10 @@ spring:
               - profile
               - email
 
+  batch:
+    jdbc:
+      initialize-schema: always
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 1800000
