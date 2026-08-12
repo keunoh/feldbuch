@@ -31,6 +31,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - KnowledgeNote `INCREMENTAL`/`CONSOLIDATED` 타입 분리
 - 기존 통합 KnowledgeNote 자동 병합과 Conversation별 통합 노트 조회
 - Knowledge 추출 Batch Job/Step/Tasklet, 스케줄러, 실패 재시도 상태 관리
+- 운영 확인용 Knowledge 추출 Batch 수동 실행 API
 - Vue Router Guard, Axios Interceptor, Fetch 기반 SSE 클라이언트
 - Markdown 렌더링, DOMPurify sanitize, highlight.js 코드 강조, 코드 복사 UX
 - 대화/지식 탭을 가진 Workspace Sidebar와 Knowledge 노트 워크스페이스
@@ -68,6 +69,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Refresh Token은 Redis에 `refresh:{userId}` 키로 저장하고 Refresh Token 만료 시간과 같은 TTL을 적용합니다.
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
+- 운영 프로필은 Spring Batch 메타 테이블을 `spring.batch.jdbc.initialize-schema=always`로 초기화합니다.
 - Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 기본값은 30분(`1800000` ms)입니다.
 - Conversation 자동 완료 스케줄러는 `conversation.auto-completion.fixed-delay` 기본 60초마다 실행되고, `conversation.auto-completion.inactivity-timeout` 기본 30분을 기준으로 비활성 ACTIVE 대화를 COMPLETED로 전환합니다.
 
@@ -170,7 +172,7 @@ sequenceDiagram
 src/main/java/io.github.kaltz.feldbuch
 ├── ai               # OpenAI 연동, 대화 응답, Knowledge 요약/병합
 ├── auth             # 로그인, JWT Access/Refresh Token, Google OAuth2/OIDC 인증
-├── batch            # Knowledge 추출 Batch 파이프라인과 스케줄러
+├── batch            # Knowledge 추출 Batch 파이프라인, 스케줄러, 관리용 수동 실행 API
 ├── common           # 공통 응답, 예외, requestId 로깅
 ├── config           # Security, Redis, OpenAI, Batch 설정
 ├── conversation     # 대화, 메시지, 대화형 AI, 비활성 대화 자동 완료

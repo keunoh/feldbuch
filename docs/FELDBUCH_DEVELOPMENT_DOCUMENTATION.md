@@ -96,6 +96,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - KnowledgeConversationReader
 - KnowledgeExtractionBatchConfig, KnowledgeExtractionTasklet
 - KnowledgeExtractionScheduler
+- BatchAdminController
 - 사용자별 Knowledge 루트/자식 조회, 동일 폴더명 중복 확인 쿼리
 - QueryDSL 기반 Knowledge 추출 대상 Conversation 조회와 대상 존재 여부 확인 쿼리
 - KnowledgeNote의 Knowledge별/Conversation별/사용자별/타입별 조회 쿼리
@@ -147,6 +148,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Refresh Token 저장 Redis Key: `refresh:{userId}`
 - Refresh Token Redis TTL: `jwt.refresh-token-expiration` 기준
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
+- 운영 Spring Batch 메타 테이블 초기화: `spring.batch.jdbc.initialize-schema=always`
 - Knowledge 추출 스케줄러 간격 설정 키: `batch.knowledge-extraction.fixed-delay`
 - Knowledge 추출 스케줄러 기본 간격: `1800000` ms, 30분
 - Knowledge 추출 배치 Job 이름: `knowledgeExtractionJob`
@@ -219,6 +221,9 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
+  batch:
+    jdbc:
+      initialize-schema: always
 
 jwt:
   secret: ${JWT_SECRET}
@@ -653,6 +658,8 @@ Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 
 - Step 이름: `knowledgeExtractionStep`
 - 실행 방식: Tasklet 기반 단일 Step
 - 실행 시점: `KnowledgeExtractionScheduler`가 `batch.knowledge-extraction.fixed-delay` 기준으로 대상 존재 여부를 확인한 뒤 Job 실행
+- 수동 실행: `POST /api/admin/batch/knowledge-extraction`로 스케줄 실행 시각을 기다리지 않고 즉시 `KnowledgeExtractionScheduler.run()` 호출
+- 수동 실행 API는 공개 경로가 아니므로 JWT 인증이 필요하며, 운영 확인과 장애 대응용 임시 관리 API입니다.
 - 기본 스케줄 간격: 30분
 - Scheduler Job Parameter: `requestedAt=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
 - 반복 방식: 한 번 실행할 때 조회된 대상 Conversation 목록을 순회 처리
@@ -663,6 +670,7 @@ Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 
 - 대상 존재 확인: `existsKnowledgeExtractionTarget()`으로 스케줄러가 불필요한 Job 실행을 건너뜀
 - 성공 처리: `PROCESSING -> COMPLETED`, `lastExtractedMessageId` 갱신, 오류 메시지와 실패 시각 초기화
 - 실패 처리: `FAILED`로 변경, 재시도 횟수 증가, 실패 메시지와 실패 시각 저장
+- 추출 본문 처리는 `REQUIRES_NEW` 트랜잭션으로 분리해 개별 Conversation 추출 실패가 전체 배치 트랜잭션 rollback으로 번지는 것을 막음
 - 증분 추출: 완료된 대화에 새 메시지가 추가되면 상태를 `NONE`으로 되돌리고 `lastExtractedMessageId` 이후 메시지만 AI 컨텍스트로 구성
 - 노트 생성: 새 메시지 범위는 항상 `INCREMENTAL` KnowledgeNote로 저장
 - 통합 노트: 같은 Conversation의 `CONSOLIDATED` KnowledgeNote가 없으면 최초 생성하고, 있으면 기존 통합 노트와 신규 증분 노트를 AI로 병합해 갱신
@@ -705,7 +713,7 @@ src/main/java/io.github.kaltz.feldbuch
 │   ├── prompt          # Knowledge/Title 프롬프트
 │   └── service         # 채팅, Knowledge 요약/병합 서비스
 ├── auth
-├── batch
+├── batch            # Batch 설정, 스케줄러, Tasklet, 관리용 수동 실행 API
 ├── common
 ├── config
 ├── conversation
@@ -761,6 +769,8 @@ frontend/src
 - 사용자의 마지막 작업 위치를 localStorage로 복원
 - Batch 대상 조회와 재시도 조건을 QueryDSL로 관리
 - Scheduler에서 대상 존재 여부를 먼저 확인해 불필요한 Batch 실행 방지
+- 운영 확인용 `POST /api/admin/batch/knowledge-extraction` 관리 API로 Knowledge 추출 배치 수동 실행 지원
+- Knowledge 추출 처리 트랜잭션을 `REQUIRES_NEW`로 분리해 실패 Conversation이 전체 Batch 결과를 rollback하지 않도록 조정
 - Knowledge 추출 상태 변경은 별도 트랜잭션으로 반영
 - Request ID 기반 요청 추적
 - Thymeleaf 화면은 비교용으로 유지하고 Vue SPA를 주 사용자 화면으로 전환
