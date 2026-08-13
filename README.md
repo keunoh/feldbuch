@@ -63,6 +63,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 로컬/운영 환경별 DB, JWT, OpenAI Key는 `application-local.yml`, `application-prod.yml`에서 분리합니다.
 - OpenAI 기본 모델은 `openai.model` 값으로 선택하며 현재 기본값은 `gpt-4.1-nano`입니다.
 - OpenAI 일반 요청용 `RestClient`는 connect timeout 10초, read timeout 120초로 설정합니다.
+- OpenAI SSE 스트리밍용 `WebClient`도 connect timeout 10초, response timeout 120초로 설정합니다.
 - Google OAuth2 client 값은 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 환경 변수로 주입합니다.
 - JWT 만료 시간은 `jwt.access-token-expiration`, `jwt.refresh-token-expiration` 값으로 분리합니다.
 - Vue 로그인 화면은 JWT 폼 로그인과 Google OAuth2 로그인 진입점을 함께 제공합니다.
@@ -97,12 +98,14 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 2026-08-11 테스트에서 `ERROR Feldbuch CloudWatch alarm test` 로그가 `BackendErrorCount = 1.0`으로 집계되어 `OK -> ALARM` 전환과 SNS 이메일 수신까지 검증했습니다.
 - 메모리 80% 경보와 Swap 60% 경보를 함께 구성해 작은 Lightsail 인스턴스의 리소스 압박을 관찰합니다.
 - Lightsail 컨테이너 내부에서 OpenAI Chat Completion SSE 요청이 `200 OK`와 `[DONE]`까지 정상 수신되는 것을 확인했고, 앱에서도 짧은 OpenAI 스트리밍 응답을 검증했습니다.
+- OpenAI 스트리밍은 첫 토큰 응답 시간(TTFT)을 로그로 남기고, 10초 이상이면 `[OPENAI_TTFT_SLOW]` 경고 로그를 기록합니다.
 - 긴 OpenAI 스트리밍 응답은 작은 Lightsail 메모리와 swap 사용량에 영향을 받을 수 있어 `free -h`, `docker stats --no-stream`, CloudWatch 경보를 함께 보며 확인합니다.
 
 ## Frontend Direction
 
 - 앞으로의 사용자 화면은 `frontend/`의 Vue 3 + Vite SPA를 중심으로 진행합니다.
 - Spring Boot 내부 Thymeleaf 로그인/대화 화면은 비교용 기준 구현으로 유지합니다.
+- Vite 개발 서버는 `/api`, `/oauth2/authorization`, `/login/oauth2` 요청을 `http://localhost:8080`으로 프록시해 로컬에서도 상대경로 기반 API/OAuth 흐름을 유지합니다.
 - Vue Router는 `/login`, `/signup`, `/oauth2/success`, `/conversations` 라우트를 관리하고, 인증이 필요한 화면은 Router Guard로 보호합니다.
 - `LoginView`는 이메일/비밀번호 로그인, Google 로그인, 회원가입 이동 링크를 제공합니다.
 - `SignUpView`는 nickname, email, password를 입력받아 `POST /api/users/signup` 호출 후 `/login`으로 이동합니다.

@@ -91,6 +91,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - KnowledgeSummaryPrompt, KnowledgeMergePrompt
 - AiKnowledgeSummaryService, OpenAiKnowledgeSummaryService
 - AiKnowledgeMergeService, OpenAiKnowledgeMergeService
+- Knowledge Summary 응답 검증: 필수 텍스트, 최소 300자 요약, Markdown 소제목, 코드 펜스 닫힘, 키워드 3-7개와 중복 여부 확인
 - KnowledgeExtractionService, KnowledgeExtractionStatusService
 - ConversationAiContextBuilder
 - KnowledgeConversationReader
@@ -136,6 +137,9 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 현재 기본 모델: `gpt-4.1-nano`
 - OpenAI `RestClient` connect timeout: 10초
 - OpenAI `RestClient` read timeout: 120초
+- OpenAI `WebClient` connect timeout: 10초
+- OpenAI `WebClient` response timeout: 120초
+- OpenAI 스트리밍 TTFT slow threshold: 10초
 - Google OAuth2 client-id 설정 키: `GOOGLE_CLIENT_ID`
 - Google OAuth2 client-secret 설정 키: `GOOGLE_CLIENT_SECRET`
 - Google OAuth2 scope: `openid`, `profile`, `email`
@@ -207,7 +211,18 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - `location /`: Vue Router history mode를 위해 `try_files $uri $uri/ /index.html`로 처리합니다.
 - `location /api/`: `proxy_pass http://feldbuch-app:8080`로 Spring Boot에 전달합니다.
 - SSE 스트리밍을 위해 `proxy_buffering off`, `proxy_cache off`를 적용합니다.
+- 긴 SSE 연결을 위해 `proxy_read_timeout 300s`, `proxy_send_timeout 300s`를 적용합니다.
 - 운영 브라우저에서 `localhost`가 사용자 PC를 가리키는 문제를 피하기 위해 공통 API 클라이언트와 SSE 요청은 `/api` 상대경로를 기준으로 동작합니다.
+
+### Vite Local Proxy
+
+로컬 개발 서버는 운영 Nginx 프록시와 같은 상대경로 호출 구조를 유지하기 위해 다음 경로를 Spring Boot 개발 서버로 프록시합니다.
+
+| Path | Target | Purpose |
+| --- | --- | --- |
+| `/api` | `http://localhost:8080` | REST API와 SSE 요청 |
+| `/oauth2/authorization` | `http://localhost:8080` | Google OAuth2 로그인 시작 |
+| `/login/oauth2` | `http://localhost:8080` | Google OAuth2 콜백 |
 
 ### Production Configuration
 
@@ -290,6 +305,8 @@ Spring Boot ERROR log
 - Lightsail의 `feldbuch-app` 컨테이너 내부에서 OpenAI Chat Completion SSE 요청을 직접 실행해 `200 OK`, `text/event-stream`, `[DONE]`까지 정상 수신되는 것을 확인했습니다.
 - 애플리케이션에서도 짧은 프롬프트인 `HTTP에 대해 간단하게 설명해줘` 요청에 대해 OpenAI 스트리밍 응답이 정상 반환되는 것을 확인했습니다.
 - OpenAI 일반 요청용 `RestClient`는 10초 connect timeout과 120초 read timeout을 적용해 외부 API 연결 지연 시 무기한 대기를 피합니다.
+- OpenAI 스트리밍용 `WebClient`는 Reactor Netty `HttpClient`에 connect timeout 10초, response timeout 120초를 적용합니다.
+- `OpenAiChatService`는 stream 시작 시각을 `NanoTimeProvider`로 기록하고 첫 토큰 수신 시 TTFT를 로그로 남깁니다. TTFT가 10초 이상이면 `[OPENAI_TTFT_SLOW]` 경고 로그를 남겨 운영 지연 분석에 사용합니다.
 - 이전에 관찰한 `reactor.netty.http.client.PrematureCloseException: Connection prematurely closed BEFORE response`는 API Key, DNS, outbound network 자체보다는 긴 스트리밍 연결과 작은 Lightsail 인스턴스의 메모리/swap 압박이 겹쳤을 가능성이 큽니다.
 - 긴 답변 테스트 시에는 `watch -n 1 'free -h; echo; docker stats --no-stream'`로 JVM, Docker, swap 상태를 함께 확인합니다.
 - 다음 운영 보강 대상은 backend 프로세스가 조용히 죽는 상황을 잡는 가용성/헬스체크 경보입니다.
@@ -321,6 +338,7 @@ Spring Boot ERROR log
 | RDS Security Group restriction | Done |
 | External HTTP access | Done |
 | Frontend to backend API proxy | Done |
+| Nginx SSE proxy timeout extension | Done |
 | GitHub Actions to Lightsail CD restart | Done |
 | Backend deployment health check | Done |
 | Frontend deployment health check | Done |
@@ -329,6 +347,7 @@ Spring Boot ERROR log
 | Backend ERROR metric and alarm | Done |
 | SNS email notification | Done |
 | Memory and Swap alarms | Done |
+| OpenAI TTFT logging | Done |
 | Domain and HTTPS | Pending |
 | Backend availability alarm | Pending |
 
