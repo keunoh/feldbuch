@@ -29,10 +29,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.batch:spring-batch-test")
+    testImplementation("io.projectreactor:reactor-test")
 
     // Devtools
     developmentOnly("org.springframework.boot:spring-boot-devtools")

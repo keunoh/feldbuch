@@ -7,6 +7,7 @@ import io.github.kaltz.feldbuch.ai.mapper.OpenAiRequestMapper;
 import io.github.kaltz.feldbuch.ai.mapper.OpenAiResponseMapper;
 import io.github.kaltz.feldbuch.ai.model.*;
 import io.github.kaltz.feldbuch.ai.prompt.TitlePromptFactory;
+import io.github.kaltz.feldbuch.common.time.NanoTimeProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,10 +27,13 @@ public class OpenAiChatService implements ChatService {
     private static final String CHAT_OPERATION = "CHAT";
     private static final String TITLE_OPERATION = "TITLE";
 
+    private static final long SLOW_TTFT_THRESHOLD_MS = 10_000L;
+
     private final OpenAiClient openAiClient;
     private final OpenAiRequestMapper requestMapper;
     private final OpenAiResponseMapper responseMapper;
     private final TitlePromptFactory titlePromptFactory;
+    private final NanoTimeProvider nanoTimeProvider;
 
     @Override
     public ChatResponse chat(ChatCommand command) {
@@ -52,7 +56,7 @@ public class OpenAiChatService implements ChatService {
         ChatCompletionRequest request =
                 requestMapper.toRequest(command);
 
-        long startTime = System.nanoTime();
+        long startTime = nanoTimeProvider.nanoTime();
 
         AtomicBoolean firstTokenReceived =
                 new AtomicBoolean(false);
@@ -66,11 +70,23 @@ public class OpenAiChatService implements ChatService {
         return openAiClient.stream(request)
                 .doOnNext(token -> {
                     if (firstTokenReceived.compareAndSet(false, true)) {
+
+                        long ttft =
+                                elapseMillis(startTime);
+
                         log.info(
                                 "{} First token received. ttft={}ms",
                                 OPENAI_LOG,
-                                elapseMillis(startTime)
+                                ttft
                         );
+
+                        if (ttft >= SLOW_TTFT_THRESHOLD_MS) {
+                            log.warn(
+                                    "[OPENAI_TTFT_SLOW] ttft={}ms threshold={}ms",
+                                    ttft,
+                                    SLOW_TTFT_THRESHOLD_MS
+                            );
+                        }
                     }
                 })
                 .doOnComplete(() ->
@@ -117,7 +133,7 @@ public class OpenAiChatService implements ChatService {
                         ChatCommand.from(messages)
                 );
 
-        long startTime = System.nanoTime();
+        long startTime = nanoTimeProvider.nanoTime();
 
         log.info(
                 "{} Request started. operation={} messageCount={}",
@@ -159,7 +175,7 @@ public class OpenAiChatService implements ChatService {
 
     private long elapseMillis(long startTime) {
         return TimeUnit.NANOSECONDS.toMillis(
-                System.nanoTime() - startTime
+                nanoTimeProvider.nanoTime() - startTime
         );
     }
 }
