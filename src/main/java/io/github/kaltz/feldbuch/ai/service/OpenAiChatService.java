@@ -14,6 +14,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Service
@@ -53,6 +54,9 @@ public class OpenAiChatService implements ChatService {
 
         long startTime = System.nanoTime();
 
+        AtomicBoolean firstTokenReceived =
+                new AtomicBoolean(false);
+
         log.info(
                 "{} Stream started. messageCount={}",
                 OPENAI_LOG,
@@ -60,6 +64,15 @@ public class OpenAiChatService implements ChatService {
         );
 
         return openAiClient.stream(request)
+                .doOnNext(token -> {
+                    if (firstTokenReceived.compareAndSet(false, true)) {
+                        log.info(
+                                "{} First token received. ttft={}ms",
+                                OPENAI_LOG,
+                                elapseMillis(startTime)
+                        );
+                    }
+                })
                 .doOnComplete(() ->
                         log.info(
                                 "{} Stream completed. elapsed={}ms",
