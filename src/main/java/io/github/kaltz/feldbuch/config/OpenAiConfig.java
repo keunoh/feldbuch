@@ -12,6 +12,7 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
 
@@ -22,6 +23,15 @@ public class OpenAiConfig {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(120);
+
+    private static final Duration CONNECTION_MAX_IDLE_TIME =
+            Duration.ofSeconds(30);
+
+    private static final Duration CONNECTION_MAX_LIFE_TIME =
+            Duration.ofMinutes(5);
+
+    private static final Duration EVICT_INTERVAL =
+            Duration.ofSeconds(30);
 
     private final OpenAiProperties properties;
 
@@ -53,6 +63,21 @@ public class OpenAiConfig {
 
     @Bean
     public WebClient openAiWebClient() {
+        
+        ConnectionProvider.builder("openai")
+                .maxIdleTime(
+                        CONNECTION_MAX_IDLE_TIME
+                )
+                .maxLifeTime(
+                        CONNECTION_MAX_LIFE_TIME
+                )
+                .pendingAcquireTimeout(
+                        CONNECT_TIMEOUT
+                )
+                .evictInBackground(
+                        EVICT_INTERVAL
+                )
+                .build();
 
         HttpClient httpClient =
                 HttpClient.create()
