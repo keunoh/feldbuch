@@ -170,6 +170,7 @@ jobs:
               --restart unless-stopped \
               --env-file .env.prod \
               -p 127.0.0.1:8080:8080 \
+              -v /var/log/feldbuch:/var/log/feldbuch \
               "$OLD_BACKEND_IMAGE"
 
             echo "Backend rollback completed."
@@ -243,6 +244,7 @@ jobs:
               --restart unless-stopped \
               --env-file .env.prod \
               -p 127.0.0.1:8080:8080 \
+              -v /var/log/feldbuch:/var/log/feldbuch \
               "$OLD_BACKEND_IMAGE"
 
             echo "Deployment rolled back."
