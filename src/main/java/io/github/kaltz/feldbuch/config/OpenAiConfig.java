@@ -1,5 +1,6 @@
 package io.github.kaltz.feldbuch.config;
 
+import io.netty.channel.ChannelOption;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -7,8 +8,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
 
@@ -51,6 +54,22 @@ public class OpenAiConfig {
     @Bean
     public WebClient openAiWebClient() {
 
+        HttpClient httpClient =
+                HttpClient.create()
+                        .option(
+                                ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                                Math.toIntExact(
+                                        CONNECT_TIMEOUT.toMillis()
+                                )
+                        )
+                        .responseTimeout(
+                                READ_TIMEOUT
+                        );
+
+        ReactorClientHttpConnector connector =
+                new ReactorClientHttpConnector(httpClient);
+
+
         return WebClient.builder()
                 .baseUrl(properties.getBaseUrl())
                 .defaultHeader(
@@ -61,6 +80,7 @@ public class OpenAiConfig {
                         HttpHeaders.CONTENT_TYPE,
                         MediaType.APPLICATION_JSON_VALUE
                 )
+                .clientConnector(connector)
                 .build();
     }
 }
