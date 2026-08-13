@@ -68,6 +68,13 @@ public class OpenAiChatService implements ChatService {
         );
 
         return openAiClient.stream(request)
+                .doOnSubscribe(subscription ->
+                        log.info(
+                                "{} Stream subscribed. elapsed={}ms",
+                                OPENAI_LOG,
+                                elapseMillis(startTime)
+                        )
+                )
                 .doOnNext(token -> {
                     if (firstTokenReceived.compareAndSet(false, true)) {
 
