@@ -27,7 +27,7 @@ public class ConversationCompletionScheduler {
 
     @Scheduled(
             fixedDelayString =
-                    "${conversation.auto-completion.fixed-delay:10m}"
+                    "${conversation.auto-completion.fixed-delay:12h}"
     )
     public void run() {
         try {

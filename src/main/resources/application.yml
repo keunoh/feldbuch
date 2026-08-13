@@ -21,7 +21,7 @@ spring:
 
 batch:
   knowledge-extraction:
-    fixed-delay: 1800000
+    fixed-delay: 12h
 
 openai:
   base-url: https://api.openai.com/v1

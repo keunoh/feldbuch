@@ -33,7 +33,7 @@ public class KnowledgeExtractionScheduler {
      */
     @Scheduled(
             fixedDelayString =
-                    "${batch.knowledge-extraction.fixed-delay:1800000}"
+                    "${batch.knowledge-extraction.fixed-delay:12h}"
     )
     public void run() {
 
@@ -45,7 +45,7 @@ public class KnowledgeExtractionScheduler {
 
             return;
         }
-        
+
         JobParameters jobParameters =
                 new JobParametersBuilder()
                         .addLong(

@@ -43,7 +43,7 @@ openai:
 conversation:
   auto-completion:
     inactivity-timeout: 30m
-    fixed-delay: 10m
+    fixed-delay: 12h
 
 server:
   servlet:
