@@ -23,7 +23,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - OpenAI WebClient 기반 SSE 스트리밍 응답
 - 첫 사용자 메시지 기반 Conversation 제목 자동 생성
 - 메시지 저장 시 Conversation 활동 시각 갱신과 완료 대화 재활성화
-- 30분 기본 비활성 시간 이후 ACTIVE Conversation 자동 완료
+- 30분 비활성 기준과 12시간 운영 스케줄 기반 ACTIVE Conversation 자동 완료
 - 완료된 Conversation 기반 Knowledge 추출 대상 관리
 - 마지막 추출 메시지 ID 기반 증분 Knowledge 추출 체크포인트
 - `KnowledgeCategory` 고정 카테고리 기반 Knowledge 폴더 생성
@@ -64,6 +64,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - OpenAI 기본 모델은 `openai.model` 값으로 선택하며 현재 기본값은 `gpt-4.1-nano`입니다.
 - OpenAI 일반 요청용 `RestClient`는 connect timeout 10초, read timeout 120초로 설정합니다.
 - OpenAI SSE 스트리밍용 `WebClient`도 connect timeout 10초, response timeout 120초로 설정합니다.
+- OpenAI 스트리밍 connection pool은 max idle 30초, max life 5분, pending acquire timeout 10초, background eviction 30초로 관리합니다.
 - Google OAuth2 client 값은 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 환경 변수로 주입합니다.
 - JWT 만료 시간은 `jwt.access-token-expiration`, `jwt.refresh-token-expiration` 값으로 분리합니다.
 - Vue 로그인 화면은 JWT 폼 로그인과 Google OAuth2 로그인 진입점을 함께 제공합니다.
@@ -72,8 +73,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
 - 운영 프로필은 Spring Batch 메타 테이블을 `spring.batch.jdbc.initialize-schema=always`로 초기화합니다.
-- Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 기본값은 30분(`1800000` ms)입니다.
-- Conversation 자동 완료 스케줄러는 `conversation.auto-completion.fixed-delay` 기본 60초마다 실행되고, `conversation.auto-completion.inactivity-timeout` 기본 30분을 기준으로 비활성 ACTIVE 대화를 COMPLETED로 전환합니다.
+- Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 현재 기본값은 12시간(`12h`)입니다.
+- Conversation 자동 완료 스케줄러는 `conversation.auto-completion.fixed-delay` 값으로 실행 간격을 조정하며, 운영 기본값은 12시간(`12h`)입니다. `conversation.auto-completion.inactivity-timeout` 기본 30분을 기준으로 비활성 ACTIVE 대화를 COMPLETED로 전환합니다.
 
 ## Deployment
 

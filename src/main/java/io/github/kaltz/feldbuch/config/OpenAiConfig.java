@@ -63,24 +63,25 @@ public class OpenAiConfig {
 
     @Bean
     public WebClient openAiWebClient() {
-        
-        ConnectionProvider.builder("openai")
-                .maxIdleTime(
-                        CONNECTION_MAX_IDLE_TIME
-                )
-                .maxLifeTime(
-                        CONNECTION_MAX_LIFE_TIME
-                )
-                .pendingAcquireTimeout(
-                        CONNECT_TIMEOUT
-                )
-                .evictInBackground(
-                        EVICT_INTERVAL
-                )
-                .build();
+
+        ConnectionProvider connectionProvider =
+                ConnectionProvider.builder("openai")
+                        .maxIdleTime(
+                                CONNECTION_MAX_IDLE_TIME
+                        )
+                        .maxLifeTime(
+                                CONNECTION_MAX_LIFE_TIME
+                        )
+                        .pendingAcquireTimeout(
+                                CONNECT_TIMEOUT
+                        )
+                        .evictInBackground(
+                                EVICT_INTERVAL
+                        )
+                        .build();
 
         HttpClient httpClient =
-                HttpClient.create()
+                HttpClient.create(connectionProvider)
                         .option(
                                 ChannelOption.CONNECT_TIMEOUT_MILLIS,
                                 Math.toIntExact(
@@ -93,7 +94,6 @@ public class OpenAiConfig {
 
         ReactorClientHttpConnector connector =
                 new ReactorClientHttpConnector(httpClient);
-
 
         return WebClient.builder()
                 .baseUrl(properties.getBaseUrl())

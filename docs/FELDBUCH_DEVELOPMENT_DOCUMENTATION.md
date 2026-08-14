@@ -139,6 +139,10 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - OpenAI `RestClient` read timeout: 120초
 - OpenAI `WebClient` connect timeout: 10초
 - OpenAI `WebClient` response timeout: 120초
+- OpenAI connection pool max idle time: 30초
+- OpenAI connection pool max life time: 5분
+- OpenAI connection pool pending acquire timeout: 10초
+- OpenAI connection pool background eviction interval: 30초
 - OpenAI 스트리밍 TTFT slow threshold: 10초
 - Google OAuth2 client-id 설정 키: `GOOGLE_CLIENT_ID`
 - Google OAuth2 client-secret 설정 키: `GOOGLE_CLIENT_SECRET`
@@ -156,7 +160,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
 - 운영 Spring Batch 메타 테이블 초기화: `spring.batch.jdbc.initialize-schema=always`
 - Knowledge 추출 스케줄러 간격 설정 키: `batch.knowledge-extraction.fixed-delay`
-- Knowledge 추출 스케줄러 기본 간격: `1800000` ms, 30분
+- Knowledge 추출 스케줄러 기본 간격: `12h`
 - Knowledge 추출 배치 Job 이름: `knowledgeExtractionJob`
 - Knowledge 추출 배치 Step 이름: `knowledgeExtractionStep`
 - Conversation 자동 완료 스케줄러 간격 설정 키: `conversation.auto-completion.fixed-delay`
@@ -190,6 +194,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - backend 배포는 기존 `feldbuch-app` 이미지 ID를 저장한 뒤 새 이미지를 실행하고, `http://127.0.0.1:8080/actuator/health`가 `200`을 반환하는지 최대 40회 확인합니다.
 - frontend 배포는 기존 `feldbuch-frontend` 이미지 ID를 저장한 뒤 새 이미지를 실행하고, `http://127.0.0.1:8081/`이 `200`을 반환하는지 확인합니다.
 - 새 컨테이너 헬스체크가 실패하면 직전 이미지 ID로 rollback합니다.
+- rollback으로 backend 컨테이너를 다시 실행할 때도 `/var/log/feldbuch:/var/log/feldbuch` volume을 마운트해 로그 수집 경로를 유지합니다.
 - `deploy.yml`은 `workflow_dispatch` 기반 수동 재배포용 workflow입니다.
 
 ### Lightsail Runtime
@@ -306,7 +311,9 @@ Spring Boot ERROR log
 - 애플리케이션에서도 짧은 프롬프트인 `HTTP에 대해 간단하게 설명해줘` 요청에 대해 OpenAI 스트리밍 응답이 정상 반환되는 것을 확인했습니다.
 - OpenAI 일반 요청용 `RestClient`는 10초 connect timeout과 120초 read timeout을 적용해 외부 API 연결 지연 시 무기한 대기를 피합니다.
 - OpenAI 스트리밍용 `WebClient`는 Reactor Netty `HttpClient`에 connect timeout 10초, response timeout 120초를 적용합니다.
+- OpenAI 스트리밍 `WebClient`는 전용 `ConnectionProvider`를 사용하고, idle connection은 30초, connection life time은 5분으로 제한하며 30초 간격으로 idle connection을 정리합니다.
 - `OpenAiChatService`는 stream 시작 시각을 `NanoTimeProvider`로 기록하고 첫 토큰 수신 시 TTFT를 로그로 남깁니다. TTFT가 10초 이상이면 `[OPENAI_TTFT_SLOW]` 경고 로그를 남겨 운영 지연 분석에 사용합니다.
+- stream 구독 시점도 `Stream subscribed` 로그로 기록해 controller 반환 이후 실제 upstream 구독까지의 지연을 구분합니다.
 - 이전에 관찰한 `reactor.netty.http.client.PrematureCloseException: Connection prematurely closed BEFORE response`는 API Key, DNS, outbound network 자체보다는 긴 스트리밍 연결과 작은 Lightsail 인스턴스의 메모리/swap 압박이 겹쳤을 가능성이 큽니다.
 - 긴 답변 테스트 시에는 `watch -n 1 'free -h; echo; docker stats --no-stream'`로 JVM, Docker, swap 상태를 함께 확인합니다.
 - 다음 운영 보강 대상은 backend 프로세스가 조용히 죽는 상황을 잡는 가용성/헬스체크 경보입니다.
@@ -682,7 +689,7 @@ Knowledge 추출 배치는 완료된 대화를 AI 학습 노트로 증류하기 
 - 실행 시점: `KnowledgeExtractionScheduler`가 `batch.knowledge-extraction.fixed-delay` 기준으로 대상 존재 여부를 확인한 뒤 Job 실행
 - 수동 실행: `POST /api/admin/batch/knowledge-extraction`로 스케줄 실행 시각을 기다리지 않고 즉시 `KnowledgeExtractionScheduler.run()` 호출
 - 수동 실행 API는 공개 경로가 아니므로 JWT 인증이 필요하며, 운영 확인과 장애 대응용 임시 관리 API입니다.
-- 기본 스케줄 간격: 30분
+- 기본 스케줄 간격: 12시간
 - Scheduler Job Parameter: `requestedAt=System.currentTimeMillis()`로 매 실행을 고유 Job 인스턴스로 구분
 - 반복 방식: 한 번 실행할 때 조회된 대상 Conversation 목록을 순회 처리
 - 대상 조건: `status = COMPLETED`이고 `knowledgeExtractStatus = NONE` 또는 재시도 가능한 `FAILED`
