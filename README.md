@@ -82,13 +82,15 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 
 <img src="docs/images/diagrams/feldbuch-deployment-pipeline-visual.svg" alt="Feldbuch deployment pipeline" width="760">
 
-외부 요청은 Lightsail Static IP의 80 포트로 들어와 `feldbuch-frontend` Nginx가 처리합니다. Vue SPA 라우트는 `try_files $uri $uri/ /index.html`로 전달하고, `/api/*` 요청은 Docker Network 내부의 `feldbuch-app:8080`으로 프록시합니다. SSE 스트리밍을 위해 Nginx API 프록시에 `proxy_buffering off`를 적용합니다.
+외부 요청은 `https://feldbuch.duckdns.org` 또는 Lightsail Static IP의 HTTP/HTTPS 포트로 들어와 `feldbuch-frontend` Nginx가 처리합니다. Vue SPA 라우트는 `try_files $uri $uri/ /index.html`로 전달하고, `/api/*` 요청은 Docker Network 내부의 `feldbuch-app:8080`으로 프록시합니다. SSE 스트리밍을 위해 Nginx API 프록시에 `proxy_buffering off`를 적용합니다.
 
 <img src="docs/images/diagrams/feldbuch-runtime-request-flow-visual.svg" alt="Feldbuch runtime request flow" width="700">
 
 운영 설정은 `application-prod.yml`에서 환경 변수로 주입합니다. 실제 운영 값은 Git에 올리지 않는 Lightsail의 `.env.prod`에서 관리합니다. Redis는 Lightsail 내부 Docker 컨테이너로 실행하고 외부 포트는 공개하지 않습니다. MySQL은 AWS RDS로 분리했으며, Lightsail VPC Peering과 RDS Security Group을 통해 Lightsail 인스턴스에서만 3306 접근을 허용합니다.
 
 `cicd.yml`은 `main` push 시 Backend/Frontend 이미지를 빌드해 `latest`와 commit SHA 태그로 GHCR에 push하고, Lightsail에서 `feldbuch-app`, `feldbuch-frontend`를 재기동합니다. 배포 중 `/actuator/health`와 frontend root 응답을 확인하며 실패하면 직전 이미지 ID로 롤백합니다. `deploy.yml`은 필요할 때 수동으로 동일 이미지를 Lightsail에 재배포하는 workflow입니다.
+
+2026-08-14에 기존 512MB Lightsail에서 새 1GB Lightsail 서버(`feldbuch-1gb`, private IP `172.26.12.135`)로 운영 인스턴스를 이관했습니다. Static IP `13.124.140.225`와 `feldbuch.duckdns.org` HTTPS 경로를 새 서버로 연결했고, 외부 `curl -I --connect-timeout 10 https://feldbuch.duckdns.org` 요청에서 `200 OK`를 확인했습니다. RDS Security Group은 새 서버 private IP 접근을 허용하도록 갱신했습니다.
 
 ## Operations
 
@@ -100,6 +102,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 메모리 80% 경보와 Swap 60% 경보를 함께 구성해 작은 Lightsail 인스턴스의 리소스 압박을 관찰합니다.
 - Lightsail 컨테이너 내부에서 OpenAI Chat Completion SSE 요청이 `200 OK`와 `[DONE]`까지 정상 수신되는 것을 확인했고, 앱에서도 짧은 OpenAI 스트리밍 응답을 검증했습니다.
 - OpenAI 스트리밍은 첫 토큰 응답 시간(TTFT)을 로그로 남기고, 10초 이상이면 `[OPENAI_TTFT_SLOW]` 경고 로그를 기록합니다.
+- 1GB 서버 이관 후 실제 도메인 경로에서 채팅 스트리밍을 검증했으며, `Stream subscribed=1ms`, `TTFT=1376ms`, `Stream completed=2369ms`로 정상 완료됐습니다. `OPENAI_TTFT_SLOW`, `Thread starvation`, `Stream failed` 로그는 발생하지 않았습니다.
 - 긴 OpenAI 스트리밍 응답은 작은 Lightsail 메모리와 swap 사용량에 영향을 받을 수 있어 `free -h`, `docker stats --no-stream`, CloudWatch 경보를 함께 보며 확인합니다.
 
 ## Frontend Direction
@@ -204,9 +207,8 @@ frontend/src
 
 ## Roadmap
 
-- 도메인과 HTTPS 적용
 - backend 애플리케이션 가용성/헬스체크 경보 추가
-- Lightsail 인스턴스 리소스 증설 또는 컨테이너 메모리 튜닝 검토
+- 기존 512MB Lightsail 서버 보존 기간 이후 삭제와 스냅샷/중복 비용 정리
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선

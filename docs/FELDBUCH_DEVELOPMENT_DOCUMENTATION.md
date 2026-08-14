@@ -203,6 +203,9 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Docker를 설치하고 `docker ps`로 런타임 동작을 확인했습니다.
 - 컨테이너는 `feldbuch-network` Docker Network 안에서 실행합니다.
 - 실행 컨테이너: `feldbuch-frontend`, `feldbuch-app`, `feldbuch-redis`
+- 2026-08-14에 기존 512MB Lightsail에서 새 1GB Lightsail 서버(`feldbuch-1gb`, private IP `172.26.12.135`)로 운영 인스턴스를 이관했습니다.
+- Static IP `13.124.140.225`는 새 1GB 서버에 연결했고, `feldbuch.duckdns.org` HTTPS 경로가 새 서버의 Nginx로 들어오도록 복구했습니다.
+- 외부 `curl -I --connect-timeout 10 https://feldbuch.duckdns.org` 요청에서 `HTTP/1.1 200 OK`, `Server: nginx/1.24.0 (Ubuntu)`를 확인했습니다.
 - `feldbuch-app`은 외부에 직접 공개하지 않고 `127.0.0.1:8080` 바인딩 또는 Docker Network 내부 접근을 기준으로 운영합니다.
 - GitHub Actions 자동 배포 시 backend 컨테이너는 `/var/log/feldbuch:/var/log/feldbuch` volume을 마운트해 운영 로그를 host에 남깁니다.
 - 외부 HTTP 요청은 `feldbuch-frontend` Nginx가 80 포트에서 받습니다.
@@ -327,7 +330,23 @@ Spring Boot ERROR log
 - Public access: `No`
 - Lightsail과 Default VPC는 VPC Peering으로 연결했습니다.
 - RDS Security Group은 최초 `0.0.0.0/0`에서 Lightsail 인스턴스 IP 단위 접근으로 제한했습니다.
+- 1GB 서버 이관 후 RDS Security Group은 새 서버 private IP `172.26.12.135`에서 3306 접근을 허용하도록 갱신했습니다.
 - Lightsail에서 `nc -vz <RDS_ENDPOINT> 3306`로 연결 성공을 확인했습니다.
+
+### Lightsail 1GB Migration Verification
+
+2026-08-14 운영 장애 분석 결과, 기존 512MB 서버의 메모리 압박과 과도한 swap 사용이 OpenAI 스트리밍 지연의 주요 원인으로 판단되어 1GB Lightsail 서버로 이관했습니다.
+
+| Item | Result |
+| --- | --- |
+| New server | `feldbuch-1gb`, private IP `172.26.12.135` |
+| Static IP | `13.124.140.225`를 새 서버에 연결 |
+| HTTPS check | `https://feldbuch.duckdns.org` `200 OK` |
+| RDS access | RDS Security Group에 새 서버 private IP 허용 |
+| Final stream test | `Stream subscribed=1ms`, `TTFT=1376ms`, `Stream completed=2369ms` |
+| Warning logs | `OPENAI_TTFT_SLOW`, `Thread starvation`, `Stream failed` 미발생 |
+
+기존 512MB 서버에서는 Java swap 사용, `Thread starvation`, 13초 이상 또는 30초 이상 TTFT가 관찰되었습니다. 1GB 서버 전환 후 실제 도메인 경로에서 TTFT가 약 1.38초로 안정화되어, 512MB 환경의 메모리/swap 압박이 지연의 주요 원인이었을 가능성이 큽니다. 단, 1GB도 최소 운영 사양에 가까우므로 swap과 CloudWatch 경보는 계속 관찰합니다.
 
 ### Current Deployment State
 
@@ -344,6 +363,9 @@ Spring Boot ERROR log
 | Lightsail VPC Peering to RDS VPC | Done |
 | RDS Security Group restriction | Done |
 | External HTTP access | Done |
+| Domain and HTTPS | Done |
+| Lightsail 512MB to 1GB migration | Done |
+| OpenAI stream TTFT verification on 1GB server | Done |
 | Frontend to backend API proxy | Done |
 | Nginx SSE proxy timeout extension | Done |
 | GitHub Actions to Lightsail CD restart | Done |
@@ -355,7 +377,6 @@ Spring Boot ERROR log
 | SNS email notification | Done |
 | Memory and Swap alarms | Done |
 | OpenAI TTFT logging | Done |
-| Domain and HTTPS | Pending |
 | Backend availability alarm | Pending |
 
 ## Architecture
@@ -806,9 +827,8 @@ frontend/src
 
 ## Roadmap
 
-- 도메인과 HTTPS 적용
 - backend 애플리케이션 가용성/헬스체크 경보 추가
-- Lightsail 인스턴스 리소스 증설 또는 컨테이너 메모리 튜닝 검토
+- 기존 512MB Lightsail 서버 보존 기간 이후 삭제와 스냅샷/중복 비용 정리
 - Knowledge 노트 원본 Conversation 이동 링크
 - Vue 화면 상태 관리 구조 정리
 - Vue 삭제 확인 UX 개선
