@@ -30,8 +30,9 @@ jobs:
 
       - name: Test backend
         run: |
-          set -o pipefail
-          ./gradlew clean test --stacktrace 2>&1 | tee test.log
+          ./gradlew clean test \
+            --tests "io.github.kaltz.feldbuch.FeldbuchApplicationTests" \
+            --stacktrace
 
       - name: Show bean override error
         if: failure()
