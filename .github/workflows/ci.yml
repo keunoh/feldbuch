@@ -32,7 +32,15 @@ jobs:
         run: |
           ./gradlew clean test \
             --tests "io.github.kaltz.feldbuch.FeldbuchApplicationTests" \
-            --stacktrace
+            || true
+
+          echo "===== BeanDefinitionOverrideException ====="
+
+          grep -R -B 5 -A 15 \
+            "BeanDefinitionOverrideException" \
+            build/test-results/test/ || true
+
+          exit 1
 
       - name: Show bean override error
         if: failure()
