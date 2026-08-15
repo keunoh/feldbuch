@@ -7,8 +7,10 @@ import io.github.kaltz.feldbuch.knowledge.entity.Knowledge;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeCategory;
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
+import io.github.kaltz.feldbuch.rag.event.KnowledgeVectorSyncEvent;
 import io.github.kaltz.feldbuch.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,9 @@ public class KnowledgeNoteCommandService {
 
     private final KnowledgeNoteRepository
             knowledgeNoteRepository;
+
+    private final ApplicationEventPublisher
+            eventPublisher;
 
     /**
      * 새롭게 추출된 대화 범위를
@@ -92,9 +97,18 @@ public class KnowledgeNoteCommandService {
                         response.keywords()
                 );
 
-        return knowledgeNoteRepository.save(
-                note
+        KnowledgeNote saved =
+                knowledgeNoteRepository.save(
+                        note
+                );
+
+        eventPublisher.publishEvent(
+                new KnowledgeVectorSyncEvent(
+                        saved.getId()
+                )
         );
+
+        return saved;
     }
 
     /**
@@ -127,28 +141,19 @@ public class KnowledgeNoteCommandService {
                 response.keywords()
         );
 
-        if (
-                !sameKnowledge(
-                        note.getKnowledge(),
-                        resolvedKnowledge
-                )
-        ) {
-            note.moveTo(
-                    resolvedKnowledge
-            );
+        if (!sameKnowledge(note.getKnowledge(), resolvedKnowledge)) {
+
+            note.moveTo(resolvedKnowledge);
         }
+
+        eventPublisher.publishEvent(new KnowledgeVectorSyncEvent(note.getId()));
 
         return note;
     }
 
-    private Knowledge resolveKnowledge(
-            User user,
-            KnowledgeCategory category
-    ) {
-        return knowledgeCategoryResolver.resolve(
-                user,
-                category
-        );
+    private Knowledge resolveKnowledge(User user, KnowledgeCategory category) {
+
+        return knowledgeCategoryResolver.resolve(user, category);
     }
 
     private boolean sameKnowledge(
