@@ -53,6 +53,11 @@ jobs:
       - name: Grant execute permission for Gradle
         run: chmod +x gradlew
 
+      - name: Check test config
+        run: |
+          ls -al src/test/resources
+          cat src/test/resources/application-test.yml
+
       - name: Test backend
         run: ./gradlew clean test
 
