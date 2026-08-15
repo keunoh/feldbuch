@@ -1,6 +1,7 @@
 package io.github.kaltz.feldbuch;
 
 import io.github.kaltz.feldbuch.config.JwtProperties;
+import org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -8,7 +9,9 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication
+@SpringBootApplication(
+        exclude = PgVectorStoreAutoConfiguration.class
+)
 @EnableJpaAuditing
 @EnableConfigurationProperties(JwtProperties.class)
 @EnableAsync

@@ -115,6 +115,10 @@ class KnowledgeVectorSyncIntegrationTest {
                                 .query(
                                         "스프링에서 트랜잭션은 어떻게 사용하지?"
                                 )
+                                .filterExpression(
+                                        "knowledgeNoteId == "
+                                                + saved.getId()
+                                )
                                 .topK(3)
                                 .build()
                 );
@@ -141,7 +145,9 @@ class KnowledgeVectorSyncIntegrationTest {
                                     .get("knowledgeNoteId"))
                                     .longValue()
                     )
-                            .isEqualTo(saved.getId());
+                            .isEqualTo(
+                                    saved.getId()
+                            );
                 });
     }
 }

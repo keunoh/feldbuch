@@ -14,6 +14,32 @@ jobs:
   backend-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: feldbuch_vector
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+      RAG_DB_URL: jdbc:postgresql://localhost:5432/feldbuch_vector
+      RAG_DB_USERNAME: postgres
+      RAG_DB_PASSWORD: postgres
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -29,23 +55,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Test backend
-        run: |
-          ./gradlew clean test \
-            --tests "io.github.kaltz.feldbuch.FeldbuchApplicationTests" \
-            || true
-
-          echo "===== BeanDefinitionOverrideException ====="
-
-          grep -R -B 5 -A 15 \
-            "BeanDefinitionOverrideException" \
-            build/test-results/test/ || true
-
-          exit 1
-
-      - name: Show bean override error
-        if: failure()
-        run: |
-          grep -n -A 40 -B 10 "BeanDefinitionOverrideException" test.log || true
+        run: ./gradlew clean test
 
   frontend-build:
     runs-on: ubuntu-latest
