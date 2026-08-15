@@ -1,0 +1,76 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+
+  datasource:
+    url: jdbc:h2:mem:feldbuch-test
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
+  batch:
+    jdbc:
+      initialize-schema: always
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+
+      embedding:
+        options:
+          model: text-embedding-3-small
+
+# RAG 전용 pgvector DB
+rag:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/feldbuch_vector
+    username: feldbuch
+    password: feldbuch
+
+# 기존 Feldbuch OpenAI Client 설정
+openai:
+  api-key: ${OPENAI_API_KEY}
+  base-url: https://api.openai.com/v1
+  model: gpt-4.1-nano
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 1800000
+  refresh-token-expiration: 1209600000
+
+conversation:
+  auto-completion:
+    inactivity-timeout: 30m
+    fixed-delay: 12h
+
+app:
+  frontend-url: http://localhost:5173
+
