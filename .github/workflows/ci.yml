@@ -29,7 +29,14 @@ jobs:
         run: chmod +x gradlew
 
       - name: Test backend
-        run: ./gradlew clean test --stacktrace --info
+        run: |
+          set -o pipefail
+          ./gradlew clean test --stacktrace 2>&1 | tee test.log
+
+      - name: Show bean override error
+        if: failure()
+        run: |
+          grep -n -A 40 -B 10 "BeanDefinitionOverrideException" test.log || true
 
   frontend-build:
     runs-on: ubuntu-latest
