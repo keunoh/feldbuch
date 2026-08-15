@@ -131,6 +131,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 기본 활성 프로필: `local`
 - 공통 설정 파일: `src/main/resources/application.yml`
 - 로컬 설정 파일: `src/main/resources/application-local.yml`
+- 로컬 설정 파일은 CI와 로컬 실행 기준을 맞추기 위해 Git에서 추적합니다. 실제 DB 계정, JWT Secret, OpenAI API Key, Google OAuth2 Client 값은 환경 변수로 주입합니다.
 - 운영 설정 파일: `src/main/resources/application-prod.yml`
 - OpenAI Base URL: `https://api.openai.com/v1`
 - OpenAI 모델 설정 키: `openai.model`
@@ -154,7 +155,13 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Google OAuth2 시작 경로: `/oauth2/authorization/google`
 - Google OAuth2 콜백 경로: `/login/oauth2/code/google`
 - Google OAuth2 성공 리다이렉트: `{app.frontend-url}/oauth2/success?token={jwt}&userId={id}`
-- 로컬 Docker 인프라: MySQL, Redis
+- 로컬 Docker 인프라: MySQL, Redis, PgVector
+- 로컬 MySQL 설정: `spring.datasource.url`, `DB_USERNAME`, `DB_PASSWORD`
+- 로컬 Redis 설정: `spring.data.redis.host=localhost`, `spring.data.redis.port=6379`
+- 로컬 RAG datasource 설정: `rag.datasource.url`, `rag.datasource.username`, `rag.datasource.password`
+- 로컬 PgVector database: `feldbuch_vector`
+- OpenAI Embedding 모델: `text-embedding-3-small`
+- PgVector 자동 설정은 애플리케이션 공통 exclude와 로컬 프로필 exclude로 비활성화하고, `RagVectorStoreConfig`에서 전용 datasource/JdbcTemplate/VectorStore Bean을 구성합니다.
 - Refresh Token 저장 Redis Key: `refresh:{userId}`
 - Refresh Token Redis TTL: `jwt.refresh-token-expiration` 기준
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`

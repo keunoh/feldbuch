@@ -61,6 +61,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 기본 활성 프로필은 `local`입니다.
 - 공통 설정은 `src/main/resources/application.yml`에서 관리합니다.
 - 로컬/운영 환경별 DB, JWT, OpenAI Key는 `application-local.yml`, `application-prod.yml`에서 분리합니다.
+- `application-local.yml`은 Git에서 추적하며, DB 계정/JWT/OpenAI/Google OAuth2 실제 값은 환경 변수로 주입합니다.
 - OpenAI 기본 모델은 `openai.model` 값으로 선택하며 현재 기본값은 `gpt-4.1-nano`입니다.
 - OpenAI 일반 요청용 `RestClient`는 connect timeout 10초, read timeout 120초로 설정합니다.
 - OpenAI SSE 스트리밍용 `WebClient`도 connect timeout 10초, response timeout 120초로 설정합니다.
@@ -70,7 +71,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Vue 로그인 화면은 JWT 폼 로그인과 Google OAuth2 로그인 진입점을 함께 제공합니다.
 - Google OAuth2 성공 시 서버가 JWT를 발급하고 `app.frontend-url` 기준 `/oauth2/success`로 리다이렉트하며, Vue 성공 화면이 토큰과 사용자 ID를 저장한 뒤 `/conversations`로 이동합니다.
 - Refresh Token은 Redis에 `refresh:{userId}` 키로 저장하고 Refresh Token 만료 시간과 같은 TTL을 적용합니다.
-- 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis 구성을 기준으로 실행합니다.
+- 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis, PgVector 구성을 기준으로 실행합니다.
+- 로컬 RAG 벡터 저장소는 `rag.datasource.*` 설정으로 PgVector에 연결하고, OpenAI Embedding 모델은 `text-embedding-3-small`을 사용합니다.
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
 - 운영 프로필은 Spring Batch 메타 테이블을 `spring.batch.jdbc.initialize-schema=always`로 초기화합니다.
 - Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 현재 기본값은 12시간(`12h`)입니다.
