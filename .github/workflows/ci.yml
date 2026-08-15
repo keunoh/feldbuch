@@ -32,13 +32,12 @@ jobs:
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
 
-      RAG_DB_URL: jdbc:postgresql://localhost:5432/feldbuch_vector
-      RAG_DB_USERNAME: postgres
-      RAG_DB_PASSWORD: postgres
+      RAG_DB_URL: ${{ secrets.RAG_DB_URL }}
+      RAG_DB_USERNAME: ${{ secrets.RAG_DB_USERNAME }}
+      RAG_DB_PASSWORD: ${{ secrets.RAG_DB_PASSWORD }}
 
     steps:
       - name: Checkout repository
