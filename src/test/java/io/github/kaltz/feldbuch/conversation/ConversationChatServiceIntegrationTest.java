@@ -1,7 +1,6 @@
 package io.github.kaltz.feldbuch.conversation;
 
-import io.github.kaltz.feldbuch.ai.model.ChatResponse;
-import io.github.kaltz.feldbuch.ai.model.TitleResponse;
+import io.github.kaltz.feldbuch.ai.model.*;
 import io.github.kaltz.feldbuch.ai.service.ChatService;
 import io.github.kaltz.feldbuch.conversation.dto.request.ChatRequest;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
@@ -10,10 +9,14 @@ import io.github.kaltz.feldbuch.conversation.entity.ConversationRole;
 import io.github.kaltz.feldbuch.conversation.repository.ConversationMessageRepository;
 import io.github.kaltz.feldbuch.conversation.repository.ConversationRepository;
 import io.github.kaltz.feldbuch.conversation.service.ConversationChatService;
+import io.github.kaltz.feldbuch.rag.context.KnowledgeContextBuilder;
+import io.github.kaltz.feldbuch.rag.service.KnowledgeSearchService;
 import io.github.kaltz.feldbuch.support.IntegrationTestSupport;
 import io.github.kaltz.feldbuch.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -24,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 class ConversationChatServiceIntegrationTest extends IntegrationTestSupport {
 
@@ -38,6 +42,12 @@ class ConversationChatServiceIntegrationTest extends IntegrationTestSupport {
 
     @MockitoBean
     private ChatService chatService;
+
+    @MockitoBean
+    private KnowledgeSearchService knowledgeSearchService;
+
+    @MockitoBean
+    private KnowledgeContextBuilder knowledgeContextBuilder;
 
     @Test
     @DisplayName("기본 제목이면 AI가 제목을 생성한다.")
@@ -169,5 +179,117 @@ class ConversationChatServiceIntegrationTest extends IntegrationTestSupport {
                 .should(never())
                 .generateTitle(any());
 
+    }
+
+    @Test
+    @DisplayName("관련 Knowledge가 있으면 AI 요청 Context에 포함한다.")
+    void includeKnowledgeContext() {
+
+        // given
+        User user =
+                testDataFactory.createUser();
+
+        Conversation conversation =
+                testDataFactory.createConversation(
+                        user,
+                        "Spring"
+                );
+
+        String question =
+                "Spring 트랜잭션은 어떻게 사용해?";
+
+        List<Document> documents =
+                List.of(
+                        new Document(
+                                "Spring에서는 @Transactional을 사용합니다."
+                        )
+                );
+
+        String knowledgeContext =
+                """
+                        [지식 1]
+                        Spring에서는 @Transactional을 사용합니다.
+                        """;
+
+        given(
+                knowledgeSearchService.search(
+                        user.getId(),
+                        question
+                )
+        )
+                .willReturn(documents);
+
+        given(
+                knowledgeContextBuilder.build(
+                        documents
+                )
+        )
+                .willReturn(
+                        knowledgeContext
+                );
+
+        given(
+                chatService.chat(any())
+        )
+                .willReturn(
+                        new ChatResponse(
+                                "AI 응답"
+                        )
+                );
+
+        // when
+        conversationChatService.chat(
+                user.getId(),
+                conversation.getId(),
+                new ChatRequest(
+                        question
+                )
+        );
+
+        // then
+        ArgumentCaptor<ChatCommand> commandCaptor =
+                ArgumentCaptor.forClass(
+                        ChatCommand.class
+                );
+
+        verify(
+                chatService
+        )
+                .chat(
+                        commandCaptor.capture()
+                );
+
+        ChatCommand command =
+                commandCaptor.getValue();
+
+        assertThat(command.messages())
+                .isNotEmpty();
+
+        ChatMessage knowledgeMessage =
+                command.messages().get(0);
+
+        assertThat(knowledgeMessage.role())
+                .isEqualTo(
+                        ChatRole.SYSTEM
+                );
+
+        assertThat(knowledgeMessage.content())
+                .contains(
+                        "@Transactional"
+                );
+
+        assertThat(command.messages())
+                .anySatisfy(message -> {
+
+                    assertThat(message.role())
+                            .isEqualTo(
+                                    ChatRole.USER
+                            );
+
+                    assertThat(message.content())
+                            .isEqualTo(
+                                    question
+                            );
+                });
     }
 }
