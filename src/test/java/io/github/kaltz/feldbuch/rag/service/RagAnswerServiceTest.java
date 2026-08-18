@@ -1,0 +1,142 @@
+package io.github.kaltz.feldbuch.rag.service;
+
+import io.github.kaltz.feldbuch.ai.model.ChatCommand;
+import io.github.kaltz.feldbuch.ai.model.ChatMessage;
+import io.github.kaltz.feldbuch.ai.model.ChatResponse;
+import io.github.kaltz.feldbuch.ai.model.ChatRole;
+import io.github.kaltz.feldbuch.ai.service.ChatService;
+import io.github.kaltz.feldbuch.rag.context.KnowledgeContextBuilder;
+import io.github.kaltz.feldbuch.rag.prompt.RagPromptFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.document.Document;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class RagAnswerServiceTest {
+
+    @Mock
+    private KnowledgeSearchService knowledgeSearchService;
+
+    @Mock
+    private KnowledgeContextBuilder knowledgeContextBuilder;
+
+    @Mock
+    private RagPromptFactory ragPromptFactory;
+
+    @Mock
+    private ChatService chatService;
+
+    @InjectMocks
+    private RagAnswerService ragAnswerService;
+
+    @Test
+    void 검색된_지식을_기반으로_AI_답변을_생성한다() {
+
+        // given
+        Long userId = 1L;
+        String question = "Spring 트랜잭션은 어떻게 사용해?";
+
+        List<Document> documents =
+                List.of(
+                        new Document(
+                                "Spring에서는 @Transactional을 사용합니다."
+                        )
+                );
+
+        String context =
+                """
+                        [지식 1]
+                        Spring에서는 @Transactional을 사용합니다.
+                        """;
+
+        List<ChatMessage> messages =
+                List.of(
+                        new ChatMessage(
+                                ChatRole.SYSTEM,
+                                "system prompt"
+                        ),
+                        new ChatMessage(
+                                ChatRole.USER,
+                                "user prompt"
+                        )
+                );
+
+        ChatResponse expectedResponse =
+                new ChatResponse(
+                        "Spring에서는 @Transactional을 사용하여 트랜잭션을 관리합니다."
+                );
+
+        when(
+                knowledgeSearchService.search(
+                        userId,
+                        question
+                )
+        )
+                .thenReturn(documents);
+
+        when(
+                knowledgeContextBuilder.build(
+                        documents
+                )
+        )
+                .thenReturn(context);
+
+        when(
+                ragPromptFactory.create(
+                        question,
+                        context
+                )
+        )
+                .thenReturn(messages);
+
+        when(
+                chatService.chat(
+                        any(ChatCommand.class)
+                )
+        )
+                .thenReturn(expectedResponse);
+
+        // when
+        ChatResponse response =
+                ragAnswerService.answer(
+                        userId,
+                        question
+                );
+
+        // then
+        assertThat(response)
+                .isEqualTo(expectedResponse);
+
+        verify(knowledgeSearchService)
+                .search(
+                        userId,
+                        question
+                );
+
+        verify(knowledgeContextBuilder)
+                .build(
+                        documents
+                );
+
+        verify(ragPromptFactory)
+                .create(
+                        question,
+                        context
+                );
+
+        verify(chatService)
+                .chat(
+                        any(ChatCommand.class)
+                );
+    }
+}
