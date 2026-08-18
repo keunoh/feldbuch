@@ -18,8 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RagAnswerServiceTest {
@@ -135,6 +134,72 @@ class RagAnswerServiceTest {
                 );
 
         verify(chatService)
+                .chat(
+                        any(ChatCommand.class)
+                );
+    }
+
+    @Test
+    void 관련_지식이_없으면_일반_AI_답변을_생성한다() {
+
+        // given
+        Long userId = 1L;
+        String question =
+                "오늘 점심 뭐 먹을까?";
+
+        ChatResponse expectedResponse =
+                new ChatResponse(
+                        "가볍게 먹고 싶다면 샌드위치는 어떠세요?"
+                );
+
+        when(
+                knowledgeSearchService.search(
+                        userId,
+                        question
+                )
+        )
+                .thenReturn(
+                        List.of()
+                );
+
+        when(
+                chatService.chat(
+                        any(ChatCommand.class)
+                )
+        )
+                .thenReturn(
+                        expectedResponse
+                );
+
+        // when
+        ChatResponse response =
+                ragAnswerService.answer(
+                        userId,
+                        question
+                );
+
+        // then
+        assertThat(response)
+                .isEqualTo(
+                        expectedResponse
+                );
+
+        verify(
+                knowledgeSearchService
+        )
+                .search(
+                        userId,
+                        question
+                );
+
+        verifyNoInteractions(
+                knowledgeContextBuilder,
+                ragPromptFactory
+        );
+
+        verify(
+                chatService
+        )
                 .chat(
                         any(ChatCommand.class)
                 );

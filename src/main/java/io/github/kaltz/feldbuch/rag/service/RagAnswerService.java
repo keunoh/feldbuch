@@ -3,6 +3,7 @@ package io.github.kaltz.feldbuch.rag.service;
 import io.github.kaltz.feldbuch.ai.model.ChatCommand;
 import io.github.kaltz.feldbuch.ai.model.ChatMessage;
 import io.github.kaltz.feldbuch.ai.model.ChatResponse;
+import io.github.kaltz.feldbuch.ai.model.ChatRole;
 import io.github.kaltz.feldbuch.ai.service.ChatService;
 import io.github.kaltz.feldbuch.rag.context.KnowledgeContextBuilder;
 import io.github.kaltz.feldbuch.rag.prompt.RagPromptFactory;
@@ -25,11 +26,25 @@ public class RagAnswerService {
 
         List<Document> documents = knowledgeSearchService.search(userId, question);
 
+        if (documents.isEmpty()) {
+
+            return answerWithoutKnowledge(question);
+        }
+
         String context = knowledgeContextBuilder.build(documents);
 
         List<ChatMessage> messages = ragPromptFactory.create(question, context);
 
         ChatCommand command = ChatCommand.from(messages);
+
+        return chatService.chat(command);
+    }
+
+    private ChatResponse answerWithoutKnowledge(String question) {
+
+        ChatMessage message = new ChatMessage(ChatRole.USER, question);
+
+        ChatCommand command = ChatCommand.from(List.of(message));
 
         return chatService.chat(command);
     }
