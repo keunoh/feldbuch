@@ -2,7 +2,6 @@ package io.github.kaltz.feldbuch.rag.service;
 
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
 import io.github.kaltz.feldbuch.knowledge.repository.KnowledgeNoteRepository;
-import io.github.kaltz.feldbuch.rag.KnowledgeVectorStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
