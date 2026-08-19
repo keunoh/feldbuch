@@ -30,6 +30,9 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Knowledge 폴더 트리와 AI 추출 KnowledgeNote 저장
 - KnowledgeNote `INCREMENTAL`/`CONSOLIDATED` 타입 분리
 - 기존 통합 KnowledgeNote 자동 병합과 Conversation별 통합 노트 조회
+- 통합 KnowledgeNote 기반 PgVector 저장과 사용자별 유사도 검색
+- RAG 검색 결과 기반 단독 질문 답변 API
+- 기존 Conversation 채팅 문맥에 RAG Knowledge Context 자동 주입
 - Knowledge 추출 Batch Job/Step/Tasklet, 스케줄러, 실패 재시도 상태 관리
 - 운영 확인용 Knowledge 추출 Batch 수동 실행 API
 - Vue Router Guard, Axios Interceptor, Fetch 기반 SSE 클라이언트
@@ -48,8 +51,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 | Area | Stack |
 | --- | --- |
 | Backend | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, QueryDSL, Spring Batch, WebFlux WebClient |
-| Database / Infra | MySQL, H2 Test DB, Redis, Docker Compose |
-| AI | OpenAI Chat Completion, SSE Streaming, structured Knowledge summary/merge parsing |
+| Database / Infra | MySQL, H2 Test DB, Redis, PgVector, Docker Compose |
+| AI | OpenAI Chat Completion, SSE Streaming, Spring AI VectorStore, structured Knowledge summary/merge parsing |
 | Auth Config | JWT Access/Refresh Token, Spring Security OAuth2 Client, Google OIDC |
 | Frontend | Vue 3, Vite, Vue Router, Axios, Fetch SSE, marked, highlight.js, DOMPurify |
 | Deployment | GitHub Actions, GHCR, Docker, Nginx, AWS Lightsail, AWS RDS MySQL |
@@ -73,6 +76,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Refresh Token은 Redis에 `refresh:{userId}` 키로 저장하고 Refresh Token 만료 시간과 같은 TTL을 적용합니다.
 - 로컬 인프라는 `docker/docker-compose.yml`의 MySQL, Redis, PgVector 구성을 기준으로 실행합니다.
 - 로컬 RAG 벡터 저장소는 `rag.datasource.*` 설정으로 PgVector에 연결하고, OpenAI Embedding 모델은 `text-embedding-3-small`을 사용합니다.
+- RAG 검색은 사용자별 metadata filter와 top-k 3개 유사도 검색을 사용하며, 통합 KnowledgeNote만 벡터화합니다.
 - Spring Batch 자동 실행은 `spring.batch.job.enabled=false`로 막습니다.
 - 운영 프로필은 Spring Batch 메타 테이블을 `spring.batch.jdbc.initialize-schema=always`로 초기화합니다.
 - Knowledge 추출 스케줄러는 `batch.knowledge-extraction.fixed-delay` 값으로 실행 간격을 조정하며 현재 기본값은 12시간(`12h`)입니다.
