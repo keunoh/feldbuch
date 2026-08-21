@@ -88,7 +88,10 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - KnowledgeRepository, KnowledgeNoteRepository
 - KnowledgeVectorStore, KnowledgeSearchService
 - KnowledgeContextBuilder, RagPromptFactory, RagChatContextBuilder
+- RagSearchProperties
+- RagAnswerResult, RagSource
 - RagAnswerService, RagController
+- RagAnswerResponse, RagSourceResponse
 - KnowledgeCategoryResolver
 - AiKnowledgeSummaryResponse, AiKnowledgeMergeResponse
 - KnowledgeSummaryPrompt, KnowledgeMergePrompt
@@ -106,6 +109,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - KnowledgeNote의 Knowledge별/Conversation별/사용자별/타입별 조회 쿼리
 - Knowledge Tree 조회 API, KnowledgeNote 목록/상세 조회 API, Conversation별 통합 노트 조회 API
 - RAG 기반 질문 답변 API `POST /api/rag/answer`
+- RAG 답변 출처 응답: `knowledgeNoteId`, `knowledgeId`, `conversationId`
+- RAG 내부 출처 모델은 similarity score를 유지하지만 API 응답 DTO에서는 노출하지 않음
 - 기존 Conversation 일반/SSE 채팅의 RAG Knowledge Context 자동 주입
 - Thymeleaf 기반 로그인/대화 비교 화면
 - Vue 3 + Vite SPA: `LoginView`, `SignUpView`, `OAuth2SuccessView`, `ConversationView`
@@ -168,6 +173,8 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - OpenAI Embedding 모델: `text-embedding-3-small`
 - PgVector 자동 설정은 애플리케이션 공통 exclude와 로컬 프로필 exclude로 비활성화하고, `RagVectorStoreConfig`에서 전용 datasource/JdbcTemplate/VectorStore Bean을 구성합니다.
 - RAG 유사도 검색 기본 top-k: `3`
+- RAG 유사도 검색 threshold 설정 키: `rag.search.similarity-threshold`
+- RAG 유사도 검색 기본 threshold: `0.3`
 - RAG 검색 metadata filter: `userId`
 - RAG 벡터화 대상: `CONSOLIDATED` KnowledgeNote
 - Refresh Token 저장 Redis Key: `refresh:{userId}`
