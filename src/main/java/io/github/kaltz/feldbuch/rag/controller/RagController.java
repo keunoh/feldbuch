@@ -1,10 +1,10 @@
 package io.github.kaltz.feldbuch.rag.controller;
 
-import io.github.kaltz.feldbuch.ai.model.ChatResponse;
 import io.github.kaltz.feldbuch.auth.security.CustomUserDetails;
 import io.github.kaltz.feldbuch.common.response.ApiResponse;
 import io.github.kaltz.feldbuch.rag.dto.RagAnswerRequest;
 import io.github.kaltz.feldbuch.rag.dto.RagAnswerResponse;
+import io.github.kaltz.feldbuch.rag.model.RagAnswerResult;
 import io.github.kaltz.feldbuch.rag.service.RagAnswerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,15 +27,13 @@ public class RagController {
             @Valid @RequestBody RagAnswerRequest request
     ) {
 
-        ChatResponse response = ragAnswerService.answer(
+        RagAnswerResult result = ragAnswerService.answer(
                 user.getUserId(),
                 request.question()
         );
 
         return ApiResponse.success(
-                RagAnswerResponse.from(
-                        response.content()
-                )
+                RagAnswerResponse.from(result)
         );
     }
 }

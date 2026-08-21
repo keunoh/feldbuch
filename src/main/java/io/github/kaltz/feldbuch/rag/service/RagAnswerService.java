@@ -6,6 +6,8 @@ import io.github.kaltz.feldbuch.ai.model.ChatResponse;
 import io.github.kaltz.feldbuch.ai.model.ChatRole;
 import io.github.kaltz.feldbuch.ai.service.ChatService;
 import io.github.kaltz.feldbuch.rag.context.KnowledgeContextBuilder;
+import io.github.kaltz.feldbuch.rag.model.RagAnswerResult;
+import io.github.kaltz.feldbuch.rag.model.RagSource;
 import io.github.kaltz.feldbuch.rag.prompt.RagPromptFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
@@ -22,13 +24,16 @@ public class RagAnswerService {
     private final RagPromptFactory ragPromptFactory;
     private final ChatService chatService;
 
-    public ChatResponse answer(Long userId, String question) {
+    public RagAnswerResult answer(Long userId, String question) {
 
         List<Document> documents = knowledgeSearchService.search(userId, question);
 
         if (documents.isEmpty()) {
 
-            return answerWithoutKnowledge(question);
+            return new RagAnswerResult(
+                    answerWithoutKnowledge(question),
+                    List.of()
+            );
         }
 
         String context = knowledgeContextBuilder.build(documents);
@@ -37,7 +42,16 @@ public class RagAnswerService {
 
         ChatCommand command = ChatCommand.from(messages);
 
-        return chatService.chat(command);
+        ChatResponse response = chatService.chat(command);
+
+        List<RagSource> sources = documents.stream()
+                .map(this::toSource)
+                .toList();
+
+        return new RagAnswerResult(
+                response,
+                sources
+        );
     }
 
     private ChatResponse answerWithoutKnowledge(String question) {
@@ -47,5 +61,27 @@ public class RagAnswerService {
         ChatCommand command = ChatCommand.from(List.of(message));
 
         return chatService.chat(command);
+    }
+
+    private RagSource toSource(Document document) {
+
+        return new RagSource(
+                metadataLong(document, "knowledgeNoteId"),
+                metadataLong(document, "knowledgeId"),
+                metadataLong(document, "conversationId")
+        );
+    }
+
+    private Long metadataLong(Document document, String key) {
+
+        Object value = document.getMetadata()
+                .get(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        return ((Number) value)
+                .longValue();
     }
 }
