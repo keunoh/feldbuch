@@ -53,7 +53,7 @@ class RagControllerTest extends IntegrationTestSupport {
                         new RagAnswerResult(
                                 new ChatResponse(answer),
                                 List.of(
-                                        new RagSource(10L, 20L, 30L)
+                                        new RagSource(10L, 20L, 30L, 0.5281)
                                 )
                         )
                 );
@@ -106,6 +106,10 @@ class RagControllerTest extends IntegrationTestSupport {
                 .andExpect(
                         jsonPath("$.data.sources[0].conversationId")
                                 .value(30)
+                )
+                .andExpect(
+                        jsonPath("$.data.sources[0].score")
+                                .value(0.5281)
                 );
 
         verify(

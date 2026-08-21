@@ -68,7 +68,8 @@ public class RagAnswerService {
         return new RagSource(
                 metadataLong(document, "knowledgeNoteId"),
                 metadataLong(document, "knowledgeId"),
-                metadataLong(document, "conversationId")
+                metadataLong(document, "conversationId"),
+                document.getScore()
         );
     }
 

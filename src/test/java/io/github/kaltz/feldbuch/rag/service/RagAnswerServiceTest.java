@@ -46,17 +46,23 @@ class RagAnswerServiceTest {
         // given
         Long userId = 1L;
         String question = "Spring 트랜잭션은 어떻게 사용해?";
+        double score = 0.5281;
 
         Document document =
-                new Document(
-                        "test-document-id",
-                        "Spring에서는 @Transactional을 사용합니다.",
-                        Map.of(
-                                "knowledgeNoteId", 10L,
-                                "knowledgeId", 20L,
-                                "conversationId", 30L
+                Document.builder()
+                        .id("test-document-id")
+                        .text(
+                                "Spring에서는 @Transactional을 사용합니다."
                         )
-                );
+                        .metadata(
+                                Map.of(
+                                        "knowledgeNoteId", 10L,
+                                        "knowledgeId", 20L,
+                                        "conversationId", 30L
+                                )
+                        )
+                        .score(score)
+                        .build();
 
         List<Document> documents = List.of(document);
 
@@ -135,6 +141,9 @@ class RagAnswerServiceTest {
 
         assertThat(result.sources().get(0).conversationId())
                 .isEqualTo(30L);
+
+        assertThat(result.sources().get(0).score())
+                .isEqualTo(score);
 
         verify(knowledgeSearchService)
                 .search(

@@ -36,7 +36,9 @@ class RagControllerIntegrationTest extends IntegrationTestSupport {
 
         String answer = "Spring에서는 @Transactional을 사용합니다.";
 
-        RagSource source = new RagSource(10L, 20L, 30L);
+        double score = 0.5281;
+
+        RagSource source = new RagSource(10L, 20L, 30L, score);
 
         when(
                 ragAnswerService.answer(
@@ -71,7 +73,11 @@ class RagControllerIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.data.sources.length()").value(1))
                 .andExpect(jsonPath("$.data.sources[0].knowledgeNoteId").value(10L))
                 .andExpect(jsonPath("$.data.sources[0].knowledgeId").value(20L))
-                .andExpect(jsonPath("$.data.sources[0].conversationId").value(30L));
+                .andExpect(jsonPath("$.data.sources[0].conversationId").value(30L))
+                .andExpect(
+                        jsonPath("$.data.sources[0].score")
+                                .value(score)
+                );
     }
 
     @Test
