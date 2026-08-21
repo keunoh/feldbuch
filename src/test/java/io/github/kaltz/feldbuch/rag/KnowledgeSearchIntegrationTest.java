@@ -22,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(
         properties = {
-                "spring.batch.job.enabled=false"
+                "spring.batch.job.enabled=false",
+                "rag.search.similarity-threshold=0.0"
         }
 )
 @ActiveProfiles("test")

@@ -6,6 +6,7 @@ import io.github.kaltz.feldbuch.ai.model.ChatResponse;
 import io.github.kaltz.feldbuch.ai.model.ChatRole;
 import io.github.kaltz.feldbuch.ai.service.ChatService;
 import io.github.kaltz.feldbuch.rag.context.KnowledgeContextBuilder;
+import io.github.kaltz.feldbuch.rag.model.RagAnswerResult;
 import io.github.kaltz.feldbuch.rag.prompt.RagPromptFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.document.Document;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,12 +47,18 @@ class RagAnswerServiceTest {
         Long userId = 1L;
         String question = "Spring 트랜잭션은 어떻게 사용해?";
 
-        List<Document> documents =
-                List.of(
-                        new Document(
-                                "Spring에서는 @Transactional을 사용합니다."
+        Document document =
+                new Document(
+                        "test-document-id",
+                        "Spring에서는 @Transactional을 사용합니다.",
+                        Map.of(
+                                "knowledgeNoteId", 10L,
+                                "knowledgeId", 20L,
+                                "conversationId", 30L
                         )
                 );
+
+        List<Document> documents = List.of(document);
 
         String context =
                 """
@@ -106,15 +114,27 @@ class RagAnswerServiceTest {
                 .thenReturn(expectedResponse);
 
         // when
-        ChatResponse response =
+        RagAnswerResult result =
                 ragAnswerService.answer(
                         userId,
                         question
                 );
 
         // then
-        assertThat(response)
+        assertThat(result.response())
                 .isEqualTo(expectedResponse);
+
+        assertThat(result.sources())
+                .hasSize(1);
+
+        assertThat(result.sources().get(0).knowledgeNoteId())
+                .isEqualTo(10L);
+
+        assertThat(result.sources().get(0).knowledgeId())
+                .isEqualTo(20L);
+
+        assertThat(result.sources().get(0).conversationId())
+                .isEqualTo(30L);
 
         verify(knowledgeSearchService)
                 .search(
@@ -153,55 +173,35 @@ class RagAnswerServiceTest {
                 );
 
         when(
-                knowledgeSearchService.search(
-                        userId,
-                        question
-                )
+                knowledgeSearchService.search(userId, question)
         )
-                .thenReturn(
-                        List.of()
-                );
+                .thenReturn(List.of());
 
         when(
-                chatService.chat(
-                        any(ChatCommand.class)
-                )
+                chatService.chat(any(ChatCommand.class))
         )
-                .thenReturn(
-                        expectedResponse
-                );
+                .thenReturn(expectedResponse);
 
         // when
-        ChatResponse response =
-                ragAnswerService.answer(
-                        userId,
-                        question
-                );
+        RagAnswerResult result =
+                ragAnswerService.answer(userId, question);
 
         // then
-        assertThat(response)
-                .isEqualTo(
-                        expectedResponse
-                );
+        assertThat(result.response())
+                .isEqualTo(expectedResponse);
 
-        verify(
-                knowledgeSearchService
-        )
-                .search(
-                        userId,
-                        question
-                );
+        assertThat(result.sources())
+                .isEmpty();
+
+        verify(knowledgeSearchService)
+                .search(userId, question);
 
         verifyNoInteractions(
                 knowledgeContextBuilder,
                 ragPromptFactory
         );
 
-        verify(
-                chatService
-        )
-                .chat(
-                        any(ChatCommand.class)
-                );
+        verify(chatService)
+                .chat(any(ChatCommand.class));
     }
 }
