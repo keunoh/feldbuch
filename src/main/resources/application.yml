@@ -30,7 +30,7 @@ openai:
 rag:
   search:
     top-k: 3
-    similarity-threshold: 0.7
+    similarity-threshold: 0.3
 
 decorator:
   datasource:
