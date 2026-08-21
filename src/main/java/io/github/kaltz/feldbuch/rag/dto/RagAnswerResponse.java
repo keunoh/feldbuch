@@ -3,6 +3,7 @@ package io.github.kaltz.feldbuch.rag.dto;
 import io.github.kaltz.feldbuch.rag.model.RagAnswerResult;
 import io.github.kaltz.feldbuch.rag.model.RagSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,14 +14,19 @@ import java.util.List;
  */
 public record RagAnswerResponse(
         String answer,
-        List<RagSource> sources
+        List<RagSourceResponse> sources
 ) {
 
     public static RagAnswerResponse from(RagAnswerResult result) {
 
+        List<RagSourceResponse> sources =
+                result.sources().stream()
+                        .map(RagSourceResponse::from)
+                        .toList();
+
         return new RagAnswerResponse(
                 result.response().content(),
-                result.sources()
+                sources
         );
     }
 }

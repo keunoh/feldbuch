@@ -76,7 +76,7 @@ class RagControllerIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.data.sources[0].conversationId").value(30L))
                 .andExpect(
                         jsonPath("$.data.sources[0].score")
-                                .value(score)
+                                .doesNotExist()
                 );
     }
 

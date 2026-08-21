@@ -109,7 +109,7 @@ class RagControllerTest extends IntegrationTestSupport {
                 )
                 .andExpect(
                         jsonPath("$.data.sources[0].score")
-                                .value(0.5281)
+                                .doesNotExist()
                 );
 
         verify(
