@@ -13,6 +13,7 @@ services:
 
     ports:
       - "3307:3306"
+
     volumes:
       - mysql-data:/var/lib/mysql
 
@@ -32,7 +33,24 @@ services:
     volumes:
       - redis-data:/data
 
+  pgvector:
+    image: pgvector/pgvector:pg16
+    container_name: feldbuch-pgvector
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: feldbuch_vector
+      POSTGRES_USER: feldbuch
+      POSTGRES_PASSWORD: feldbuch
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - pgvector-data:/var/lib/postgresql/data
+
 volumes:
   mysql-data:
   redis-data:
-
+  pgvector-data:

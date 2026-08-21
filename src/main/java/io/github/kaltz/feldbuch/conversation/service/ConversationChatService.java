@@ -1,6 +1,5 @@
 package io.github.kaltz.feldbuch.conversation.service;
 
-import io.github.kaltz.feldbuch.ai.context.ChatContextBuilder;
 import io.github.kaltz.feldbuch.ai.model.ChatCommand;
 import io.github.kaltz.feldbuch.ai.model.ChatResponse;
 import io.github.kaltz.feldbuch.ai.model.TitleCommand;
@@ -10,6 +9,7 @@ import io.github.kaltz.feldbuch.conversation.dto.request.ChatRequest;
 import io.github.kaltz.feldbuch.conversation.dto.response.StreamResponse;
 import io.github.kaltz.feldbuch.conversation.entity.Conversation;
 import io.github.kaltz.feldbuch.conversation.reader.ConversationReader;
+import io.github.kaltz.feldbuch.rag.context.RagChatContextBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class ConversationChatService {
     private static final String STREAM_LOG = "[CHAT_STREAM]";
 
     private final ConversationMessageCommandService messageCommandService;
-    private final ChatContextBuilder chatContextBuilder;
+    private final RagChatContextBuilder ragChatContextBuilder;
     private final ChatService chatService;
     private final ConversationReader conversationReader;
     private final ConversationStreamCompletionService streamCompletionService;
@@ -36,31 +36,20 @@ public class ConversationChatService {
     public ChatResponse chat(Long userId, Long conversationId, ChatRequest request) {
 
         // 조회가 한 번 더 발생하더라도 일관성이 더 큰 가치다.
-        Conversation conversation =
-                conversationReader.get(userId, conversationId);
+        Conversation conversation = conversationReader.get(userId, conversationId);
 
         String message = request.message();
 
         // 1. 사용자 메시지 저장
-        messageCommandService.createUserMessage(
-                userId,
-                conversationId,
-                message
-        );
+        messageCommandService.createUserMessage(userId, conversationId, message);
 
-        ChatCommand command =
-                chatContextBuilder.build(userId, conversationId);
+        ChatCommand command = ragChatContextBuilder.build(userId, conversationId, message);
 
         // 4. AI 호출
-        ChatResponse response =
-                chatService.chat(command);
+        ChatResponse response = chatService.chat(command);
 
         // 5. AI 응답 저장
-        messageCommandService.createAssistantMessage(
-                userId,
-                conversationId,
-                response.content()
-        );
+        messageCommandService.createAssistantMessage(userId, conversationId, response.content());
 
         generateConversationTitle(conversation, message);
 
@@ -75,18 +64,12 @@ public class ConversationChatService {
         String userMessage = request.message();
 
         // 짧은 트랜잭션으로 사용자 메시지를 저장한다.
-        messageCommandService.createUserMessage(
-                userId,
-                conversationId,
-                userMessage
-        );
+        messageCommandService.createUserMessage(userId, conversationId, userMessage);
 
         // 방금 저장한 사용자 메시지까지 포함해 AI 문맥을 생성한다.
-        ChatCommand command =
-                chatContextBuilder.build(userId, conversationId);
+        ChatCommand command = ragChatContextBuilder.build(userId, conversationId, userMessage);
 
-        StringBuilder assistantContent =
-                new StringBuilder();
+        StringBuilder assistantContent = new StringBuilder();
 
         log.info(
                 "{} Started. userId={} conversationId={}",

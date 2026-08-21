@@ -54,8 +54,7 @@ out/
 # ==========================
 # Local Configuration
 # ==========================
-src/main/resources/application-local.yml
-src/test/resources/application-test.yml
+
 
 # ==========================
 # Frontend (Vue)

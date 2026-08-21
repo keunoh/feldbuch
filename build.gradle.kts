@@ -65,6 +65,14 @@ dependencies {
 
     // OAuth
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+
+    // Spring AI
+    implementation(platform("org.springframework.ai:spring-ai-bom:1.0.3"))
+    implementation("org.springframework.ai:spring-ai-starter-model-openai")
+    implementation("org.springframework.ai:spring-ai-starter-vector-store-pgvector")
+
+    // PostgreSQL
+    runtimeOnly("org.postgresql:postgresql")
 }
 
 tasks.withType<Test> {

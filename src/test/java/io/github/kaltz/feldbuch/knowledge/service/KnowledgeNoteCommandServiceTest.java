@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -51,12 +52,16 @@ class KnowledgeNoteCommandServiceTest {
 
     private AiKnowledgeMergeResponse mergeResponse;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @BeforeEach
     void setUp() {
         service =
                 new KnowledgeNoteCommandService(
                         knowledgeCategoryResolver,
-                        knowledgeNoteRepository
+                        knowledgeNoteRepository,
+                        eventPublisher
                 );
 
         user =

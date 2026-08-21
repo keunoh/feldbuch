@@ -86,6 +86,12 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - `KnowledgeCategory` 기반 세부 카테고리 체계
 - KnowledgeNoteType 기반 `INCREMENTAL`, `CONSOLIDATED` 노트 분리
 - KnowledgeRepository, KnowledgeNoteRepository
+- KnowledgeVectorStore, KnowledgeSearchService
+- KnowledgeContextBuilder, RagPromptFactory, RagChatContextBuilder
+- RagSearchProperties
+- RagAnswerResult, RagSource
+- RagAnswerService, RagController
+- RagAnswerResponse, RagSourceResponse
 - KnowledgeCategoryResolver
 - AiKnowledgeSummaryResponse, AiKnowledgeMergeResponse
 - KnowledgeSummaryPrompt, KnowledgeMergePrompt
@@ -102,6 +108,10 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - QueryDSL 기반 Knowledge 추출 대상 Conversation 조회와 대상 존재 여부 확인 쿼리
 - KnowledgeNote의 Knowledge별/Conversation별/사용자별/타입별 조회 쿼리
 - Knowledge Tree 조회 API, KnowledgeNote 목록/상세 조회 API, Conversation별 통합 노트 조회 API
+- RAG 기반 질문 답변 API `POST /api/rag/answer`
+- RAG 답변 출처 응답: `knowledgeNoteId`, `knowledgeId`, `conversationId`
+- RAG 내부 출처 모델은 similarity score를 유지하지만 API 응답 DTO에서는 노출하지 않음
+- 기존 Conversation 일반/SSE 채팅의 RAG Knowledge Context 자동 주입
 - Thymeleaf 기반 로그인/대화 비교 화면
 - Vue 3 + Vite SPA: `LoginView`, `SignUpView`, `OAuth2SuccessView`, `ConversationView`
 - Vue 컴포넌트: `WorkspaceSidebar`, `SidebarHeader`, `SidebarTabs`, `SidebarSectionLabel`, `ConversationSidebar`, `MessageList`, `ChatInput`, `StudyInfoPanel`, `UserProfilePanel`, `SettingsModal`, `KnowledgeSidebar`, `KnowledgeTreeNode`, `KnowledgeWorkspace`, `KnowledgeNoteList`, `KnowledgeNoteDetail`, `SearchHighlight`
@@ -131,6 +141,7 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - 기본 활성 프로필: `local`
 - 공통 설정 파일: `src/main/resources/application.yml`
 - 로컬 설정 파일: `src/main/resources/application-local.yml`
+- 로컬 설정 파일은 CI와 로컬 실행 기준을 맞추기 위해 Git에서 추적합니다. 실제 DB 계정, JWT Secret, OpenAI API Key, Google OAuth2 Client 값은 환경 변수로 주입합니다.
 - 운영 설정 파일: `src/main/resources/application-prod.yml`
 - OpenAI Base URL: `https://api.openai.com/v1`
 - OpenAI 모델 설정 키: `openai.model`
@@ -154,7 +165,18 @@ Feldbuch는 개발자가 AI와 나눈 학습 대화를 저장하고, 완료된 �
 - Google OAuth2 시작 경로: `/oauth2/authorization/google`
 - Google OAuth2 콜백 경로: `/login/oauth2/code/google`
 - Google OAuth2 성공 리다이렉트: `{app.frontend-url}/oauth2/success?token={jwt}&userId={id}`
-- 로컬 Docker 인프라: MySQL, Redis
+- 로컬 Docker 인프라: MySQL, Redis, PgVector
+- 로컬 MySQL 설정: `spring.datasource.url`, `DB_USERNAME`, `DB_PASSWORD`
+- 로컬 Redis 설정: `spring.data.redis.host=localhost`, `spring.data.redis.port=6379`
+- 로컬 RAG datasource 설정: `rag.datasource.url`, `rag.datasource.username`, `rag.datasource.password`
+- 로컬 PgVector database: `feldbuch_vector`
+- OpenAI Embedding 모델: `text-embedding-3-small`
+- PgVector 자동 설정은 애플리케이션 공통 exclude와 로컬 프로필 exclude로 비활성화하고, `RagVectorStoreConfig`에서 전용 datasource/JdbcTemplate/VectorStore Bean을 구성합니다.
+- RAG 유사도 검색 기본 top-k: `3`
+- RAG 유사도 검색 threshold 설정 키: `rag.search.similarity-threshold`
+- RAG 유사도 검색 기본 threshold: `0.3`
+- RAG 검색 metadata filter: `userId`
+- RAG 벡터화 대상: `CONSOLIDATED` KnowledgeNote
 - Refresh Token 저장 Redis Key: `refresh:{userId}`
 - Refresh Token Redis TTL: `jwt.refresh-token-expiration` 기준
 - Spring Batch 기본 자동 실행: `spring.batch.job.enabled=false`
@@ -395,11 +417,22 @@ Spring Boot는 인증, REST API, AI 호출, Batch 처리를 담당합니다. Vue
 flowchart TD
     ChatController --> ConversationChatService
     ConversationChatService --> ConversationMessageCommandService
-    ConversationChatService --> ChatContextBuilder
+    ConversationChatService --> RagChatContextBuilder
     ConversationChatService --> ChatService
+    RagChatContextBuilder --> ChatContextBuilder
+    RagChatContextBuilder --> KnowledgeSearchService
+    RagChatContextBuilder --> KnowledgeContextBuilder
     ChatContextBuilder --> ConversationMessageReader
+    KnowledgeSearchService --> KnowledgeVectorStore
+    KnowledgeVectorStore --> PgVector
     ChatService --> OpenAiWebClient
     OpenAiWebClient --> OpenAI
+
+    RagController --> RagAnswerService
+    RagAnswerService --> KnowledgeSearchService
+    RagAnswerService --> KnowledgeContextBuilder
+    RagAnswerService --> RagPromptFactory
+    RagAnswerService --> ChatService
 
     ConversationController --> ConversationCommandService
     ConversationController --> ConversationQueryService
@@ -436,6 +469,9 @@ flowchart TD
     KnowledgeNoteCommandService --> KnowledgeCategoryResolver
     KnowledgeCategoryResolver --> KnowledgeRepository
     KnowledgeNoteCommandService --> KnowledgeNoteRepository
+    KnowledgeNoteCommandService --> KnowledgeVectorSyncEvent
+    KnowledgeVectorSyncEvent --> KnowledgeVectorSyncService
+    KnowledgeVectorSyncService --> KnowledgeVectorStore
     OpenAiKnowledgeSummaryService --> AiClient
     OpenAiKnowledgeMergeService --> AiClient
     AiClient --> OpenAI
@@ -770,6 +806,7 @@ src/main/java/io.github.kaltz.feldbuch
 ├── knowledge
 │   ├── context         # Conversation 메시지 기반 추출 컨텍스트
 │   └── service         # Knowledge 카테고리 결정, 추출, 노트 저장
+├── rag                 # PgVector 검색, RAG 컨텍스트/프롬프트, 질문 답변 API
 ├── redis
 └── user
 

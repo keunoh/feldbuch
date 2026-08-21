@@ -27,6 +27,11 @@ openai:
   base-url: https://api.openai.com/v1
   model: gpt-4.1-nano
 
+rag:
+  search:
+    top-k: 3
+    similarity-threshold: 0.3
+
 decorator:
   datasource:
     p6spy:
