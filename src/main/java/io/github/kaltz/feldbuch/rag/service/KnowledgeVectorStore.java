@@ -1,6 +1,7 @@
 package io.github.kaltz.feldbuch.rag.service;
 
 import io.github.kaltz.feldbuch.knowledge.entity.KnowledgeNote;
+import io.github.kaltz.feldbuch.rag.config.RagSearchProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -20,10 +21,8 @@ public class KnowledgeVectorStore {
      * Spring AI 검색 방법
      * userId metadata filter
      */
-
-    private static final int DEFAULT_TOP_K = 3;
-
     private final VectorStore vectorStore;
+    private final RagSearchProperties ragSearchProperties;
 
     public void save(KnowledgeNote note) {
 
@@ -66,7 +65,12 @@ public class KnowledgeVectorStore {
         SearchRequest request =
                 SearchRequest.builder()
                         .query(query)
-                        .topK(DEFAULT_TOP_K)
+                        .topK(
+                                ragSearchProperties.getTopK()
+                        )
+                        .similarityThreshold(
+                                ragSearchProperties.getSimilarityThreshold()
+                        )
                         .filterExpression(
                                 "userId == " + userId
                         )

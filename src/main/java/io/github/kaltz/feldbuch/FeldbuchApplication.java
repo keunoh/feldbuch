@@ -1,6 +1,7 @@
 package io.github.kaltz.feldbuch;
 
 import io.github.kaltz.feldbuch.config.JwtProperties;
+import io.github.kaltz.feldbuch.rag.config.RagSearchProperties;
 import org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,7 +14,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
         exclude = PgVectorStoreAutoConfiguration.class
 )
 @EnableJpaAuditing
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({
+        JwtProperties.class,
+        RagSearchProperties.class,
+})
 @EnableAsync
 @EnableCaching
 public class FeldbuchApplication {
